@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetPurple</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <meta property="og:title" content="NetPurple - Alles was du jemals brauchen wirst">
+    <meta property="og:description" content="Alles was du jemals brauchen wirst">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.netpurple.com">
+    <meta name="description" content="NetPurple - Alles was du jemals brauchen wirst">
+    <link rel="icon" type="image/x-icon" href="logo.png">
+</head>
+<body>
+
+    <!-- L-Shape Burger Menu -->
+    <div class="burger-menu-container" id="burgerMenuContainer">
+        <!-- Circular Burger Button -->
+        <button class="burger-icon" id="burgerIcon" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <!-- Horizontal Bar - Extends RIGHT (5 icons) -->
+        <div class="menu-items-horizontal">
+            <!-- Dark/Light Mode Toggle -->
+            <button class="menu-item-circle" id="themeToggleItem" aria-label="Toggle dark mode">
+                <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 1v4m0 14v4M1 12h4m14 0h4M4.22 4.22l2.83 2.83m10.9 10.9l2.83 2.83M4.22 19.78l2.83-2.83m10.9-10.9l2.83-2.83" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+
+            <button class="menu-item-circle disabled" aria-label="Analytics">
+                <i class="fa-solid fa-chart-bar"></i>
+            </button>
+
+            <button class="menu-item-circle disabled" aria-label="Notifications">
+                <i class="fa-solid fa-bell"></i>
+            </button>
+
+            <button class="menu-item-circle disabled" aria-label="Messages">
+                <i class="fa-solid fa-envelope"></i>
+            </button>
+
+            <button class="menu-item-circle disabled" aria-label="Download">
+                <i class="fa-solid fa-download"></i>
+            </button>
+        </div>
+
+        <!-- Vertical Bar - Extends DOWN (6 icons) -->
+        <div class="menu-items-vertical">
+            <button class="menu-item-circle disabled" aria-label="Search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+
+            <button class="menu-item-circle disabled" aria-label="Favorites">
+                <i class="fa-solid fa-star"></i>
+            </button>
+
+            <button class="menu-item-circle disabled" aria-label="Tools">
+                <i class="fa-solid fa-wrench"></i>
+            </button>
+
+            <button class="menu-item-circle disabled" aria-label="Settings">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+
+            <button class="menu-item-circle disabled" aria-label="User">
+                <i class="fa-solid fa-user"></i>
+            </button>
+
+            <button class="menu-item-circle disabled" aria-label="Help">
+                <i class="fa-solid fa-circle-question"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Profile Button -->
+    <div class="profile-container">
+        <button class="profile-button" id="profileButton">
+            <i class="fa-solid fa-user"></i>
+        </button>
+        <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-content">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Hintergrund-Partikel (liegt hinter allem Content) -->
+    <canvas id="bg-particles" aria-hidden="true"></canvas>
+
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <div class="hero-logo">
+                <div class="logo-geometric"></div>
+            </div>
+            <h1 class="hero-title">NetPurple</h1>
+            <div class="hero-buttons">
+            </div>
+        </div>
+
+        <!-- Optional: vorhandene Deko beibehalten -->
+        <div class="hero-background">
+            <div class="floating-elements">
+                <div class="floating-element"></div>
+                <div class="floating-element"></div>
+                <div class="floating-element"></div>
+                <div class="floating-element"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="services">
+        <div class="container">
+            <div class="tools-grid">
+                <div class="tool-card">
+                    <div class="tool-icon"><i class="fa-solid fa-code"></i></div>
+                    <h3>Code & Scripts</h3>
+                    <p>The source code of NetPurple and more.</p>
+                    <button class="tool-button">See Code</button>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                    <h3>Free Things</h3>
+                    <p>Free games, anime, movies, and more.</p>
+                    <button class="tool-button">Search free things</button>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon"><i class="fa-solid fa-crown"></i></div>
+                    <h3>Lounge</h3>
+                    <p>Lounge for VIP visitors of NetPurple.</p>
+                    <button class="tool-button">Visit Lounge</button>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon"><i class="fa-solid fa-wrench"></i></div>
+                    <h3>Tools</h3>
+                    <p>Tools you didn't know you needed.</p>
+                    <button class="tool-button">Append Tools</button>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon"><i class="fa-solid fa-gamepad"></i></div>
+                    <h3>Fun Hub</h3>
+                    <p>Our own hub with games, a soundboard, and more.</p>
+                    <button class="tool-button">Visit Hub</button>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon"><i class="fa-solid fa-folder-open"></i></div>
+                    <h3>Archive</h3>
+                    <p>Our archive of software, code, tools, and more.</p>
+                    <button class="tool-button">Browse Library</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="particles.js"></script>
+    <script src="auth.js"></script>
+    <script src="menu.js"></script>
+</body>
+</html>
