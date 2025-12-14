@@ -146,6 +146,27 @@
             font-size: 0.75rem;
             white-space: nowrap;
         }
+
+        /* Icon Colors */
+        .icon-windows { color: #0078D6; }
+        .icon-linux { color: #FCC624; } /* Standard Linux Yellow */
+        .icon-android { color: #3DDC84; }
+        .icon-ios { color: #A2AAAD; }
+        
+        /* 18+ Badge */
+        .icon-18plus {
+            border: 2px solid #ef4444;
+            color: #ef4444;
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            display: inline-block;
+            line-height: 1;
+            min-width: 24px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -213,11 +234,12 @@
                 'Windows': 'fa-brands fa-windows',
                 'Web': 'fa-solid fa-globe',
                 'Information': 'fa-solid fa-circle-info',
-                'Kemono 18+': 'fa-solid fa-layer-group',
+                'Kemono 18+': '18+', // Marker for custom handling
                 'Self-Hosting': 'fa-solid fa-server',
                 'Android': 'fa-brands fa-android',
                 'Utilities': 'fa-solid fa-screwdriver-wrench',
-                'Linux': 'fa-brands fa-linux'
+                'Linux': 'fa-brands fa-linux',
+                'IOS': 'fa-brands fa-apple'
             };
 
             fetch('data.json')
@@ -238,6 +260,23 @@
                 return categoryIcons[category] || 'fa-solid fa-folder';
             }
 
+            function getCategoryColorClass(category) {
+                if (category === 'Windows') return 'icon-windows';
+                if (category === 'Linux') return 'icon-linux';
+                if (category === 'Android') return 'icon-android';
+                if (category === 'IOS') return 'icon-ios';
+                return '';
+            }
+
+            function getIconHTML(category) {
+                if (category === 'Kemono 18+') {
+                    return '<span class="icon-18plus">18+</span>';
+                }
+                const iconClass = getCategoryIcon(category);
+                const colorClass = getCategoryColorClass(category);
+                return `<i class="${iconClass} ${colorClass}"></i>`;
+            }
+
             function renderCategories() {
                 const categories = new Set();
                 toolsData.forEach(item => {
@@ -249,7 +288,11 @@
                 sortedCategories.forEach(category => {
                     const btn = document.createElement('button');
                     btn.className = 'category-btn';
-                    btn.innerHTML = `<i class="${getCategoryIcon(category)}"></i> ${category}`;
+                    
+                    // Use the icon helper
+                    const iconHTML = getIconHTML(category);
+                    
+                    btn.innerHTML = `${iconHTML} ${category}`;
                     btn.dataset.category = category;
                     btn.addEventListener('click', () => {
                         // Toggle active class
@@ -292,10 +335,10 @@
                     card.className = 'tool-card';
                     card.onclick = () => window.open(item.url, '_blank');
                     
-                    const iconClass = getCategoryIcon(item.category);
+                    const iconHTML = getIconHTML(item.category);
 
                     card.innerHTML = `
-                        <div class="tool-icon"><i class="${iconClass}"></i></div>
+                        <div class="tool-icon">${iconHTML}</div>
                         <h3>${item.name}</h3>
                         <p>${item.description}</p>
                         <button class="tool-button" onclick="event.stopPropagation(); window.open('${item.url}', '_blank')">Visit Site</button>
