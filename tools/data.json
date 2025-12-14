@@ -124,5 +124,53 @@
     "url": "https://github.com/leapbtw/uxplay-windows",
     "description": "Open source AirPlay receiver for Windows",
     "category": "IOS"
+  },
+  {
+    "name": "Universal ADB Driver",
+    "url": "https://adb.clockworkmod.com/",
+    "description": "ADB USB driver",
+    "category": "Android"
+  },
+  {
+    "name": "ReVanced",
+    "url": "https://revanced.app/",
+    "description": "Tool For YT, Reddit, Insta without ads and with premium features",
+    "category": "Android"
+  },
+  {
+    "name": "ADB Platform Tools",
+    "url": "https://developer.android.com/tools/releases/platform-tools?hl=de",
+    "description": "ADB Download",
+    "category": "Android"
+  },
+  {
+    "name": "Icon-Icons",
+    "url": "https://icon-icons.com/",
+    "description": "Free Icons",
+    "category": "Web"
+  },
+  {
+    "name": "Boxicons",
+    "url": "https://boxicons.com/",
+    "description": "Free Icons",
+    "category": "Web"
+  },
+  {
+    "name": "Tabler",
+    "url": "https://github.com/tabler/tabler",
+    "description": "Admin UI framework",
+    "category": "Web"
+  },
+  {
+    "name": "particles.js",
+    "url": "https://vincentgarreau.com/particles.js/",
+    "description": "Own particle for website",
+    "category": "Web"
+  },
+  {
+    "name": "WinApps",
+    "url": "https://www.youtube.com/watch?v=mdnbIXArwVk",
+    "description": "Windows apps running on Linux (Tutorial)",
+    "category": "Linux"
   }
 ]
