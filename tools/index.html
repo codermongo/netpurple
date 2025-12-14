@@ -182,7 +182,7 @@
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
         </div>
         <div class="category-filters" id="categoryFilters">
-            <button class="category-btn active" data-category="all">All</button>
+            <button class="category-btn active" data-category="all"><i class="fa-solid fa-list"></i> All</button>
             <!-- Categories injected by JS -->
         </div>
     </div>
@@ -206,6 +206,20 @@
             const searchInput = document.getElementById('searchInput');
             const filtersContainer = document.getElementById('categoryFilters');
 
+            const categoryIcons = {
+                'Remote Access': 'fa-solid fa-desktop',
+                'Privacy': 'fa-solid fa-shield-halved',
+                'Social': 'fa-solid fa-comments',
+                'Windows': 'fa-brands fa-windows',
+                'Web': 'fa-solid fa-globe',
+                'Information': 'fa-solid fa-circle-info',
+                'Kemono 18+': 'fa-solid fa-layer-group',
+                'Self-Hosting': 'fa-solid fa-server',
+                'Android': 'fa-brands fa-android',
+                'Utilities': 'fa-solid fa-screwdriver-wrench',
+                'Linux': 'fa-brands fa-linux'
+            };
+
             fetch('data.json')
                 .then(response => response.json())
                 .then(data => {
@@ -220,6 +234,10 @@
                 renderList();
             });
 
+            function getCategoryIcon(category) {
+                return categoryIcons[category] || 'fa-solid fa-folder';
+            }
+
             function renderCategories() {
                 const categories = new Set();
                 toolsData.forEach(item => {
@@ -231,7 +249,7 @@
                 sortedCategories.forEach(category => {
                     const btn = document.createElement('button');
                     btn.className = 'category-btn';
-                    btn.textContent = category;
+                    btn.innerHTML = `<i class="${getCategoryIcon(category)}"></i> ${category}`;
                     btn.dataset.category = category;
                     btn.addEventListener('click', () => {
                         // Toggle active class
@@ -243,7 +261,7 @@
                     filtersContainer.appendChild(btn);
                 });
 
-                // Re-attach listener to 'All' button (since it's static in HTML but we want to manage active state)
+                // Re-attach listener to 'All' button
                 const allBtn = document.querySelector('.category-btn[data-category="all"]');
                 allBtn.addEventListener('click', () => {
                     document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
@@ -274,8 +292,10 @@
                     card.className = 'tool-card';
                     card.onclick = () => window.open(item.url, '_blank');
                     
+                    const iconClass = getCategoryIcon(item.category);
+
                     card.innerHTML = `
-                        <div class="tool-icon"><i class="fa-solid fa-wrench"></i></div>
+                        <div class="tool-icon"><i class="${iconClass}"></i></div>
                         <h3>${item.name}</h3>
                         <p>${item.description}</p>
                         <button class="tool-button" onclick="event.stopPropagation(); window.open('${item.url}', '_blank')">Visit Site</button>
