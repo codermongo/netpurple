@@ -1,45 +1,8 @@
-// Burger Menu and Dark Mode functionality
+// Dark Mode functionality
 
 document.addEventListener('DOMContentLoaded', () => {
-    initBurgerMenu();
     initDarkMode();
 });
-
-/* ===== BURGER MENU ===== */
-function initBurgerMenu() {
-    const burgerIcon = document.getElementById('burgerIcon');
-    const burgerMenuContainer = document.getElementById('burgerMenuContainer');
-
-    if (!burgerIcon || !burgerMenuContainer) return;
-
-    function toggleMenu() {
-        burgerMenuContainer.classList.toggle('expanded');
-    }
-
-    function closeMenu() {
-        burgerMenuContainer.classList.remove('expanded');
-    }
-
-    // Toggle menu on burger icon click
-    burgerIcon.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleMenu();
-    });
-
-    // Close menu when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!burgerMenuContainer.contains(e.target)) {
-            closeMenu();
-        }
-    });
-
-    // Close menu on escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && burgerMenuContainer.classList.contains('expanded')) {
-            closeMenu();
-        }
-    });
-}
 
 /* ===== DARK MODE ===== */
 function initDarkMode() {

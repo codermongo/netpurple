@@ -17,36 +17,10 @@
 </head>
 <body>
 
-    <!-- L-Shape Burger Menu -->
-    <div class="burger-menu-container" id="burgerMenuContainer">
-        <!-- Circular Burger Button -->
-        <button class="burger-icon" id="burgerIcon" aria-label="Toggle menu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-
-        <!-- Horizontal Bar - Extends RIGHT (4 icons) -->
-        <div class="menu-items-horizontal">
-            <button class="menu-item-circle disabled" aria-label="Analytics">
-                <i class="fa-solid fa-chart-bar"></i>
-            </button>
-
-            <button class="menu-item-circle disabled" aria-label="Notifications">
-                <i class="fa-solid fa-bell"></i>
-            </button>
-
-            <button class="menu-item-circle disabled" aria-label="Messages">
-                <i class="fa-solid fa-envelope"></i>
-            </button>
-
-            <button class="menu-item-circle disabled" aria-label="Download">
-                <i class="fa-solid fa-download"></i>
-            </button>
-        </div>
-
+    <!-- Theme Toggle Container -->
+    <div class="theme-toggle-container">
         <!-- Dark/Light Mode Toggle -->
-        <button class="menu-item-circle" id="themeToggleItem" aria-label="Toggle dark mode">
+        <button class="menu-item-circle visible" id="themeToggleItem" aria-label="Toggle dark mode">
             <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
                 <path d="M12 1v4m0 14v4M1 12h4m14 0h4M4.22 4.22l2.83 2.83m10.9 10.9l2.83 2.83M4.22 19.78l2.83-2.83m10.9-10.9l2.83-2.83" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -55,18 +29,6 @@
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
             </svg>
         </button>
-    </div>
-
-    <!-- Profile Button -->
-    <div class="profile-container">
-        <button class="profile-button" id="profileButton">
-            <i class="fa-solid fa-user"></i>
-        </button>
-        <div class="profile-dropdown" id="profileDropdown">
-            <div class="dropdown-content">
-                <!-- Content will be populated by JavaScript -->
-            </div>
-        </div>
     </div>
 
     <!-- Hintergrund-Partikel (liegt hinter allem Content) -->
