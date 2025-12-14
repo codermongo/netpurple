@@ -82,5 +82,47 @@
     "url": "https://github.com/flick9000/winscript",
     "description": "Tool for Windows debloating and initial setup",
     "category": "Windows"
+  },
+  {
+    "name": "Nugget",
+    "url": "https://github.com/leminlimez/Nugget",
+    "description": "Tool to disable Liquid Ass and unlock iOS features",
+    "category": "IOS"
+  },
+  {
+    "name": "YTLitePlus",
+    "url": "https://github.com/YTLitePlus/YTLitePlus",
+    "description": "Revanced for YouTube on iOS",
+    "category": "IOS"
+  },
+  {
+    "name": "SideStore",
+    "url": "https://sidestore.io/",
+    "description": "Sideload apps without refreshing every 7 days (requires VPN)",
+    "category": "IOS"
+  },
+  {
+    "name": "Stos VPN",
+    "url": "https://apps.apple.com/de/app/stosvpn/id6744003051",
+    "description": "VPN required for SideStore to work on-device",
+    "category": "IOS"
+  },
+  {
+    "name": "Live Container",
+    "url": "https://github.com/LiveContainer/LiveContainer",
+    "description": "Run unsideloaded apps or more than 3 apps simultaneously",
+    "category": "IOS"
+  },
+  {
+    "name": "AltServer",
+    "url": "https://altstore.io/",
+    "description": "Desktop tool to patch/install SideStore/AltStore",
+    "category": "IOS"
+  },
+  {
+    "name": "UxPlay-Windows",
+    "url": "https://github.com/leapbtw/uxplay-windows",
+    "description": "Open source AirPlay receiver for Windows",
+    "category": "IOS"
   }
 ]
