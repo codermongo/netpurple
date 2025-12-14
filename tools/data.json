@@ -2,71 +2,85 @@
   {
     "name": "RustDesk",
     "url": "https://github.com/rustdesk/rustdesk",
-    "description": "Open source RDP tool"
+    "description": "Open source RDP tool",
+    "category": "Remote Access"
   },
   {
     "name": "uBlock Origin",
     "url": "https://ublockorigin.com",
-    "description": "Best open source ad blocker"
+    "description": "Best open source ad blocker",
+    "category": "Privacy"
   },
   {
     "name": "Vencord",
     "url": "https://vencord.dev/download/",
-    "description": "FOSS Discord client for free Nitro features, etc."
+    "description": "FOSS Discord client for free Nitro features, etc.",
+    "category": "Social"
   },
   {
-    "name": "PowerToys",
-    "url": "https://github.com/microsoft/PowerToys",
-    "description": "Windows UI tweak tool"
+    "name": "Windhawk",
+    "url": "https://windhawk.net/",
+    "description": "Windows UI tweak tool",
+    "category": "Windows"
   },
   {
-    "name": "eu.org",
-    "url": "https://nic.eu.org/",
-    "description": "Free domains online"
+    "name": "FreeDomain",
+    "url": "https://github.com/DigitalPlatDev/FreeDomain",
+    "description": "Free domains online",
+    "category": "Web"
   },
   {
     "name": "PCMasters",
     "url": "https://www.pcmasters.de/",
-    "description": "Useful reports on hardware/software/peripherals"
+    "description": "Useful reports on hardware/software/peripherals",
+    "category": "Information"
   },
   {
     "name": "Kemono",
     "url": "https://kemono.cr/",
-    "description": "Patreon stuff for free"
+    "description": "Patreon stuff for free",
+    "category": "Media"
   },
   {
     "name": "Homarr",
     "url": "https://homarr.dev/",
-    "description": "Home server dashboard"
+    "description": "Home server dashboard",
+    "category": "Self-Hosting"
   },
   {
     "name": "Homepage",
     "url": "https://gethomepage.dev/",
-    "description": "Home server dashboard"
+    "description": "Home server dashboard",
+    "category": "Self-Hosting"
   },
   {
     "name": "scrcpy",
     "url": "https://github.com/Genymobile/scrcpy/releases",
-    "description": "Tool for transferring mobile phone screens to PC Android"
+    "description": "Tool for transferring mobile phone screens to PC Android",
+    "category": "Android"
   },
   {
     "name": "Ventoy",
     "url": "https://www.ventoy.net/en/index.html",
-    "description": "Tool for booting multiple ISOs from a USB stick"
+    "description": "Tool for booting multiple ISOs from a USB stick",
+    "category": "Utilities"
   },
   {
     "name": "SlimBrave (Windows)",
     "url": "https://github.com/ltx0101/SlimBrave",
-    "description": "Brave Debloater"
+    "description": "Brave Debloater",
+    "category": "Windows"
   },
   {
     "name": "Brave Debloatinator (Linux)",
     "url": "https://github.com/MulesGaming/brave-debloatinator",
-    "description": "Brave Debloater"
+    "description": "Brave Debloater",
+    "category": "Linux"
   },
   {
     "name": "Winscript",
     "url": "https://github.com/flick9000/winscript",
-    "description": "Tool for Windows debloating and initial setup"
+    "description": "Tool for Windows debloating and initial setup",
+    "category": "Windows"
   }
 ]
