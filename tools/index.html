@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetPurple - Tools</title>
+    <link rel="stylesheet" href="../style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="../logo.png">
+    <style>
+        .back-button {
+            position: fixed;
+            top: 2rem;
+            left: 6rem;
+            z-index: 1001;
+            padding: 8px 16px;
+            background: var(--card-glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-glass-stroke);
+            border-radius: 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .back-button:hover {
+            background: var(--card-glass-hover);
+            transform: translateY(-2px);
+        }
+
+        #list-container {
+            grid-template-columns: 1fr;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        #list-container .tool-card {
+            flex-direction: row;
+            align-items: center;
+            text-align: left;
+            gap: 1.5rem;
+            padding: 1rem 1.5rem;
+        }
+
+        #list-container .tool-icon {
+            font-size: 1.2rem;
+            margin-bottom: 0;
+        }
+
+        #list-container h3 {
+            margin-bottom: 0;
+            font-size: 1rem;
+            min-width: 180px;
+        }
+
+        #list-container p {
+            margin-bottom: 0;
+            flex-grow: 1;
+            font-size: 0.9rem;
+        }
+
+        #list-container .tool-button {
+            margin-top: 0;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle Container -->
+    <div class="theme-toggle-container">
+        <!-- Dark/Light Mode Toggle -->
+        <button class="menu-item-circle visible" id="themeToggleItem" aria-label="Toggle dark mode">
+            <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 1v4m0 14v4M1 12h4m14 0h4M4.22 4.22l2.83 2.83m10.9 10.9l2.83 2.83M4.22 19.78l2.83-2.83m10.9-10.9l2.83-2.83" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+        </button>
+    </div>
+
+    <a href="../index.html" class="back-button"><i class="fa-solid fa-arrow-left"></i> Back</a>
+
+    <!-- Hintergrund-Partikel -->
+    <canvas id="bg-particles" aria-hidden="true"></canvas>
+
+    <section class="hero" style="min-height: 25vh; padding-top: 100px;">
+        <div class="hero-content">
+            <h1 class="hero-title">Useful Tools</h1>
+            <p class="hero-subtitle">Tools you didn't know you needed</p>
+        </div>
+    </section>
+
+    <section class="services">
+        <div class="container">
+            <div class="tools-grid" id="list-container">
+                <!-- Content injected by JS -->
+            </div>
+        </div>
+    </section>
+
+    <script src="../particles.js"></script>
+    <script src="../menu.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('data.json')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('list-container');
+                    data.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'tool-card';
+                        // Make entire card clickable
+                        card.onclick = () => window.open(item.url, '_blank');
+                        
+                        card.innerHTML = `
+                            <div class="tool-icon"><i class="fa-solid fa-wrench"></i></div>
+                            <h3>${item.name}</h3>
+                            <p>${item.description}</p>
+                            <button class="tool-button" onclick="event.stopPropagation(); window.open('${item.url}', '_blank')">Visit Site</button>
+                        `;
+                        container.appendChild(card);
+                    });
+                })
+                .catch(error => console.error('Error loading data:', error));
+        });
+    </script>
+</body>
+</html>
