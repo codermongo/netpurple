@@ -1,0 +1,72 @@
+[
+  {
+    "name": "RustDesk",
+    "url": "https://github.com/rustdesk/rustdesk",
+    "description": "Open source RDP tool"
+  },
+  {
+    "name": "uBlock Origin",
+    "url": "https://ublockorigin.com",
+    "description": "Best open source ad blocker"
+  },
+  {
+    "name": "Vencord",
+    "url": "https://vencord.dev/download/",
+    "description": "FOSS Discord client for free Nitro features, etc."
+  },
+  {
+    "name": "PowerToys",
+    "url": "https://github.com/microsoft/PowerToys",
+    "description": "Windows UI tweak tool"
+  },
+  {
+    "name": "eu.org",
+    "url": "https://nic.eu.org/",
+    "description": "Free domains online"
+  },
+  {
+    "name": "PCMasters",
+    "url": "https://www.pcmasters.de/",
+    "description": "Useful reports on hardware/software/peripherals"
+  },
+  {
+    "name": "Kemono",
+    "url": "https://kemono.cr/",
+    "description": "Patreon stuff for free"
+  },
+  {
+    "name": "Homarr",
+    "url": "https://homarr.dev/",
+    "description": "Home server dashboard"
+  },
+  {
+    "name": "Homepage",
+    "url": "https://gethomepage.dev/",
+    "description": "Home server dashboard"
+  },
+  {
+    "name": "scrcpy",
+    "url": "https://github.com/Genymobile/scrcpy/releases",
+    "description": "Tool for transferring mobile phone screens to PC Android"
+  },
+  {
+    "name": "Ventoy",
+    "url": "https://www.ventoy.net/en/index.html",
+    "description": "Tool for booting multiple ISOs from a USB stick"
+  },
+  {
+    "name": "SlimBrave (Windows)",
+    "url": "https://github.com/ltx0101/SlimBrave",
+    "description": "Brave Debloater"
+  },
+  {
+    "name": "Brave Debloatinator (Linux)",
+    "url": "https://github.com/MulesGaming/brave-debloatinator",
+    "description": "Brave Debloater"
+  },
+  {
+    "name": "Winscript",
+    "url": "https://github.com/flick9000/winscript",
+    "description": "Tool for Windows debloating and initial setup"
+  }
+]
