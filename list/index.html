@@ -32,9 +32,86 @@
             transform: translateY(-2px);
         }
 
+        /* Controls Section */
+        .controls {
+            max-width: 900px;
+            margin: 0 auto 2rem auto;
+            padding: 0 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 40px 12px 16px;
+            background: var(--card-glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-glass-stroke);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            background: var(--card-glass-hover);
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+        }
+
+        .category-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .category-btn {
+            padding: 6px 14px;
+            background: var(--card-glass-bg);
+            border: 1px solid var(--card-glass-stroke);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .category-btn:hover {
+            background: var(--card-glass-hover);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        .category-btn.active {
+            background: var(--button-purple);
+            color: white;
+            border-color: var(--button-purple);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        /* List Styles */
         #list-container {
             grid-template-columns: 1fr;
-            max-width: 900px; /* Slightly wider for rows */
+            max-width: 900px;
             margin: 0 auto;
         }
 
@@ -69,6 +146,26 @@
             font-size: 0.75rem;
             white-space: nowrap;
         }
+
+        /* Icon Colors */
+        .icon-windows { color: #0078D6; }
+        .icon-games { color: #8B5CF6; } /* Purple for games */
+        .icon-streaming { color: #F43F5E; } /* Red/Pink for streaming */
+        
+        /* 18+ Badge */
+        .icon-18plus {
+            border: 2px solid #ef4444;
+            color: #ef4444;
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            display: inline-block;
+            line-height: 1;
+            min-width: 24px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -98,6 +195,18 @@
         </div>
     </section>
 
+    <!-- Controls -->
+    <div class="controls">
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search free stuff...">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        </div>
+        <div class="category-filters" id="categoryFilters">
+            <button class="category-btn active" data-category="all"><i class="fa-solid fa-list"></i> All</button>
+            <!-- Categories injected by JS -->
+        </div>
+    </div>
+
     <section class="services">
         <div class="container">
             <div class="tools-grid" id="list-container">
@@ -110,26 +219,121 @@
     <script src="../menu.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            let toolsData = [];
+            let activeCategory = 'all';
+
+            const container = document.getElementById('list-container');
+            const searchInput = document.getElementById('searchInput');
+            const filtersContainer = document.getElementById('categoryFilters');
+
+            const categoryIcons = {
+                'Games': 'fa-solid fa-gamepad',
+                'Streaming': 'fa-solid fa-play',
+                '18+': '18+',
+                'Windows': 'fa-brands fa-windows',
+                'Web': 'fa-solid fa-globe'
+            };
+
             fetch('data.json')
                 .then(response => response.json())
                 .then(data => {
-                    const container = document.getElementById('list-container');
-                    data.forEach(item => {
-                        const card = document.createElement('div');
-                        card.className = 'tool-card';
-                        // Make entire card clickable
-                        card.onclick = () => window.open(item.url, '_blank');
-                        
-                        card.innerHTML = `
-                            <div class="tool-icon"><i class="fa-solid fa-link"></i></div>
-                            <h3>${item.name}</h3>
-                            <p>${item.description}</p>
-                            <button class="tool-button" onclick="event.stopPropagation(); window.open('${item.url}', '_blank')">Visit Site</button>
-                        `;
-                        container.appendChild(card);
-                    });
+                    toolsData = data;
+                    renderCategories();
+                    renderList();
                 })
                 .catch(error => console.error('Error loading data:', error));
+
+            // Search functionality
+            searchInput.addEventListener('input', (e) => {
+                renderList();
+            });
+
+            function getCategoryIcon(category) {
+                return categoryIcons[category] || 'fa-solid fa-folder';
+            }
+
+            function getCategoryColorClass(category) {
+                if (category === 'Windows') return 'icon-windows';
+                if (category === 'Games') return 'icon-games';
+                if (category === 'Streaming') return 'icon-streaming';
+                return '';
+            }
+
+            function getIconHTML(category) {
+                if (category === '18+') {
+                    return '<span class="icon-18plus">18+</span>';
+                }
+                const iconClass = getCategoryIcon(category);
+                const colorClass = getCategoryColorClass(category);
+                return `<i class="${iconClass} ${colorClass}"></i>`;
+            }
+
+            function renderCategories() {
+                const categories = new Set();
+                toolsData.forEach(item => {
+                    if (item.category) categories.add(item.category);
+                });
+
+                const sortedCategories = Array.from(categories).sort();
+
+                sortedCategories.forEach(category => {
+                    const btn = document.createElement('button');
+                    btn.className = 'category-btn';
+                    
+                    const iconHTML = getIconHTML(category);
+                    
+                    btn.innerHTML = `${iconHTML} ${category}`;
+                    btn.dataset.category = category;
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        activeCategory = category;
+                        renderList();
+                    });
+                    filtersContainer.appendChild(btn);
+                });
+
+                const allBtn = document.querySelector('.category-btn[data-category="all"]');
+                allBtn.addEventListener('click', () => {
+                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                    allBtn.classList.add('active');
+                    activeCategory = 'all';
+                    renderList();
+                });
+            }
+
+            function renderList() {
+                container.innerHTML = '';
+                const searchTerm = searchInput.value.toLowerCase();
+
+                const filteredData = toolsData.filter(item => {
+                    const matchesSearch = item.name.toLowerCase().includes(searchTerm) || 
+                                          item.description.toLowerCase().includes(searchTerm);
+                    const matchesCategory = activeCategory === 'all' || item.category === activeCategory;
+                    return matchesSearch && matchesCategory;
+                });
+
+                if (filteredData.length === 0) {
+                    container.innerHTML = '<p style="text-align:center; color: var(--text-secondary); grid-column: 1/-1;">No items found matching your criteria.</p>';
+                    return;
+                }
+
+                filteredData.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'tool-card';
+                    card.onclick = () => window.open(item.url, '_blank');
+                    
+                    const iconHTML = getIconHTML(item.category);
+
+                    card.innerHTML = `
+                        <div class="tool-icon">${iconHTML}</div>
+                        <h3>${item.name}</h3>
+                        <p>${item.description}</p>
+                        <button class="tool-button" onclick="event.stopPropagation(); window.open('${item.url}', '_blank')">Visit Site</button>
+                    `;
+                    container.appendChild(card);
+                });
+            }
         });
     </script>
 </body>
