@@ -2,36 +2,55 @@
   {
     "name": "steamrip.com",
     "url": "https://steamrip.com",
-    "description": "Free games"
-  },
-  {
-    "name": "s.to",
-    "url": "https://s.to",
-    "description": "Series with German and English subtitles"
-  },
-  {
-    "name": "aniworld.to",
-    "url": "https://aniworld.to",
-    "description": "Site with free anime with German and English subtitles"
-  },
-  {
-    "name": "massgrave.dev",
-    "url": "https://massgrave.dev",
-    "description": "Site for free Windows keys"
+    "description": "Free games",
+    "category": "Games"
   },
   {
     "name": "fitgirl-repacks.site",
     "url": "https://fitgirl-repacks.site",
-    "description": "Free site for cracked games"
-  },
-  {
-    "name": "online-fix.me",
-    "url": "https://online-fix.me",
-    "description": "Site for playing cracked games online"
+    "description": "Free site for cracked games",
+    "category": "Games"
   },
   {
     "name": "ankergames.net",
     "url": "https://ankergames.net",
-    "description": "Site for free games"
+    "description": "Site for free games",
+    "category": "Games"
+  },
+  {
+    "name": "online-fix.me",
+    "url": "https://online-fix.me",
+    "description": "Site for playing cracked games online",
+    "category": "Games"
+  },
+  {
+    "name": "aniworld.to",
+    "url": "https://aniworld.to",
+    "description": "Site with free anime with German and English subtitles",
+    "category": "Streaming"
+  },
+  {
+    "name": "s.to",
+    "url": "https://s.to",
+    "description": "Series with German and English subtitles",
+    "category": "Streaming"
+  },
+  {
+    "name": "filmpalast.to",
+    "url": "https://filmpalast.to",
+    "description": "free films",
+    "category": "Streaming"
+  },
+  {
+    "name": "Kemono",
+    "url": "https://kemono.cr/",
+    "description": "Patreon stuff for free",
+    "category": "18+"
+  },
+  {
+    "name": "massgrave.dev",
+    "url": "https://massgrave.dev",
+    "description": "Site for free Windows keys",
+    "category": "Windows"
   }
 ]
