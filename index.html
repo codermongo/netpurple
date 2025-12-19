@@ -18,7 +18,7 @@
 <body>
 
     <!-- Theme Toggle Container -->
-    <div class="theme-toggle-container">
+    <div class="theme-toggle-container" style="display: flex; gap: 1rem;">
         <!-- Dark/Light Mode Toggle -->
         <button class="menu-item-circle visible" id="themeToggleItem" aria-label="Toggle dark mode">
             <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -29,6 +29,11 @@
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
             </svg>
         </button>
+        
+        <!-- GitHub Link -->
+        <a href="https://github.com/codermongo/netpurple" class="menu-item-circle visible" aria-label="GitHub" target="_blank" style="text-decoration: none;">
+            <i class="fa-brands fa-github" style="font-size: 24px;"></i>
+        </a>
     </div>
 
     <!-- Hintergrund-Partikel (liegt hinter allem Content) -->
@@ -62,7 +67,7 @@
                     <div class="tool-icon"><i class="fa-solid fa-code"></i></div>
                     <h3>Code & Scripts</h3>
                     <p>The source code of NetPurple and more.</p>
-                    <button class="tool-button">See Code</button>
+                    <button class="tool-button" onclick="window.location.href='https://docs.netpurple.net'">See Code</button>
                 </div>
 
                 <div class="tool-card">
