@@ -1,0 +1,164 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Timeline Studio</title>
+    <meta name="description" content="Personal timeline powered by PocketBase." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-auth="out" data-entry="closed">
+    <div class="theme-toggle-container">
+      <button class="menu-item-circle visible" id="themeToggleItem" aria-label="Toggle dark mode">
+        <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2" />
+          <path
+            d="M12 1v4m0 14v4M1 12h4m14 0h4M4.22 4.22l2.83 2.83m10.9 10.9l2.83 2.83M4.22 19.78l2.83-2.83m10.9-10.9l2.83-2.83"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      </button>
+    </div>
+    <div class="user-menu auth-only" id="user-menu" role="group" aria-label="Account">
+      <button class="user-logout" id="logout-btn" type="button" aria-label="Log out">X</button>
+      <span class="user-handle" id="user-handle">User</span>
+    </div>
+
+    <canvas id="bg-particles" aria-hidden="true"></canvas>
+
+    <main>
+      <section id="home" class="hero">
+        <div class="hero-content">
+          <div class="hero-logo">
+            <div class="logo-geometric"></div>
+          </div>
+        </div>
+
+        <div class="hero-background" aria-hidden="true">
+          <div class="floating-elements">
+            <div class="floating-element"></div>
+            <div class="floating-element"></div>
+            <div class="floating-element"></div>
+            <div class="floating-element"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="services">
+        <div class="container">
+          <div class="tools-grid timeline-grid">
+            <div class="tool-card panel-card login-panel" id="login-panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Sign in with Pocketbase</h2>
+                </div>
+              </div>
+              <form id="login-form" class="form">
+                <label class="field">
+                  <span>Email or username</span>
+                  <input type="text" name="identity" id="login-identity" placeholder="you@example.com" required />
+                </label>
+                <label class="field">
+                  <span>Password</span>
+                  <input type="password" name="password" id="login-password" placeholder="********" required />
+                </label>
+                <button class="primary" id="login-btn" type="submit">Sign in</button>
+                <p class="form-error" id="login-error" role="alert"></p>
+              </form>
+            </div>
+
+            <div class="tool-card panel-card timeline-panel" id="timeline-panel">
+              <div class="panel-head">
+                <div>
+                  <h2>Timeline</h2>
+                  <p class="subtitle">Left-to-right, hover for details.</p>
+                </div>
+                <label class="search-field panel-search">
+                  <span class="sr-only">Search entries</span>
+                  <input type="search" id="timeline-search" placeholder="Search entries" />
+                </label>
+                <div class="chip" id="user-chip">Signed out</div>
+              </div>
+
+              <div class="timeline-controls">
+                <div class="toolbar">
+                  <div>
+                    <p class="eyebrow">Range</p>
+                    <p class="status" id="status-text">Sign in to load entries.</p>
+                  </div>
+                  <div class="toolbar-actions">
+                    <button class="tool-button" id="refresh-btn" type="button">Refresh</button>
+                    <button class="tool-button auth-only" id="open-entry-btn" type="button">Create new</button>
+                  </div>
+                </div>
+                <div class="filter-bar">
+                  <div class="quick-filters" role="group" aria-label="Quick filters">
+                    <button class="filter-pill is-active" type="button" data-range="all">All</button>
+                    <button class="filter-pill" type="button" data-range="7">7d</button>
+                    <button class="filter-pill" type="button" data-range="30">30d</button>
+                    <button class="filter-pill" type="button" data-range="90">90d</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="timeline-scroll" id="timeline-scroll">
+                <div class="timeline-track" id="timeline-track"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="entry-overlay" id="entry-overlay" aria-hidden="true">
+      <div class="tool-card panel-card entry-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Create new entry</h2>
+            <p>Fill in the details and add it to the timeline.</p>
+          </div>
+          <button class="ghost" id="close-entry-btn" type="button">Close</button>
+        </div>
+
+        <form id="entry-form" class="form">
+          <div class="field-row">
+            <label class="field">
+              <span>Title</span>
+              <input type="text" name="title" id="entry-title" required />
+            </label>
+            <label class="field">
+              <span>Date and time</span>
+              <input type="datetime-local" name="Date" id="entry-date" required />
+            </label>
+          </div>
+          <label class="field">
+            <span>Category</span>
+            <select name="category" id="entry-category">
+              <option value="">No category</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Description</span>
+            <textarea name="description" id="entry-description" rows="3" placeholder="What happened?"></textarea>
+          </label>
+          <button class="primary" id="entry-submit" type="submit">Add to timeline</button>
+          <p class="form-error" id="entry-error" role="alert"></p>
+        </form>
+      </div>
+    </div>
+
+    <script src="particles.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
