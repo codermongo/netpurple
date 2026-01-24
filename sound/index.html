@@ -1,0 +1,97 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetPurple Soundboard</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/spinner.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <meta property="og:title" content="NetPurple Soundboard">
+    <meta property="og:description" content="Play, search, and queue sounds in NetPurple style.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.netpurple.com/sound">
+    <meta name="description" content="NetPurple Soundboard">
+    <link rel="icon" type="image/x-icon" href="../logo.png">
+</head>
+<body>
+    <div class="theme-toggle-container" style="display: flex; gap: 1rem;">
+        <button class="menu-item-circle visible" id="themeToggleItem" aria-label="Toggle dark mode">
+            <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2" />
+                <path d="M12 1v4m0 14v4M1 12h4m14 0h4M4.22 4.22l2.83 2.83m10.9 10.9l2.83 2.83M4.22 19.78l2.83-2.83m10.9-10.9l2.83-2.83" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+        </button>
+
+        <a href="https://github.com/codermongo/netpurple" class="menu-item-circle visible" aria-label="GitHub" target="_blank" rel="noopener" style="text-decoration: none;">
+            <i class="fa-brands fa-github" style="font-size: 24px;"></i>
+        </a>
+    </div>
+
+    <canvas id="bg-particles" aria-hidden="true"></canvas>
+
+    <main class="page">
+        <section class="hero">
+            <div class="hero-top">
+            </div>
+            <div class="hero-content">
+                <div class="hero-logo">
+                    <div class="logo-geometric"></div>
+                </div>
+                <div class="hub-switch" data-active="sound" role="group" aria-label="Switch between Soundboard and Games">
+                    <a class="hub-option is-active" href="/sound" aria-current="page">Sound</a>
+                    <a class="hub-option" href="/games">Games</a>
+                    <span class="hub-indicator" aria-hidden="true"></span>
+                </div>
+                <h1 class="hero-title">Soundboard</h1>
+                <p class="hero-subtitle">Play, search, and queue the NetPurple sounds.</p>
+                <div class="hero-actions">
+                    <a class="btn-primary" href="#soundboard">Start playing</a>
+                    <a class="btn-secondary" href="../">Back to NetPurple</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="soundboard" class="soundboard">
+            <div class="controls">
+                <div class="search-field">
+                    <label class="search-label" for="soundSearch">Search sounds</label>
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                        <input id="soundSearch" type="search" placeholder="Type a sound name..." autocomplete="off" />
+                        <button class="icon-button" id="clearSearch" type="button" aria-label="Clear search">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-meta">
+                    <span class="sound-count" id="soundCount">Loading sounds...</span>
+                    <div class="soundboard-actions">
+                        <button class="btn-primary" id="playAll" type="button">Play all</button>
+                        <button class="btn-secondary" id="stopAll" type="button">Stop</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="soundboard-container">
+                <div class="spinner" id="spinner" role="status" aria-live="polite"></div>
+                <div class="sound-grid" id="soundGrid"></div>
+                <p class="sound-empty" id="soundEmpty" hidden>No sounds match your search.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">NetPurple Soundboard · Tap a card to play</footer>
+
+    <script src="../particles.js"></script>
+    <script src="../menu.js"></script>
+    <script src="loader.js"></script>
+</body>
+</html>
+

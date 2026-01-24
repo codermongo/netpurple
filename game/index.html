@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetPurple Games</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="games.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <meta name="description" content="NetPurple Games - Play the 3kh0 lite collection in NetPurple style.">
+    <meta property="og:title" content="NetPurple Games">
+    <meta property="og:description" content="Play the 3kh0 lite collection in NetPurple style.">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/x-icon" href="../logo.png">
+</head>
+<body>
+
+    <div class="theme-toggle-container games-toggle">
+        <a href="../index.html" class="menu-item-circle visible" aria-label="Back to NetPurple">
+            <i class="fa-solid fa-house" aria-hidden="true"></i>
+        </a>
+        <button class="menu-item-circle visible" id="themeToggleItem" aria-label="Toggle dark mode">
+            <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 1v4m0 14v4M1 12h4m14 0h4M4.22 4.22l2.83 2.83m10.9 10.9l2.83 2.83M4.22 19.78l2.83-2.83m10.9-10.9l2.83-2.83" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+        </button>
+    </div>
+
+    <canvas id="bg-particles" aria-hidden="true"></canvas>
+
+    <section class="hero hero-games">
+        <div class="hero-content">
+            <div class="hero-logo">
+                <div class="logo-geometric"></div>
+            </div>
+            <div class="hub-switch" data-active="games" role="group" aria-label="Switch between Soundboard and Games">
+                <a class="hub-option" href="/sound">Sound</a>
+                <a class="hub-option is-active" href="/games" aria-current="page">Games</a>
+                <span class="hub-indicator" aria-hidden="true"></span>
+            </div>
+            <h1 class="hero-title">NetPurple Games</h1>
+            <div class="hero-buttons">
+                <a class="btn-primary" href="#games">Browse games</a>
+                <button class="btn-secondary" id="randomGame" type="button">Random game</button>
+            </div>
+        </div>
+        <div class="hero-background">
+            <div class="floating-elements">
+                <div class="floating-element"></div>
+                <div class="floating-element"></div>
+                <div class="floating-element"></div>
+                <div class="floating-element"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="games" class="games-section">
+        <div class="container">
+            <div class="games-controls">
+                <div class="search-field">
+                    <label class="search-label" for="searchInput">Search</label>
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                        <input id="searchInput" type="text" placeholder="Search for a game" autocomplete="off">
+                    </div>
+                </div>
+                <div class="game-meta">
+                    <span id="gameCount" class="game-count">Loading games...</span>
+                    <button class="btn-secondary" id="clearSearch" type="button">Clear</button>
+                </div>
+            </div>
+
+            <div id="gamesLoader" class="games-loader" aria-hidden="true"></div>
+            <div id="gameGrid" class="games-grid" aria-live="polite"></div>
+            <div id="gamesEmpty" class="games-empty" hidden>No matches found. Try a different search.</div>
+
+            <div class="games-footer">
+                <a class="btn-secondary" href="../index.html">Back to NetPurple</a>
+            </div>
+            <p class="games-credit">
+                Content from <a href="https://github.com/3kh0/3kh0-lite">3kh0</a>.
+            </p>
+        </div>
+    </section>
+
+    <button id="backToTop" class="back-to-top" type="button" aria-label="Back to top">
+        <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+    </button>
+
+    <script src="../particles.js"></script>
+    <script src="../menu.js"></script>
+    <script src="games.js"></script>
+</body>
+</html>
