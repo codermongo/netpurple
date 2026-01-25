@@ -1,4 +1,5 @@
-﻿const API_BASE = "https://api.netpurple.net";
+﻿(() => {
+const API_BASE = "https://api.netpurple.net";
 const FAVORITES_COLLECTION = "favorites";
 const FAVORITE_TYPE = "sound";
 const AUTH_STORAGE_KEY = "pb_auth";
@@ -431,3 +432,5 @@ setTimeout(() => {
     handleError("Soundboard is taking too long to load.");
   }
 }, 7000);
+})();
+
