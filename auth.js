@@ -17,6 +17,52 @@ const elements = {
   userHandle: document.querySelector("#user-handle")
 };
 
+function normalizePath(path) {
+  return path.replace(/\/+$/, "");
+}
+
+function isLoginPage() {
+  const path = normalizePath(window.location.pathname);
+  return path == "/login" || path == "/login/index.html";
+}
+
+function setReturnTargetFromReferrer() {
+  if (!isLoginPage()) {
+    return;
+  }
+  const referrer = document.referrer;
+  if (!referrer) {
+    return;
+  }
+  try {
+    const url = new URL(referrer);
+    if (url.origin != window.location.origin) {
+      return;
+    }
+    const refPath = normalizePath(url.pathname);
+    if (!refPath || refPath == "/login" || refPath == "/login/index.html") {
+      return;
+    }
+    const target = `${url.pathname}${url.search}${url.hash}`;
+    sessionStorage.setItem("login_return", target);
+  } catch (error) {
+    return;
+  }
+}
+
+function getReturnTarget() {
+  const params = new URLSearchParams(window.location.search);
+  const paramTarget = params.get("return");
+  if (paramTarget && paramTarget.startsWith("/")) {
+    return paramTarget;
+  }
+  const stored = sessionStorage.getItem("login_return");
+  if (stored && stored.startsWith("/")) {
+    return stored;
+  }
+  return "/";
+}
+
 function getUserHandle(user) {
   const email = user?.email || "";
   if (email.includes("@")) {
@@ -122,6 +168,12 @@ async function login(identity, password) {
       body: JSON.stringify({ identity, password })
     });
     saveAuth(result);
+    if (isLoginPage()) {
+      const target = getReturnTarget();
+      sessionStorage.removeItem("login_return");
+      window.location.href = target;
+      return;
+    }
     if (elements.password) {
       elements.password.value = "";
     }
@@ -133,6 +185,7 @@ async function login(identity, password) {
 }
 
 function initAuth() {
+  setReturnTargetFromReferrer();
   const existingAuth = loadAuth();
   if (existingAuth?.token) {
     setAuth(existingAuth);
@@ -161,3 +214,6 @@ function initAuth() {
 }
 
 initAuth();
+
+
+
