@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="darkreader-lock">
     <title>NetPurple Soundboard</title>
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="css/styles.css">
@@ -16,7 +17,7 @@
     <meta name="description" content="NetPurple Soundboard">
     <link rel="icon" type="image/x-icon" href="../logo.png">
 </head>
-<body>
+<body data-auth="out">
     <div class="theme-toggle-container" style="display: flex; gap: 1rem;">
         <button class="menu-item-circle visible" id="themeToggleItem" aria-label="Toggle dark mode">
             <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -32,6 +33,14 @@
             <i class="fa-brands fa-github" style="font-size: 24px;"></i>
         </a>
     </div>
+
+    <div class="user-menu auth-only" id="user-menu" role="group" aria-label="Account">
+        <button class="user-logout" id="logout-btn" type="button" aria-label="Log out">X</button>
+        <span class="user-handle" id="user-handle">User</span>
+    </div>
+    <a class="menu-item-circle user-login auth-out" id="login-link" href="/login" aria-label="Login">
+        <i class="fa-solid fa-user" aria-hidden="true"></i>
+    </a>
 
     <canvas id="bg-particles" aria-hidden="true"></canvas>
 
@@ -91,7 +100,7 @@
 
     <script src="../particles.js"></script>
     <script src="../menu.js"></script>
+    <script src="../auth.js"></script>
     <script src="loader.js"></script>
 </body>
 </html>
-
