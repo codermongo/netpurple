@@ -1,4 +1,5 @@
-﻿const API_BASE = "https://api.netpurple.net";
+﻿(() => {
+const API_BASE = "https://api.netpurple.net";
 const FAVORITES_COLLECTION = "favorites";
 const FAVORITE_TYPE = "game";
 const AUTH_STORAGE_KEY = "pb_auth";
@@ -379,3 +380,5 @@ if (logoutButton) {
 
 initBackToTop();
 loadGames();
+})();
+
