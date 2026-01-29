@@ -60,6 +60,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 1rem;
+  flex-direction: row;
 }
 
 /* Circular Icon Buttons */
@@ -141,6 +142,13 @@ body.dark-mode .menu-item-circle .moon-icon {
   transition: all 0.3s ease;
   overflow: hidden;
   user-select: none;
+}
+
+.user-login {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 1001;
 }
 
 .user-logout {
