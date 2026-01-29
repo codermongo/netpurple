@@ -15,10 +15,10 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://www.netpurple.com/sound">
     <meta name="description" content="NetPurple Soundboard">
-    <link rel="icon" type="image/x-icon" href="../logo.png">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <body data-auth="out">
-    <div class="theme-toggle-container" style="display: flex; gap: 1rem;">
+    <div class="theme-toggle-container">
         <button class="menu-item-circle visible" id="themeToggleItem" aria-label="Toggle dark mode">
             <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2" />
@@ -32,15 +32,15 @@
         <a href="https://github.com/codermongo/netpurple" class="menu-item-circle visible" aria-label="GitHub" target="_blank" rel="noopener" style="text-decoration: none;">
             <i class="fa-brands fa-github" style="font-size: 24px;"></i>
         </a>
+        <a class="menu-item-circle user-login auth-out" id="login-link" href="/login" aria-label="Login">
+            <i class="fa-solid fa-user" aria-hidden="true"></i>
+        </a>
     </div>
 
     <div class="user-menu auth-only" id="user-menu" role="group" aria-label="Account">
         <button class="user-logout" id="logout-btn" type="button" aria-label="Log out">X</button>
         <span class="user-handle" id="user-handle">User</span>
     </div>
-    <a class="menu-item-circle user-login auth-out" id="login-link" href="/login" aria-label="Login">
-        <i class="fa-solid fa-user" aria-hidden="true"></i>
-    </a>
 
     <canvas id="bg-particles" aria-hidden="true"></canvas>
 
