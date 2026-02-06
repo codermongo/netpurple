@@ -7,7 +7,7 @@
 
 :root {
   --primary-gradient: linear-gradient(135deg, #8B5CF6, #3B82F6);
-  --dark-bg: #0a0a0a;
+  --dark-bg: #000000;
   --text-primary: #ffffff;
   --text-secondary: #b0b0b0;
   --accent-purple: #8B5CF6;
@@ -31,7 +31,7 @@ body {
 
 body {
   font-family: "Inter", sans-serif;
-  background: var(--dark-bg);
+  background: #000000;
   color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
@@ -187,16 +187,16 @@ body.dark-mode .menu-item-circle .moon-icon {
 
 /* Light Theme */
 body.dark-mode {
-  --dark-bg: #ffffff;
-  --text-primary: #000000;
-  --text-secondary: #4a4a4a;
-  --card-glass-bg: rgba(255, 255, 255, 0.85);
-  --card-glass-hover: rgba(255, 255, 255, 0.95);
-  --card-glass-stroke: rgba(139, 92, 246, 0.15);
-  --card-solid: rgba(255, 255, 255, 0.9);
-  --line: rgba(17, 24, 39, 0.16);
-  --scroll-thumb: rgba(99, 102, 241, 0.5);
-  background: #ffffff;
+  --dark-bg: #000000;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --card-glass-bg: rgba(12, 12, 20, 0.35);
+  --card-glass-hover: rgba(12, 12, 20, 0.42);
+  --card-glass-stroke: rgba(139, 92, 246, 0.18);
+  --card-solid: rgba(12, 12, 20, 0.6);
+  --line: rgba(255, 255, 255, 0.16);
+  --scroll-thumb: rgba(139, 92, 246, 0.55);
+  background: #000000;
 }
 
 body.dark-mode #bg-particles {
@@ -691,13 +691,13 @@ button {
 }
 
 .panel-search input {
-  background: #ffffff;
-  color: #0a0a0a;
-  border-color: rgba(0, 0, 0, 0.15);
+  background: var(--card-solid);
+  color: var(--text-primary);
+  border-color: var(--card-glass-stroke);
 }
 
 .panel-search input::placeholder {
-  color: rgba(0, 0, 0, 0.55);
+  color: rgba(176, 176, 176, 0.7);
 }
 
 .search-field input:focus {
@@ -718,7 +718,7 @@ button {
 }
 
 body.dark-mode .toolbar {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(12, 12, 20, 0.3);
 }
 
 .status {
