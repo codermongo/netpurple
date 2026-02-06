@@ -1,0 +1,89 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="darkreader-lock" />
+    <title>Anime Ranking | NetPurple</title>
+    <meta name="description" content="Public anime ranking list." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <div class="theme-toggle-container">
+      <button class="menu-item-circle" id="themeToggleItem" aria-label="Toggle dark mode">
+        <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2" />
+          <path
+            d="M12 1v4m0 14v4M1 12h4m14 0h4M4.22 4.22l2.83 2.83m10.9 10.9l2.83 2.83M4.22 19.78l2.83-2.83m10.9-10.9l2.83-2.83"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      </button>
+      <a class="menu-item-circle back-link" href="/" aria-label="Back to home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M15 6l-6 6 6 6M9 12h12"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </a>
+    </div>
+
+    <a class="menu-item-circle login-link" href="/login" aria-label="Login">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M20 21a8 8 0 10-16 0M12 11a4 4 0 100-8 4 4 0 000 8z"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </a>
+
+    <canvas id="bg-particles" aria-hidden="true"></canvas>
+
+    <main>
+      <section class="hero">
+        <div class="hero-content">
+          <div class="hero-logo"><div class="logo-geometric"></div></div>
+          <h1 class="hero-title">Anime Ranking</h1>
+          <p class="hero-subtitle">Public list sorted from top score to lowest.</p>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="container">
+          <div class="toolbar">
+            <label class="search-field" for="searchInput">
+              <span class="sr-only">Search anime</span>
+              <input id="searchInput" type="search" placeholder="Search title, tier, notes, score" />
+            </label>
+            <button class="tool-button" id="refreshBtn" type="button">Refresh list</button>
+          </div>
+
+          <p class="status" id="statusText">Loading anime list...</p>
+          <div class="anime-list" id="animeList" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="../particles.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
