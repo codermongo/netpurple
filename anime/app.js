@@ -372,7 +372,7 @@ async function loadAnimeList() {
 
   try {
     const response = await fetch(
-      `${API_BASE}/api/collections/${COLLECTION}/records?page=1&perPage=500&sort=-score`
+      `${API_BASE}/api/collections/${COLLECTION}/records?page=1&perPage=500&sort=rank`
     );
 
     if (!response.ok) {
@@ -387,7 +387,7 @@ async function loadAnimeList() {
     }
 
     const data = await response.json();
-    state.records = stableSortByScore(data.items || []);
+    state.records = data.items || [];
     updateRanks();
     renderList();
   } catch (error) {
