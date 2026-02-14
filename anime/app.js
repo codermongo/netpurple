@@ -1,6 +1,8 @@
-﻿const API_BASE = "https://api.netpurple.net";
+const API_BASE = "https://api.netpurple.net";
 const COLLECTION = "anime_ranking";
+const SORT = "-score,-updated";
 const THEME_KEY = "darkMode";
+const AUTH_STORAGE_KEY = "pb_auth";
 const COVER_CACHE_KEY = "anime_cover_cache_v1";
 const JIKAN_BASE = "https://api.jikan.moe/v4/anime";
 
@@ -9,7 +11,8 @@ const state = {
   query: "",
   rankById: new Map(),
   coverCache: loadCoverCache(),
-  pendingCovers: new Set()
+  pendingCovers: new Set(),
+  pendingActions: new Set()
 };
 
 const elements = {
@@ -17,10 +20,23 @@ const elements = {
   status: document.querySelector("#statusText"),
   search: document.querySelector("#searchInput"),
   refresh: document.querySelector("#refreshBtn"),
-  themeToggle: document.querySelector("#themeToggleItem")
+  add: document.querySelector("#addBtn"),
+  themeToggle: document.querySelector("#themeToggleItem"),
+  editOverlay: document.querySelector("#editOverlay"),
+  editForm: document.querySelector("#editForm"),
+  editTitleText: document.querySelector("#editTitleText"),
+  editTitle: document.querySelector("#editTitle"),
+  editTier: document.querySelector("#editTier"),
+  editScore: document.querySelector("#editScore"),
+  editNotes: document.querySelector("#editNotes"),
+  editError: document.querySelector("#editError"),
+  editCancelBtn: document.querySelector("#editCancelBtn"),
+  editSaveBtn: document.querySelector("#editSaveBtn")
 };
 
 let coverRenderJob = 0;
+let editMode = "edit";
+let activeRecordId = null;
 
 function initThemeToggle() {
   const saved = localStorage.getItem(THEME_KEY);
@@ -49,6 +65,38 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function readAuth() {
+  const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+  if (!raw) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    return null;
+  }
+}
+
+function getAuthToken() {
+  return readAuth()?.token || null;
+}
+
+function redirectToLogin() {
+  const target = encodeURIComponent(
+    `${window.location.pathname}${window.location.search}${window.location.hash}`
+  );
+  window.location.href = `/login?return=${target}`;
+}
+
+function ensureMutationAuth() {
+  if (getAuthToken()) {
+    return true;
+  }
+  redirectToLogin();
+  return false;
 }
 
 function toScore(value) {
@@ -87,7 +135,10 @@ function stableSortByScore(records) {
     }))
     .sort((left, right) => {
       if (left.score === null && right.score === null) {
-        return left.index - right.index;
+        const leftTitle = (left.record.title || "").toLowerCase();
+        const rightTitle = (right.record.title || "").toLowerCase();
+        const titleCompare = leftTitle.localeCompare(rightTitle);
+        return titleCompare !== 0 ? titleCompare : left.index - right.index;
       }
       if (left.score === null) {
         return 1;
@@ -98,7 +149,10 @@ function stableSortByScore(records) {
       if (left.score !== right.score) {
         return right.score - left.score;
       }
-      return left.index - right.index;
+      const leftTitle = (left.record.title || "").toLowerCase();
+      const rightTitle = (right.record.title || "").toLowerCase();
+      const titleCompare = leftTitle.localeCompare(rightTitle);
+      return titleCompare !== 0 ? titleCompare : left.index - right.index;
     })
     .map((item) => item.record);
 }
@@ -316,8 +370,82 @@ async function enrichVisibleCovers(records, jobId) {
   }
 }
 
+async function apiRequest(path, options = {}) {
+  const headers = {
+    Accept: "application/json"
+  };
+  if (options.body) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const token = getAuthToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE}${path}`,
+    {
+      ...options,
+      headers: {
+        ...headers,
+        ...(options.headers || {})
+      }
+    }
+  );
+
+  if (!response.ok) {
+    let message = "Request failed.";
+    try {
+      const body = await response.json();
+      message = body?.message || message;
+    } catch (error) {
+      message = response.statusText || message;
+    }
+    const err = new Error(message);
+    err.status = response.status;
+    throw err;
+  }
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    return null;
+  }
+  return response.json();
+}
+
+async function fetchAllRecords() {
+  const records = [];
+  let page = 1;
+  let totalPages = 1;
+
+  while (page <= totalPages) {
+    const data = await apiRequest(
+      `/api/collections/${COLLECTION}/records?page=${page}&perPage=200&sort=${encodeURIComponent(SORT)}`
+    );
+    totalPages = Number(data?.totalPages) || 1;
+    if (Array.isArray(data?.items)) {
+      records.push(...data.items);
+    }
+    page += 1;
+  }
+
+  return records;
+}
+
 function renderEmpty(message) {
   elements.list.innerHTML = `<div class="empty-state">${escapeHtml(message)}</div>`;
+}
+
+function setListStatus(filteredCount) {
+  if (state.query) {
+    setStatus(`Showing ${filteredCount} of ${state.records.length} anime.`);
+    return;
+  }
+  setStatus(`${state.records.length} anime loaded.`);
 }
 
 function renderList() {
@@ -336,6 +464,7 @@ function renderList() {
     const notes = record.notes ? `<p class="card-notes">${escapeHtml(record.notes)}</p>` : "";
     const scoreText = formatScore(record.score);
     const rank = state.rankById.get(record.id) || "-";
+    const disabled = state.pendingActions.has(record.id) ? " disabled" : "";
 
     return `
       <article class="anime-card ${tierClass}">
@@ -344,10 +473,18 @@ function renderList() {
         </div>
         <div class="card-body">
           <div class="card-head">
-            <h2 class="card-title">#${rank} ${title}</h2>
-            <span class="score-pill">Score: ${escapeHtml(scoreText)}</span>
+            <div class="card-head-left">
+              <h2 class="card-title">#${rank} ${title}</h2>
+              <p class="card-meta ${tierClass}">Tier: ${tier}</p>
+            </div>
+            <div class="head-right">
+              <span class="score-pill">Score: ${escapeHtml(scoreText)}</span>
+              <div class="card-actions">
+                <button class="card-action-btn" type="button" data-action="edit" data-id="${escapeHtml(record.id)}"${disabled}>Edit</button>
+                <button class="card-action-btn delete" type="button" data-action="delete" data-id="${escapeHtml(record.id)}"${disabled}>Delete</button>
+              </div>
+            </div>
           </div>
-          <p class="card-meta ${tierClass}">Tier: ${tier}</p>
           ${notes}
         </div>
       </article>
@@ -355,15 +492,198 @@ function renderList() {
   });
 
   elements.list.innerHTML = cards.join("");
-
-  if (state.query) {
-    setStatus(`Showing ${filtered.length} of ${state.records.length} anime.`);
-  } else {
-    setStatus(`${state.records.length} anime loaded.`);
-  }
+  setListStatus(filtered.length);
 
   coverRenderJob += 1;
   void enrichVisibleCovers(filtered, coverRenderJob);
+}
+
+function setEditError(message) {
+  elements.editError.textContent = message || "";
+}
+
+function setEditLoading(isLoading) {
+  elements.editSaveBtn.disabled = isLoading;
+  elements.editCancelBtn.disabled = isLoading;
+  elements.editSaveBtn.textContent = isLoading
+    ? editMode === "create" ? "Creating..." : "Saving..."
+    : editMode === "create" ? "Create" : "Save";
+}
+
+function closeEditModal() {
+  activeRecordId = null;
+  editMode = "edit";
+  setEditError("");
+  setEditLoading(false);
+  elements.editOverlay.hidden = true;
+  elements.editOverlay.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+}
+
+function openCreateModal() {
+  if (!ensureMutationAuth()) {
+    return;
+  }
+
+  editMode = "create";
+  activeRecordId = null;
+  elements.editTitleText.textContent = "Add Anime";
+  elements.editTitle.value = "";
+  elements.editTier.value = "";
+  elements.editScore.value = "";
+  elements.editNotes.value = "";
+  setEditError("");
+  setEditLoading(false);
+  elements.editOverlay.hidden = false;
+  elements.editOverlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  elements.editTitle.focus();
+}
+
+function openEditModal(recordId) {
+  if (!ensureMutationAuth()) {
+    return;
+  }
+
+  const record = state.records.find((item) => item.id === recordId);
+  if (!record) {
+    return;
+  }
+
+  editMode = "edit";
+  activeRecordId = record.id;
+  elements.editTitleText.textContent = "Edit Anime";
+  elements.editTitle.value = record.title || "";
+  elements.editTier.value = record.tier || "";
+  elements.editScore.value = record.score ?? "";
+  elements.editNotes.value = record.notes || "";
+  setEditError("");
+  setEditLoading(false);
+  elements.editOverlay.hidden = false;
+  elements.editOverlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  elements.editTitle.focus();
+}
+
+function parseScoreInput(value) {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return { ok: true, value: null };
+  }
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) {
+    return { ok: false, error: "Score must be a number." };
+  }
+  if (parsed < 0 || parsed > 10) {
+    return { ok: false, error: "Score must be between 0 and 10." };
+  }
+  return { ok: true, value: parsed };
+}
+
+function buildPayloadFromForm() {
+  const title = elements.editTitle.value.trim();
+  if (!title) {
+    return { ok: false, error: "Title is required." };
+  }
+
+  const scoreResult = parseScoreInput(elements.editScore.value);
+  if (!scoreResult.ok) {
+    return scoreResult;
+  }
+
+  return {
+    ok: true,
+    value: {
+      title,
+      tier: elements.editTier.value || "",
+      score: scoreResult.value,
+      notes: elements.editNotes.value.trim()
+    }
+  };
+}
+
+function updateStateRecords(records) {
+  state.records = stableSortByScore(records);
+  updateRanks();
+  renderList();
+}
+
+async function createRecord(payload) {
+  const created = await apiRequest(`/api/collections/${COLLECTION}/records`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }
+  );
+
+  if (!created || !created.id) {
+    await loadAnimeList();
+    return;
+  }
+
+  const next = state.records.slice();
+  next.push(created);
+  updateStateRecords(next);
+}
+
+async function updateRecord(recordId, payload) {
+  const updated = await apiRequest(`/api/collections/${COLLECTION}/records/${recordId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload)
+    }
+  );
+
+  if (!updated || !updated.id) {
+    await loadAnimeList();
+    return;
+  }
+
+  const next = state.records.map((record) => {
+    if (record.id !== recordId) {
+      return record;
+    }
+    return updated;
+  });
+  updateStateRecords(next);
+}
+
+async function deleteRecord(recordId) {
+  if (!ensureMutationAuth()) {
+    return;
+  }
+
+  const record = state.records.find((item) => item.id === recordId);
+  if (!record || state.pendingActions.has(recordId)) {
+    return;
+  }
+
+  const confirmed = window.confirm(`Delete "${record.title || "this anime"}"?`);
+  if (!confirmed) {
+    return;
+  }
+
+  state.pendingActions.add(recordId);
+  renderList();
+
+  try {
+    await apiRequest(`/api/collections/${COLLECTION}/records/${recordId}`,
+      {
+        method: "DELETE"
+      }
+    );
+    const next = state.records.filter((item) => item.id !== recordId);
+    updateStateRecords(next);
+  } catch (error) {
+    if (error?.status === 401 || error?.status === 403) {
+      redirectToLogin();
+      return;
+    }
+    window.alert(error.message || "Delete failed.");
+  } finally {
+    state.pendingActions.delete(recordId);
+    renderList();
+  }
 }
 
 async function loadAnimeList() {
@@ -371,25 +691,8 @@ async function loadAnimeList() {
   setStatus("Loading anime list...");
 
   try {
-    const response = await fetch(
-      `${API_BASE}/api/collections/${COLLECTION}/records?page=1&perPage=500&sort=rank`
-    );
-
-    if (!response.ok) {
-      let message = "Unable to load anime list.";
-      try {
-        const data = await response.json();
-        message = data?.message || message;
-      } catch (error) {
-        message = response.statusText || message;
-      }
-      throw new Error(message);
-    }
-
-    const data = await response.json();
-    state.records = data.items || [];
-    updateRanks();
-    renderList();
+    const records = await fetchAllRecords();
+    updateStateRecords(records);
   } catch (error) {
     state.records = [];
     updateRanks();
@@ -400,6 +703,27 @@ async function loadAnimeList() {
   }
 }
 
+function handleListClick(event) {
+  const button = event.target.closest("button[data-action]");
+  if (!button) {
+    return;
+  }
+
+  const action = button.getAttribute("data-action");
+  const recordId = button.getAttribute("data-id") || "";
+  if (!recordId) {
+    return;
+  }
+
+  if (action === "edit") {
+    openEditModal(recordId);
+    return;
+  }
+  if (action === "delete") {
+    void deleteRecord(recordId);
+  }
+}
+
 function initEvents() {
   elements.search.addEventListener("input", (event) => {
     state.query = event.target.value || "";
@@ -407,14 +731,84 @@ function initEvents() {
   });
 
   elements.refresh.addEventListener("click", () => {
-    loadAnimeList();
+    void loadAnimeList();
+  });
+
+  elements.add.addEventListener("click", () => {
+    openCreateModal();
+  });
+
+  elements.list.addEventListener("click", handleListClick);
+
+  elements.editForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!ensureMutationAuth()) {
+      return;
+    }
+
+    const payloadResult = buildPayloadFromForm();
+    if (!payloadResult.ok) {
+      setEditError(payloadResult.error || "Invalid input.");
+      return;
+    }
+
+    const payload = payloadResult.value;
+    const currentId = activeRecordId;
+
+    setEditError("");
+    setEditLoading(true);
+    if (currentId) {
+      state.pendingActions.add(currentId);
+      renderList();
+    }
+
+    try {
+      if (editMode === "create") {
+        await createRecord(payload);
+      } else {
+        if (!currentId) {
+          throw new Error("No record selected for edit.");
+        }
+        await updateRecord(currentId, payload);
+      }
+      closeEditModal();
+    } catch (error) {
+      if (error?.status === 401 || error?.status === 403) {
+        redirectToLogin();
+        return;
+      }
+      setEditError(error.message || "Save failed.");
+    } finally {
+      setEditLoading(false);
+      if (currentId) {
+        state.pendingActions.delete(currentId);
+      }
+      renderList();
+    }
+  });
+
+  elements.editCancelBtn.addEventListener("click", () => {
+    closeEditModal();
+  });
+
+  elements.editOverlay.addEventListener("click", (event) => {
+    if (event.target === elements.editOverlay) {
+      closeEditModal();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !elements.editOverlay.hidden) {
+      closeEditModal();
+    }
   });
 }
 
 function init() {
+  closeEditModal();
   initThemeToggle();
   initEvents();
-  loadAnimeList();
+  void loadAnimeList();
 }
 
 init();
