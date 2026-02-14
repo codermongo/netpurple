@@ -74,7 +74,10 @@
               <span class="sr-only">Search anime</span>
               <input id="searchInput" type="search" placeholder="Search title, tier, notes, score" />
             </label>
-            <button class="tool-button" id="refreshBtn" type="button">Refresh list</button>
+            <div class="toolbar-actions">
+              <button class="tool-button add-button" id="addBtn" type="button">Add Anime</button>
+              <button class="tool-button" id="refreshBtn" type="button">Refresh list</button>
+            </div>
           </div>
 
           <p class="status" id="statusText">Loading anime list...</p>
@@ -82,6 +85,43 @@
         </div>
       </section>
     </main>
+
+    <div class="edit-overlay" id="editOverlay" hidden aria-hidden="true">
+      <div class="edit-modal">
+        <h2 class="edit-title" id="editTitleText">Edit Anime</h2>
+        <form id="editForm" class="edit-form">
+          <label class="edit-field">
+            <span>Title *</span>
+            <input id="editTitle" type="text" required />
+          </label>
+          <div class="edit-grid">
+            <label class="edit-field">
+              <span>Tier</span>
+              <input id="editTier" type="text" list="tierOptions" placeholder="Tier 1, Tier 2, Tier 3" />
+              <datalist id="tierOptions">
+                <option value="Tier 1"></option>
+                <option value="Tier 2"></option>
+                <option value="Tier 3"></option>
+              </datalist>
+            </label>
+            <label class="edit-field">
+              <span>Score</span>
+              <input id="editScore" type="number" step="0.1" min="0" max="10" />
+            </label>
+          </div>
+          <label class="edit-field">
+            <span>Notes</span>
+            <textarea id="editNotes" rows="4"></textarea>
+          </label>
+          <p class="required-note">* required</p>
+          <p class="edit-error" id="editError" role="alert"></p>
+          <div class="edit-actions">
+            <button class="tool-button secondary" id="editCancelBtn" type="button">Cancel</button>
+            <button class="tool-button" id="editSaveBtn" type="submit">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <script src="../particles.js"></script>
     <script src="app.js"></script>
