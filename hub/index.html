@@ -9,9 +9,9 @@
     <link rel="stylesheet" href="hub.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <meta name="description" content="NetPurple Video Collection - read-only database list from api.netpurple.net.">
+    <meta name="description" content="NetPurple Video Collection - database list from api.netpurple.net.">
     <meta property="og:title" content="NetPurple Video Collection">
-    <meta property="og:description" content="Read-only database list from api.netpurple.net.">
+    <meta property="og:description" content="Database list from api.netpurple.net.">
     <meta property="og:type" content="website">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
@@ -48,7 +48,7 @@
                 <div class="logo-geometric"></div>
             </div>
             <h1 class="hero-title">Video Collection</h1>
-            <p class="hero-subtitle">Read-only database view of the videos collection</p>
+            <p class="hero-subtitle">Database view of the videos collection</p>
         </div>
         <div class="hero-background">
             <div class="floating-elements">
@@ -89,6 +89,7 @@
                     <span>Score Star</span>
                     <span>URL</span>
                     <span>Trigger Warning</span>
+                    <span>Actions</span>
                 </div>
                 <div id="hubLoader" class="hub-loader" aria-hidden="true"></div>
                 <div id="videoGrid" class="video-grid"></div>
@@ -97,6 +98,64 @@
             <div id="hubEmpty" class="hub-empty" hidden>No videos found.</div>
         </div>
     </section>
+
+    <div class="edit-overlay" id="editOverlay" hidden aria-hidden="true">
+        <div class="edit-modal">
+            <h2 class="edit-title">Edit Video Entry</h2>
+            <form id="editForm" class="edit-form">
+                <div class="field">
+                    <span>Title</span>
+                    <input id="editTitle" type="text" required>
+                </div>
+                <div class="edit-grid">
+                    <label class="field">
+                        <span>Category</span>
+                        <select id="editCategory">
+                            <option value="">None</option>
+                            <option value="Hentai">Hentai</option>
+                            <option value="Video">Video</option>
+                            <option value="Game">Game</option>
+                            <option value="Bild">Bild</option>
+                            <option value="Animation">Animation</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Trigger Warning</span>
+                        <select id="editTrigger">
+                            <option value="">None</option>
+                            <option value="Futunari">Futunari</option>
+                            <option value="Old Style Hentai">Old Style Hentai</option>
+                            <option value="Zensiert">Zensiert</option>
+                            <option value="E.N.K">E.N.K</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="edit-grid">
+                    <label class="field">
+                        <span>Score D</span>
+                        <input id="editScoreD" type="number" step="0.1">
+                    </label>
+                    <label class="field">
+                        <span>Score Star</span>
+                        <input id="editScoreStar" type="number" step="0.1">
+                    </label>
+                </div>
+                <label class="field">
+                    <span>URL</span>
+                    <input id="editLink" type="url" required>
+                </label>
+                <label class="field">
+                    <span>Description</span>
+                    <textarea id="editNotes" rows="3"></textarea>
+                </label>
+                <p class="edit-error" id="editError" role="alert"></p>
+                <div class="edit-actions">
+                    <button id="editCancelBtn" class="btn-secondary" type="button">Cancel</button>
+                    <button id="editSaveBtn" class="btn-primary" type="submit">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="../particles.js"></script>
     <script src="../menu.js"></script>
