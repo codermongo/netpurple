@@ -74,6 +74,13 @@
   min-width: 180px;
 }
 
+.add-entry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 42px;
+}
+
 .filter-select {
   width: 100%;
   padding: 0.6rem 0.8rem;
@@ -320,6 +327,10 @@ body.modal-open {
   font-size: 1.1rem;
 }
 
+.required-mark {
+  color: #fda4af;
+}
+
 .edit-form {
   display: grid;
   gap: 0.75rem;
@@ -335,6 +346,12 @@ body.modal-open {
   min-height: 1.1rem;
   color: #fca5a5;
   font-size: 0.85rem;
+}
+
+.required-note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
 }
 
 .edit-actions {
@@ -364,7 +381,8 @@ body.modal-open {
   }
 
   .search-field,
-  .filter-row {
+  .filter-row,
+  .add-entry-btn {
     width: 100%;
   }
 

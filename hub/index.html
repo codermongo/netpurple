@@ -76,6 +76,10 @@
                         <option value="all">All categories</option>
                     </select>
                 </div>
+                <button id="addEntryBtn" class="btn-primary add-entry-btn" type="button">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                    Add Entry
+                </button>
             </div>
 
             <p class="status-text" id="statusText">Loading video collection...</p>
@@ -101,10 +105,10 @@
 
     <div class="edit-overlay" id="editOverlay" hidden aria-hidden="true">
         <div class="edit-modal">
-            <h2 class="edit-title">Edit Video Entry</h2>
+            <h2 class="edit-title" id="editModalTitle">Edit Video Entry</h2>
             <form id="editForm" class="edit-form">
                 <div class="field">
-                    <span>Title</span>
+                    <span>Title <strong class="required-mark">*</strong></span>
                     <input id="editTitle" type="text" required>
                 </div>
                 <div class="edit-grid">
@@ -141,13 +145,14 @@
                     </label>
                 </div>
                 <label class="field">
-                    <span>URL</span>
+                    <span>URL <strong class="required-mark">*</strong></span>
                     <input id="editLink" type="url" required>
                 </label>
                 <label class="field">
                     <span>Description</span>
                     <textarea id="editNotes" rows="3"></textarea>
                 </label>
+                <p class="required-note"><strong>*</strong> is required</p>
                 <p class="edit-error" id="editError" role="alert"></p>
                 <div class="edit-actions">
                     <button id="editCancelBtn" class="btn-secondary" type="button">Cancel</button>

@@ -13,6 +13,8 @@ const hubLoader = document.getElementById("hubLoader");
 const hubEmpty = document.getElementById("hubEmpty");
 const editOverlay = document.getElementById("editOverlay");
 const editForm = document.getElementById("editForm");
+const addEntryBtn = document.getElementById("addEntryBtn");
+const editModalTitle = document.getElementById("editModalTitle");
 const editTitle = document.getElementById("editTitle");
 const editCategory = document.getElementById("editCategory");
 const editTrigger = document.getElementById("editTrigger");
@@ -27,6 +29,7 @@ const editSaveBtn = document.getElementById("editSaveBtn");
 let allVideos = [];
 let visibleVideos = [];
 let activeEditId = null;
+let modalMode = "edit";
 const pendingActions = new Set();
 
 function readAuth() {
@@ -224,11 +227,16 @@ function setEditError(message) {
 function setEditLoading(isLoading) {
   editSaveBtn.disabled = isLoading;
   editCancelBtn.disabled = isLoading;
-  editSaveBtn.textContent = isLoading ? "Saving..." : "Save";
+  if (isLoading) {
+    editSaveBtn.textContent = modalMode === "create" ? "Creating..." : "Saving...";
+    return;
+  }
+  editSaveBtn.textContent = modalMode === "create" ? "Create" : "Save";
 }
 
 function closeEditModal() {
   activeEditId = null;
+  modalMode = "edit";
   setEditError("");
   setEditLoading(false);
   editOverlay.hidden = true;
@@ -241,9 +249,11 @@ function openEditModal(recordId) {
   if (!record) {
     return;
   }
+  modalMode = "edit";
   activeEditId = record.id;
   setEditError("");
   setEditLoading(false);
+  editModalTitle.textContent = "Edit Video Entry";
   editTitle.value = record.title || "";
   editCategory.value = record.category || "";
   editTrigger.value = record.trigger_warning || "";
@@ -251,6 +261,25 @@ function openEditModal(recordId) {
   editScoreStar.value = record.score_star ?? "";
   editLink.value = record.link || "";
   editNotes.value = record.notes || "";
+  editOverlay.hidden = false;
+  editOverlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  editTitle.focus();
+}
+
+function openCreateModal() {
+  modalMode = "create";
+  activeEditId = null;
+  setEditError("");
+  setEditLoading(false);
+  editModalTitle.textContent = "Add Video Entry";
+  editTitle.value = "";
+  editCategory.value = "";
+  editTrigger.value = "";
+  editScoreD.value = "";
+  editScoreStar.value = "";
+  editLink.value = "";
+  editNotes.value = "";
   editOverlay.hidden = false;
   editOverlay.setAttribute("aria-hidden", "false");
   document.body.classList.add("modal-open");
@@ -466,7 +495,7 @@ async function loadVideos() {
 
 editForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!activeEditId || pendingActions.has(activeEditId)) {
+  if (modalMode === "edit" && (!activeEditId || pendingActions.has(activeEditId))) {
     return;
   }
   const recordId = activeEditId;
@@ -492,25 +521,43 @@ editForm.addEventListener("submit", async (event) => {
 
   setEditError("");
   setEditLoading(true);
-  pendingActions.add(recordId);
+  if (recordId) {
+    pendingActions.add(recordId);
+  }
   applyFilter();
 
   try {
-    const updated = await apiFetch(`/api/collections/${COLLECTION}/records/${recordId}`,
-      {
-        method: "PATCH",
-        body: JSON.stringify(payload)
+    if (modalMode === "create") {
+      const created = await apiFetch(`/api/collections/${COLLECTION}/records`,
+        {
+          method: "POST",
+          body: JSON.stringify(payload)
+        }
+      );
+      const nextRecords = getPlainRecords();
+      if (created && created.id) {
+        nextRecords.push(created);
+      } else {
+        nextRecords.push({ ...payload, id: `local_${Date.now()}` });
       }
-    );
+      refreshRecords(nextRecords);
+    } else {
+      const updated = await apiFetch(`/api/collections/${COLLECTION}/records/${recordId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(payload)
+        }
+      );
 
-    const records = getPlainRecords().map((video) => {
-      if (video.id !== recordId) {
-        return video;
-      }
-      return updated && updated.id ? updated : { ...video, ...payload };
-    });
+      const records = getPlainRecords().map((video) => {
+        if (video.id !== recordId) {
+          return video;
+        }
+        return updated && updated.id ? updated : { ...video, ...payload };
+      });
 
-    refreshRecords(records);
+      refreshRecords(records);
+    }
     closeEditModal();
   } catch (error) {
     if (error?.status === 401 || error?.status === 403) {
@@ -520,7 +567,9 @@ editForm.addEventListener("submit", async (event) => {
     setEditError(error.message || "Save failed.");
   } finally {
     setEditLoading(false);
-    pendingActions.delete(recordId);
+    if (recordId) {
+      pendingActions.delete(recordId);
+    }
     applyFilter();
   }
 });
@@ -546,6 +595,9 @@ closeEditModal();
 if (!ensureAuthenticated()) {
   hubLoader.hidden = true;
 } else {
+addEntryBtn.addEventListener("click", () => {
+  openCreateModal();
+});
 searchInput.addEventListener("input", applyFilter);
 categoryFilter.addEventListener("change", applyFilter);
 
