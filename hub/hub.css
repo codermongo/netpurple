@@ -295,11 +295,15 @@ body.modal-open {
   inset: 0;
   z-index: 1300;
   padding: 1rem;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.62);
   backdrop-filter: blur(4px);
+}
+
+.edit-overlay:not([hidden]) {
+  display: flex;
 }
 
 .edit-modal {
