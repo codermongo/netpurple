@@ -211,6 +211,31 @@ function formatScore(value) {
   return `${numeric}/10`;
 }
 
+function normalizeWarning(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\./g, "")
+    .replace(/\s+/g, " ");
+}
+
+function getWarningClass(value) {
+  const normalized = normalizeWarning(value);
+  if (normalized === "futunari" || normalized === "futanri") {
+    return "warning-futunari";
+  }
+  if (normalized === "zensiert") {
+    return "warning-zensiert";
+  }
+  if (normalized === "enk") {
+    return "warning-enk";
+  }
+  if (normalized === "old style hentai" || normalized === "old style henati") {
+    return "warning-old-style";
+  }
+  return "";
+}
+
 function parseOptionalNumber(value) {
   const input = String(value ?? "").trim();
   if (!input) {
@@ -364,6 +389,10 @@ async function deleteEntry(recordId) {
 function buildCard(video) {
   const card = document.createElement("article");
   card.className = "video-card";
+  const warningClass = getWarningClass(video.trigger_warning);
+  if (warningClass) {
+    card.classList.add(warningClass);
+  }
 
   const topRow = document.createElement("div");
   topRow.className = "video-main-row";

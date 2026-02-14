@@ -168,6 +168,42 @@
   background: rgba(99, 102, 241, 0.12);
 }
 
+.video-card.warning-futunari {
+  background: linear-gradient(90deg, rgba(244, 114, 182, 0.2) 0%, rgba(12, 12, 20, 0.52) 68%);
+  border-left: 4px solid rgba(244, 114, 182, 0.7);
+}
+
+.video-card.warning-zensiert {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(12, 12, 20, 0.52) 68%);
+  border-left: 4px solid rgba(255, 255, 255, 0.75);
+}
+
+.video-card.warning-enk {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.62) 0%, rgba(8, 8, 12, 0.9) 72%);
+  border-left: 4px solid rgba(0, 0, 0, 0.92);
+}
+
+.video-card.warning-old-style {
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.24) 0%, rgba(12, 12, 20, 0.52) 68%);
+  border-left: 4px solid rgba(148, 163, 184, 0.72);
+}
+
+.video-card.warning-futunari:hover {
+  background: linear-gradient(90deg, rgba(244, 114, 182, 0.32) 0%, rgba(99, 102, 241, 0.16) 68%);
+}
+
+.video-card.warning-zensiert:hover {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.28) 0%, rgba(99, 102, 241, 0.16) 68%);
+}
+
+.video-card.warning-enk:hover {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.72) 0%, rgba(20, 20, 28, 0.92) 72%);
+}
+
+.video-card.warning-old-style:hover {
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.33) 0%, rgba(99, 102, 241, 0.16) 68%);
+}
+
 .video-main-row {
   display: grid;
   grid-template-columns: var(--hub-columns);
