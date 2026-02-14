@@ -11,9 +11,23 @@ const videoGrid = document.getElementById("videoGrid");
 const statusText = document.getElementById("statusText");
 const hubLoader = document.getElementById("hubLoader");
 const hubEmpty = document.getElementById("hubEmpty");
+const editOverlay = document.getElementById("editOverlay");
+const editForm = document.getElementById("editForm");
+const editTitle = document.getElementById("editTitle");
+const editCategory = document.getElementById("editCategory");
+const editTrigger = document.getElementById("editTrigger");
+const editScoreD = document.getElementById("editScoreD");
+const editScoreStar = document.getElementById("editScoreStar");
+const editLink = document.getElementById("editLink");
+const editNotes = document.getElementById("editNotes");
+const editError = document.getElementById("editError");
+const editCancelBtn = document.getElementById("editCancelBtn");
+const editSaveBtn = document.getElementById("editSaveBtn");
 
 let allVideos = [];
 let visibleVideos = [];
+let activeEditId = null;
+const pendingActions = new Set();
 
 function readAuth() {
   const raw = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -47,14 +61,25 @@ function ensureAuthenticated() {
   return false;
 }
 
-async function apiFetch(path) {
+async function apiFetch(path, options = {}) {
   const headers = { Accept: "application/json" };
+  if (options.body) {
+    headers["Content-Type"] = "application/json";
+  }
   const token = getAuthToken();
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${path}`, { headers });
+  const response = await fetch(`${API_BASE}${path}`,
+    {
+      ...options,
+      headers: {
+        ...headers,
+        ...(options.headers || {})
+      }
+    }
+  );
   if (!response.ok) {
     let message = `Request failed (${response.status})`;
     try {
@@ -68,7 +93,16 @@ async function apiFetch(path) {
     throw err;
   }
 
-  return response.json();
+  if (response.status === 204) {
+    return null;
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    return response.json();
+  }
+
+  return null;
 }
 
 function parseScore(value) {
@@ -92,6 +126,34 @@ function sortVideos(records) {
     const bTitle = (b.title || "").toLowerCase();
     return aTitle.localeCompare(bTitle);
   });
+}
+
+function withRank(records) {
+  return sortVideos(records).map((record, index) => ({
+    ...record,
+    rank: index + 1
+  }));
+}
+
+function setCategoryOptions(records) {
+  const previous = categoryFilter.value || "all";
+  const categories = new Set();
+  records.forEach((record) => {
+    if (record.category) {
+      categories.add(record.category);
+    }
+  });
+
+  categoryFilter.innerHTML = '<option value="all">All categories</option>';
+  Array.from(categories).sort().forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = category;
+    categoryFilter.appendChild(option);
+  });
+
+  const hasPrevious = Array.from(categoryFilter.options).some((option) => option.value === previous);
+  categoryFilter.value = hasPrevious ? previous : "all";
 }
 
 function setStatus(total, showing) {
@@ -144,6 +206,130 @@ function formatScore(value) {
     return "-";
   }
   return `${numeric}/10`;
+}
+
+function parseOptionalNumber(value) {
+  const input = String(value ?? "").trim();
+  if (!input) {
+    return null;
+  }
+  const numeric = Number(input);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function setEditError(message) {
+  editError.textContent = message || "";
+}
+
+function setEditLoading(isLoading) {
+  editSaveBtn.disabled = isLoading;
+  editCancelBtn.disabled = isLoading;
+  editSaveBtn.textContent = isLoading ? "Saving..." : "Save";
+}
+
+function closeEditModal() {
+  activeEditId = null;
+  setEditError("");
+  setEditLoading(false);
+  editOverlay.hidden = true;
+  editOverlay.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+}
+
+function openEditModal(recordId) {
+  const record = allVideos.find((video) => video.id === recordId);
+  if (!record) {
+    return;
+  }
+  activeEditId = record.id;
+  setEditError("");
+  setEditLoading(false);
+  editTitle.value = record.title || "";
+  editCategory.value = record.category || "";
+  editTrigger.value = record.trigger_warning || "";
+  editScoreD.value = record.score_d ?? "";
+  editScoreStar.value = record.score_star ?? "";
+  editLink.value = record.link || "";
+  editNotes.value = record.notes || "";
+  editOverlay.hidden = false;
+  editOverlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  editTitle.focus();
+}
+
+function refreshRecords(records) {
+  allVideos = withRank(records);
+  setCategoryOptions(allVideos);
+  applyFilter();
+}
+
+function getPlainRecords() {
+  return allVideos.map((video) => {
+    const { rank, ...rest } = video;
+    return rest;
+  });
+}
+
+function buildActionButtons(video) {
+  const actions = document.createElement("div");
+  actions.className = "row-actions";
+
+  const editButton = document.createElement("button");
+  editButton.type = "button";
+  editButton.className = "action-btn edit";
+  editButton.setAttribute("aria-label", `Edit ${video.title || "entry"}`);
+  editButton.innerHTML = '<i class="fa-solid fa-pen" aria-hidden="true"></i>';
+  editButton.addEventListener("click", () => {
+    openEditModal(video.id);
+  });
+
+  const deleteButton = document.createElement("button");
+  deleteButton.type = "button";
+  deleteButton.className = "action-btn delete";
+  deleteButton.setAttribute("aria-label", `Delete ${video.title || "entry"}`);
+  deleteButton.innerHTML = '<i class="fa-solid fa-trash" aria-hidden="true"></i>';
+  deleteButton.addEventListener("click", () => {
+    deleteEntry(video.id);
+  });
+
+  const disabled = pendingActions.has(video.id);
+  editButton.disabled = disabled;
+  deleteButton.disabled = disabled;
+
+  actions.append(editButton, deleteButton);
+  return actions;
+}
+
+async function deleteEntry(recordId) {
+  const record = allVideos.find((video) => video.id === recordId);
+  if (!record || pendingActions.has(recordId)) {
+    return;
+  }
+
+  const confirmDelete = window.confirm(`Delete "${record.title || "this entry"}"?`);
+  if (!confirmDelete) {
+    return;
+  }
+
+  pendingActions.add(recordId);
+  applyFilter();
+
+  try {
+    await apiFetch(`/api/collections/${COLLECTION}/records/${recordId}`,
+      { method: "DELETE" }
+    );
+    const remaining = getPlainRecords().filter((video) => video.id !== recordId);
+    refreshRecords(remaining);
+  } catch (error) {
+    if (error?.status === 401 || error?.status === 403) {
+      redirectToLogin();
+      return;
+    }
+    window.alert(error.message || "Delete failed.");
+  } finally {
+    pendingActions.delete(recordId);
+    applyFilter();
+  }
 }
 
 function buildCard(video) {
@@ -208,8 +394,9 @@ function buildCard(video) {
     openLink.style.opacity = "0.6";
   }
   linkCell.appendChild(openLink);
+  const actionCell = buildActionButtons(video);
 
-  topRow.append(title, category, description, scoreD, scoreStar, linkCell, warning);
+  topRow.append(title, category, description, scoreD, scoreStar, linkCell, warning, actionCell);
   card.append(topRow);
   return card;
 }
@@ -241,22 +428,6 @@ function applyFilter() {
   hubEmpty.hidden = visibleVideos.length > 0;
 }
 
-function buildCategoryFilter(records) {
-  const categories = new Set();
-  records.forEach((record) => {
-    if (record.category) {
-      categories.add(record.category);
-    }
-  });
-
-  Array.from(categories).sort().forEach((category) => {
-    const option = document.createElement("option");
-    option.value = category;
-    option.textContent = category;
-    categoryFilter.appendChild(option);
-  });
-}
-
 async function fetchAllRecords() {
   const output = [];
   let page = 1;
@@ -279,12 +450,7 @@ async function fetchAllRecords() {
 async function loadVideos() {
   try {
     const records = await fetchAllRecords();
-    allVideos = sortVideos(records).map((record, index) => ({
-      ...record,
-      rank: index + 1
-    }));
-    buildCategoryFilter(allVideos);
-    applyFilter();
+    refreshRecords(records);
   } catch (error) {
     if (error?.status === 401 || error?.status === 403) {
       redirectToLogin();
@@ -297,6 +463,83 @@ async function loadVideos() {
     hubLoader.hidden = true;
   }
 }
+
+editForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!activeEditId || pendingActions.has(activeEditId)) {
+    return;
+  }
+  const recordId = activeEditId;
+
+  const payload = {
+    title: editTitle.value.trim(),
+    category: editCategory.value || "",
+    trigger_warning: editTrigger.value || "",
+    score_d: parseOptionalNumber(editScoreD.value),
+    score_star: parseOptionalNumber(editScoreStar.value),
+    notes: editNotes.value.trim(),
+    link: editLink.value.trim()
+  };
+
+  if (!payload.title) {
+    setEditError("Title is required.");
+    return;
+  }
+  if (!payload.link) {
+    setEditError("URL is required.");
+    return;
+  }
+
+  setEditError("");
+  setEditLoading(true);
+  pendingActions.add(recordId);
+  applyFilter();
+
+  try {
+    const updated = await apiFetch(`/api/collections/${COLLECTION}/records/${recordId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload)
+      }
+    );
+
+    const records = getPlainRecords().map((video) => {
+      if (video.id !== recordId) {
+        return video;
+      }
+      return updated && updated.id ? updated : { ...video, ...payload };
+    });
+
+    refreshRecords(records);
+    closeEditModal();
+  } catch (error) {
+    if (error?.status === 401 || error?.status === 403) {
+      redirectToLogin();
+      return;
+    }
+    setEditError(error.message || "Save failed.");
+  } finally {
+    setEditLoading(false);
+    pendingActions.delete(recordId);
+    applyFilter();
+  }
+});
+
+editCancelBtn.addEventListener("click", () => {
+  closeEditModal();
+});
+
+editOverlay.addEventListener("click", (event) => {
+  if (event.target === editOverlay) {
+    closeEditModal();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !editOverlay.hidden) {
+    closeEditModal();
+  }
+});
 
 if (!ensureAuthenticated()) {
   hubLoader.hidden = true;
