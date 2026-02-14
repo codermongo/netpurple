@@ -98,6 +98,10 @@ function ensureMutationAuth() {
   return false;
 }
 
+function isAuthenticated() {
+  return Boolean(getAuthToken());
+}
+
 function toScore(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
@@ -449,6 +453,7 @@ function setListStatus(filteredCount) {
 
 function renderList() {
   const filtered = getFilteredRecords();
+  const canManage = isAuthenticated();
 
   if (!filtered.length) {
     renderEmpty("No anime found for the current search.");
@@ -464,6 +469,14 @@ function renderList() {
     const scoreText = formatScore(record.score);
     const rank = state.rankById.get(record.id) || "-";
     const disabled = state.pendingActions.has(record.id) ? " disabled" : "";
+    const actionButtons = canManage
+      ? `
+              <div class="card-actions">
+                <button class="card-action-btn" type="button" data-action="edit" data-id="${escapeHtml(record.id)}"${disabled}>Edit</button>
+                <button class="card-action-btn delete" type="button" data-action="delete" data-id="${escapeHtml(record.id)}"${disabled}>Delete</button>
+              </div>
+        `
+      : "";
 
     return `
       <article class="anime-card ${tierClass}">
@@ -478,10 +491,7 @@ function renderList() {
             </div>
             <div class="head-right">
               <span class="score-pill">Score: ${escapeHtml(scoreText)}</span>
-              <div class="card-actions">
-                <button class="card-action-btn" type="button" data-action="edit" data-id="${escapeHtml(record.id)}"${disabled}>Edit</button>
-                <button class="card-action-btn delete" type="button" data-action="delete" data-id="${escapeHtml(record.id)}"${disabled}>Delete</button>
-              </div>
+              ${actionButtons}
             </div>
           </div>
           ${notes}
@@ -495,6 +505,10 @@ function renderList() {
 
   coverRenderJob += 1;
   void enrichVisibleCovers(filtered, coverRenderJob);
+}
+
+function syncAuthUi() {
+  elements.add.hidden = !isAuthenticated();
 }
 
 function setEditError(message) {
@@ -806,6 +820,7 @@ function initEvents() {
 function init() {
   closeEditModal();
   initThemeToggle();
+  syncAuthUi();
   initEvents();
   void loadAnimeList();
 }
