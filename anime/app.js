@@ -417,14 +417,15 @@ async function apiRequest(path, options = {}) {
   return response.json();
 }
 
-async function fetchAllRecords() {
+async function fetchAllRecordsWithSort(sortValue) {
   const records = [];
   let page = 1;
   let totalPages = 1;
 
   while (page <= totalPages) {
+    const sortPart = sortValue ? `&sort=${encodeURIComponent(sortValue)}` : "";
     const data = await apiRequest(
-      `/api/collections/${COLLECTION}/records?page=${page}&perPage=200&sort=${encodeURIComponent(SORT)}`
+      `/api/collections/${COLLECTION}/records?page=${page}&perPage=200${sortPart}`
     );
     totalPages = Number(data?.totalPages) || 1;
     if (Array.isArray(data?.items)) {
@@ -434,6 +435,17 @@ async function fetchAllRecords() {
   }
 
   return records;
+}
+
+async function fetchAllRecords() {
+  try {
+    return await fetchAllRecordsWithSort(SORT);
+  } catch (error) {
+    if (error?.status === 400 && SORT) {
+      return fetchAllRecordsWithSort("");
+    }
+    throw error;
+  }
 }
 
 function renderEmpty(message) {
