@@ -1,6 +1,5 @@
 const API_BASE = "https://api.netpurple.net";
 const COLLECTION = "anime_ranking";
-const SORT = "-score,-updated";
 const THEME_KEY = "darkMode";
 const AUTH_STORAGE_KEY = "pb_auth";
 const COVER_CACHE_KEY = "anime_cover_cache_v1";
@@ -417,15 +416,14 @@ async function apiRequest(path, options = {}) {
   return response.json();
 }
 
-async function fetchAllRecordsWithSort(sortValue) {
+async function fetchAllRecords() {
   const records = [];
   let page = 1;
   let totalPages = 1;
 
   while (page <= totalPages) {
-    const sortPart = sortValue ? `&sort=${encodeURIComponent(sortValue)}` : "";
     const data = await apiRequest(
-      `/api/collections/${COLLECTION}/records?page=${page}&perPage=200${sortPart}`
+      `/api/collections/${COLLECTION}/records?page=${page}&perPage=200`
     );
     totalPages = Number(data?.totalPages) || 1;
     if (Array.isArray(data?.items)) {
@@ -435,17 +433,6 @@ async function fetchAllRecordsWithSort(sortValue) {
   }
 
   return records;
-}
-
-async function fetchAllRecords() {
-  try {
-    return await fetchAllRecordsWithSort(SORT);
-  } catch (error) {
-    if (error?.status === 400 && SORT) {
-      return fetchAllRecordsWithSort("");
-    }
-    throw error;
-  }
 }
 
 function renderEmpty(message) {
