@@ -541,6 +541,8 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+closeEditModal();
+
 if (!ensureAuthenticated()) {
   hubLoader.hidden = true;
 } else {
