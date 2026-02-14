@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="darkreader-lock">
+    <title>NetPurple Video Collection</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="hub.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <meta name="description" content="NetPurple Video Collection - read-only database list from api.netpurple.net.">
+    <meta property="og:title" content="NetPurple Video Collection">
+    <meta property="og:description" content="Read-only database list from api.netpurple.net.">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body data-auth="out">
+
+    <div class="theme-toggle-container hub-toggle">
+        <a href="../index.html" class="menu-item-circle visible" aria-label="Back to NetPurple">
+            <i class="fa-solid fa-house" aria-hidden="true"></i>
+        </a>
+        <button class="menu-item-circle visible" id="themeToggleItem" aria-label="Toggle dark mode">
+            <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 1v4m0 14v4M1 12h4m14 0h4M4.22 4.22l2.83 2.83m10.9 10.9l2.83 2.83M4.22 19.78l2.83-2.83m10.9-10.9l2.83-2.83" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+        </button>
+    </div>
+
+    <div class="user-menu auth-only" id="user-menu" role="group" aria-label="Account">
+        <button class="user-logout" id="logout-btn" type="button" aria-label="Log out">X</button>
+        <span class="user-handle" id="user-handle">User</span>
+    </div>
+    <a class="menu-item-circle user-login auth-out" id="login-link" href="/login" aria-label="Login">
+        <i class="fa-solid fa-user" aria-hidden="true"></i>
+    </a>
+
+    <canvas id="bg-particles" aria-hidden="true"></canvas>
+
+    <section class="hero hero-hub">
+        <div class="hero-content">
+            <div class="hero-logo">
+                <div class="logo-geometric"></div>
+            </div>
+            <h1 class="hero-title">Video Collection</h1>
+            <p class="hero-subtitle">Read-only database view of the videos collection</p>
+        </div>
+        <div class="hero-background">
+            <div class="floating-elements">
+                <div class="floating-element"></div>
+                <div class="floating-element"></div>
+                <div class="floating-element"></div>
+                <div class="floating-element"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="videoFeed" class="hub-section">
+        <div class="container hub-container">
+            <div class="hub-controls">
+                <div class="search-field">
+                    <label class="search-label" for="searchInput">Search</label>
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                        <input id="searchInput" type="text" placeholder="Search title, notes or URL" autocomplete="off">
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <label class="filter-label" for="categoryFilter">Category</label>
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="all">All categories</option>
+                    </select>
+                </div>
+            </div>
+
+            <p class="status-text" id="statusText">Loading video collection...</p>
+
+            <div class="hub-board" aria-live="polite">
+                <div class="db-head" aria-hidden="true">
+                    <span>Title</span>
+                    <span>Category</span>
+                    <span>Description</span>
+                    <span>Score D</span>
+                    <span>Score Star</span>
+                    <span>URL</span>
+                    <span>Trigger Warning</span>
+                </div>
+                <div id="hubLoader" class="hub-loader" aria-hidden="true"></div>
+                <div id="videoGrid" class="video-grid"></div>
+            </div>
+
+            <div id="hubEmpty" class="hub-empty" hidden>No videos found.</div>
+        </div>
+    </section>
+
+    <script src="../particles.js"></script>
+    <script src="../menu.js"></script>
+    <script src="../auth.js"></script>
+    <script src="hub.js"></script>
+</body>
+</html>
