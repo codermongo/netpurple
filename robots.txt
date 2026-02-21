@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /login/
+Disallow: /time/
+Disallow: /sound/og.html
+
+Sitemap: https://www.netpurple.com/sitemap.xml

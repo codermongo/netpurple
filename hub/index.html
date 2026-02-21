@@ -4,15 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="darkreader-lock">
-    <title>NetPurple Video Collection</title>
+    <title>NetPurple Video Collection | Search the Video Database</title>
+    <meta name="description" content="Browse the NetPurple video collection with search, filters, and sortable metadata in a single database view.">
+    <meta name="keywords" content="NetPurple video collection, video database, searchable video list">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="author" content="NetPurple">
+    <link rel="canonical" href="https://www.netpurple.com/hub/">
+    <meta name="theme-color" content="#121224">
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="hub.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <meta name="description" content="NetPurple Video Collection - database list from api.netpurple.net.">
-    <meta property="og:title" content="NetPurple Video Collection">
-    <meta property="og:description" content="Database list from api.netpurple.net.">
+    <meta property="og:title" content="NetPurple Video Collection | Search the Video Database">
+    <meta property="og:description" content="Browse the NetPurple video collection with search, filters, and sortable metadata.">
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="NetPurple">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:url" content="https://www.netpurple.com/hub/">
+    <meta property="og:image" content="https://www.netpurple.com/logo.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="NetPurple Video Collection | Search the Video Database">
+    <meta name="twitter:description" content="Browse the NetPurple video collection with search, filters, and sortable metadata.">
+    <meta name="twitter:image" content="https://www.netpurple.com/logo.png">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <body data-auth="out">
@@ -67,13 +82,19 @@
                     <label class="search-label" for="searchInput">Search</label>
                     <div class="search-box">
                         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                        <input id="searchInput" type="text" placeholder="Search title, notes or URL" autocomplete="off">
+                        <input id="searchInput" type="text" placeholder="Search title, type, category, notes or URL" autocomplete="off">
                     </div>
                 </div>
                 <div class="filter-row">
-                    <label class="filter-label" for="categoryFilter">Category</label>
-                    <select id="categoryFilter" class="filter-select">
-                        <option value="all">All categories</option>
+                    <label class="filter-label" for="typeFilter">Type</label>
+                    <select id="typeFilter" class="filter-select">
+                        <option value="all">All types</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label class="filter-label" for="catigorieFilter">Catigorie</label>
+                    <select id="catigorieFilter" class="filter-select">
+                        <option value="all">All catigories</option>
                     </select>
                 </div>
                 <button id="addEntryBtn" class="btn-primary add-entry-btn" type="button">
@@ -87,8 +108,9 @@
             <div class="hub-board" aria-live="polite">
                 <div class="db-head" aria-hidden="true">
                     <span>Title</span>
-                    <span>Category</span>
-                    <span>Description</span>
+                    <span>Type</span>
+                    <span>Catigorie</span>
+                    <span>Notes</span>
                     <span>Score D</span>
                     <span>Score Star</span>
                     <span>URL</span>
@@ -113,8 +135,8 @@
                 </div>
                 <div class="edit-grid">
                     <label class="field">
-                        <span>Category</span>
-                        <select id="editCategory">
+                        <span>Type</span>
+                        <select id="editType">
                             <option value="">None</option>
                             <option value="Hentai">Hentai</option>
                             <option value="Video">Video</option>
@@ -123,6 +145,27 @@
                             <option value="Animation">Animation</option>
                         </select>
                     </label>
+                    <label class="field">
+                        <span>Catigorie</span>
+                        <select id="editCatigorie">
+                            <option value="">None</option>
+                            <option value="Hentai">Hentai</option>
+                            <option value="Tentacle">Tentacle</option>
+                            <option value="Creampie">Creampie</option>
+                            <option value="X-Ray">X-Ray</option>
+                            <option value="Egg">Egg</option>
+                            <option value="Impreg">Impreg</option>
+                            <option value="Amateur">Amateur</option>
+                            <option value="BDSM">BDSM</option>
+                            <option value="CNC">CNC</option>
+                            <option value="Boobs">Boobs</option>
+                            <option value="BlowJob">BlowJob</option>
+                            <option value="Small Boobs">Small Boobs</option>
+                            <option value="Anal">Anal</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="edit-grid">
                     <label class="field">
                         <span>Trigger Warning</span>
                         <select id="editTrigger">
@@ -133,17 +176,15 @@
                             <option value="E.N.K">E.N.K</option>
                         </select>
                     </label>
-                </div>
-                <div class="edit-grid">
                     <label class="field">
                         <span>Score D</span>
                         <input id="editScoreD" type="number" step="0.1">
                     </label>
-                    <label class="field">
-                        <span>Score Star</span>
-                        <input id="editScoreStar" type="number" step="0.1">
-                    </label>
                 </div>
+                <label class="field">
+                    <span>Score Star</span>
+                    <input id="editScoreStar" type="number" step="0.1">
+                </label>
                 <label class="field">
                     <span>URL <strong class="required-mark">*</strong></span>
                     <input id="editLink" type="url" required>
