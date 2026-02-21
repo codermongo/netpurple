@@ -593,6 +593,51 @@ body.dark-mode .menu-item-circle .moon-icon {
   50% { transform: translateY(-10px) rotate(180deg); }
 }
 
+/* Low-power performance mode */
+body.low-power-mode #bg-particles {
+  display: none;
+}
+
+body.low-power-mode .hero-background {
+  display: none;
+}
+
+body.low-power-mode .floating-element,
+body.low-power-mode .logo-geometric,
+body.low-power-mode .hero-title {
+  animation: none !important;
+}
+
+body.low-power-mode .hero-title {
+  filter: none !important;
+}
+
+body.low-power-mode .menu-item-circle,
+body.low-power-mode .user-menu,
+body.low-power-mode .tool-card,
+body.low-power-mode .btn-secondary {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.low-power-mode .menu-item-circle,
+body.low-power-mode .user-menu,
+body.low-power-mode .tool-card,
+body.low-power-mode .btn-primary,
+body.low-power-mode .btn-secondary {
+  box-shadow: none !important;
+}
+
+body.low-power-mode .menu-item-circle:hover,
+body.low-power-mode .user-menu:hover,
+body.low-power-mode .user-menu:focus-within,
+body.low-power-mode .tool-card:hover,
+body.low-power-mode .btn-primary:hover,
+body.low-power-mode .btn-secondary:hover,
+body.low-power-mode .tool-card:hover .tool-icon {
+  transform: none !important;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .tools-grid {
@@ -621,6 +666,56 @@ body.dark-mode .menu-item-circle .moon-icon {
   }
 
   .tool-card { padding: 1.2rem; }
+}
+
+@media (max-width: 768px), (prefers-reduced-motion: reduce), (prefers-reduced-data: reduce) {
+  #bg-particles {
+    display: none;
+  }
+
+  .hero-background {
+    display: none;
+  }
+
+  .floating-element,
+  .logo-geometric,
+  .hero-title {
+    animation: none !important;
+  }
+
+  .hero-title {
+    filter: none !important;
+  }
+
+  .menu-item-circle,
+  .user-menu,
+  .tool-card,
+  .btn-secondary {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .menu-item-circle,
+  .user-menu,
+  .tool-card,
+  .btn-primary,
+  .btn-secondary {
+    box-shadow: none !important;
+  }
+
+  .menu-item-circle:hover,
+  .user-menu:hover,
+  .user-menu:focus-within,
+  .tool-card:hover,
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .tool-card:hover .tool-icon {
+    transform: none !important;
+  }
+
+  html {
+    scroll-behavior: auto !important;
+  }
 }
 
 @media (max-width: 480px) {
