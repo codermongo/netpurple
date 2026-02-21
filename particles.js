@@ -3,6 +3,21 @@
   const canvas = document.getElementById('bg-particles');
   if (!canvas) return;
 
+  function isLowPowerMode() {
+    const narrowViewport = window.matchMedia('(max-width: 768px)').matches;
+    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reducedData = window.matchMedia('(prefers-reduced-data: reduce)').matches;
+    const saveData = Boolean(navigator.connection && navigator.connection.saveData);
+    return reducedMotion || reducedData || saveData || (narrowViewport && coarsePointer);
+  }
+
+  if (isLowPowerMode()) {
+    document.body.classList.add('low-power-mode');
+    canvas.style.display = 'none';
+    return;
+  }
+
   const ctx = canvas.getContext('2d', { alpha: true });
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
   let w = 0, h = 0, particles = [];
