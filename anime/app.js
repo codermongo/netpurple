@@ -4,12 +4,16 @@ const APPWRITE_DATABASE_ID = "699f251000346ad6c5e7";
 const ANIME_COLLECTION_ID = "anime_ranking";
 const PAGE_SIZE = 100;
 const THEME_KEY = "darkMode";
+const COVER_CACHE_KEY = "anime_cover_cache_v1";
+const JIKAN_BASE = "https://api.jikan.moe/v4/anime";
 
 const TIER_VALUES = new Set(["Tier_1", "Tier_2", "Tier_3"]);
 
 const state = {
   records: [],
-  query: ""
+  query: "",
+  coverCache: loadCoverCache(),
+  pendingCovers: new Set()
 };
 
 const elements = {
@@ -24,6 +28,7 @@ const elements = {
 
 let databases = null;
 let Query = null;
+let coverRenderJob = 0;
 
 function escapeHtml(value) {
   return String(value)
@@ -77,6 +82,197 @@ function initThemeToggle() {
     document.body.classList.toggle("dark-mode");
     localStorage.setItem(THEME_KEY, document.body.classList.contains("dark-mode"));
   });
+}
+
+function loadCoverCache() {
+  const raw = localStorage.getItem(COVER_CACHE_KEY);
+  if (!raw) {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (error) {
+    localStorage.removeItem(COVER_CACHE_KEY);
+    return {};
+  }
+}
+
+function saveCoverCache() {
+  localStorage.setItem(COVER_CACHE_KEY, JSON.stringify(state.coverCache));
+}
+
+function getCoverKey(title) {
+  return String(title || "")
+    .trim()
+    .toLowerCase();
+}
+
+function sanitizeTitle(title) {
+  return String(title || "")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\[[^\]]*\]/g, " ")
+    .replace(/[^a-zA-Z0-9\s:'-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeForMatch(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function pickBestMatch(items, title) {
+  if (!Array.isArray(items) || !items.length) {
+    return null;
+  }
+
+  const needle = normalizeForMatch(title);
+  if (!needle) {
+    return items[0];
+  }
+
+  let best = null;
+  let bestScore = -1;
+
+  for (const item of items) {
+    const variants = [item?.title, item?.title_english, item?.title_japanese].filter(Boolean);
+    let localScore = 0;
+
+    for (const variant of variants) {
+      const candidate = normalizeForMatch(variant);
+      if (!candidate) {
+        continue;
+      }
+      if (candidate === needle) {
+        localScore = Math.max(localScore, 100);
+      } else if (candidate.includes(needle) || needle.includes(candidate)) {
+        localScore = Math.max(localScore, 80);
+      } else {
+        const needleTokens = new Set(needle.split(" "));
+        const candidateTokens = candidate.split(" ");
+        let overlap = 0;
+        for (const token of candidateTokens) {
+          if (needleTokens.has(token)) {
+            overlap += 1;
+          }
+        }
+        localScore = Math.max(localScore, overlap * 10);
+      }
+    }
+
+    if (localScore > bestScore) {
+      bestScore = localScore;
+      best = item;
+    }
+  }
+
+  return best || items[0];
+}
+
+function getCoverUrlFromItem(item) {
+  return item?.images?.webp?.large_image_url
+    || item?.images?.jpg?.large_image_url
+    || item?.images?.webp?.image_url
+    || item?.images?.jpg?.image_url
+    || "";
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function fetchCover(title) {
+  const cleanTitle = sanitizeTitle(title);
+  const queries = [title, cleanTitle].filter(Boolean);
+
+  for (const query of queries) {
+    try {
+      const response = await fetch(
+        `${JIKAN_BASE}?q=${encodeURIComponent(query)}&limit=8&sfw=true`
+      );
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          await sleep(750);
+          continue;
+        }
+        continue;
+      }
+
+      const data = await response.json();
+      const best = pickBestMatch(data?.data || [], title);
+      const imageUrl = getCoverUrlFromItem(best);
+      if (imageUrl) {
+        return imageUrl;
+      }
+    } catch (error) {
+      continue;
+    }
+
+    await sleep(220);
+  }
+
+  return "";
+}
+
+function createPlaceholder(title) {
+  const safeTitle = escapeHtml(title || "?");
+  const initial = escapeHtml((title || "?").trim().charAt(0).toUpperCase() || "?");
+  return `
+    <div class="card-cover-placeholder" aria-label="No cover image for ${safeTitle}">
+      <span>${initial}</span>
+    </div>
+  `;
+}
+
+function renderCardCover(record) {
+  const key = getCoverKey(record.title);
+  const cached = state.coverCache[key] || "";
+  const safeTitle = escapeHtml(record.title || "Anime");
+
+  if (cached) {
+    return `<img class="card-cover" src="${escapeHtml(cached)}" alt="${safeTitle} cover" loading="lazy" referrerpolicy="no-referrer" />`;
+  }
+
+  return createPlaceholder(record.title);
+}
+
+async function enrichVisibleCovers(records, jobId) {
+  for (const record of records) {
+    if (jobId !== coverRenderJob) {
+      return;
+    }
+
+    const key = getCoverKey(record.title);
+    if (!key || Object.prototype.hasOwnProperty.call(state.coverCache, key) || state.pendingCovers.has(key)) {
+      continue;
+    }
+
+    state.pendingCovers.add(key);
+    const cover = await fetchCover(record.title || "");
+    state.pendingCovers.delete(key);
+
+    state.coverCache[key] = cover || "";
+    saveCoverCache();
+
+    if (jobId !== coverRenderJob || !cover) {
+      continue;
+    }
+
+    const slot = elements.list.querySelector(`[data-cover-slot="${record.id}"]`);
+    if (!slot) {
+      continue;
+    }
+
+    slot.innerHTML = `<img class="card-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(record.title || "Anime")} cover" loading="lazy" referrerpolicy="no-referrer" />`;
+    await sleep(180);
+  }
 }
 
 function normalizeAnimeDocument(document) {
@@ -260,6 +456,9 @@ function renderList() {
 
     return `
       <article class="anime-card ${tierClass}">
+        <div class="card-media" data-cover-slot="${escapeHtml(record.id)}">
+          ${renderCardCover(record)}
+        </div>
         <div class="card-body">
           <div class="card-head">
             <div class="card-head-left">
@@ -285,6 +484,9 @@ function renderList() {
   } else {
     setStatus(`${state.records.length} anime loaded.`);
   }
+
+  coverRenderJob += 1;
+  void enrichVisibleCovers(filtered, coverRenderJob);
 }
 
 async function loadAnimeList() {
