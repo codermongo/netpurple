@@ -15,7 +15,7 @@
 }
 
 .hub-container {
-  max-width: 1420px;
+  max-width: 1720px;
 }
 
 .hub-controls {
@@ -106,12 +106,12 @@
 }
 
 .hub-board {
-  --hub-columns: minmax(220px, 2.2fr) minmax(130px, 1fr) minmax(250px, 2fr) minmax(95px, 0.8fr) minmax(105px, 0.85fr) minmax(150px, 1.2fr) minmax(150px, 1.1fr) minmax(92px, 0.75fr);
+  --hub-columns: minmax(210px, 2.2fr) minmax(110px, 0.9fr) minmax(130px, 1fr) minmax(240px, 2fr) minmax(95px, 0.8fr) minmax(105px, 0.85fr) minmax(150px, 1.2fr) minmax(145px, 1.05fr) minmax(92px, 0.75fr);
   background: var(--card-glass-bg);
   border: 1px solid var(--card-glass-stroke);
   border-radius: 18px;
   box-shadow: 0 14px 38px rgba(59, 130, 246, 0.12);
-  min-height: 62vh;
+  min-height: 74vh;
   overflow: hidden;
 }
 
@@ -423,7 +423,7 @@ body.modal-open {
 
   .db-head,
   .video-main-row {
-    grid-template-columns: minmax(190px, 1.9fr) minmax(105px, 0.9fr) minmax(180px, 1.6fr) minmax(80px, 0.72fr) minmax(90px, 0.78fr) minmax(120px, 1fr) minmax(110px, 0.9fr) minmax(84px, 0.7fr);
+    grid-template-columns: minmax(180px, 1.8fr) minmax(95px, 0.8fr) minmax(100px, 0.9fr) minmax(165px, 1.5fr) minmax(78px, 0.66fr) minmax(86px, 0.72fr) minmax(115px, 0.95fr) minmax(100px, 0.82fr) minmax(82px, 0.68fr);
   }
 }
 
@@ -443,7 +443,7 @@ body.modal-open {
   }
 
   .hub-board {
-    min-height: 56vh;
+    min-height: 62vh;
   }
 
   .db-head {
@@ -475,3 +475,4 @@ body.modal-open {
     grid-template-columns: 1fr;
   }
 }
+
