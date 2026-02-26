@@ -1,4 +1,4 @@
-const APPWRITE_ENDPOINT = "https://api.netpurple.net/";
+const APPWRITE_ENDPOINT = "https://api.netpurple.net/v1";
 const APPWRITE_PROJECT_ID = "699f23920000d9667d3e";
 const APPWRITE_DATABASE_ID = "699f251000346ad6c5e7";
 const ANIME_COLLECTION_ID = "anime_ranking";
