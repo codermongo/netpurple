@@ -6,7 +6,8 @@ const PER_PAGE = 200;
 const SORT = "-score_d,-score_star,-created";
 
 const searchInput = document.getElementById("searchInput");
-const categoryFilter = document.getElementById("categoryFilter");
+const typeFilter = document.getElementById("typeFilter");
+const catigorieFilter = document.getElementById("catigorieFilter");
 const videoGrid = document.getElementById("videoGrid");
 const statusText = document.getElementById("statusText");
 const hubLoader = document.getElementById("hubLoader");
@@ -16,7 +17,8 @@ const editForm = document.getElementById("editForm");
 const addEntryBtn = document.getElementById("addEntryBtn");
 const editModalTitle = document.getElementById("editModalTitle");
 const editTitle = document.getElementById("editTitle");
-const editCategory = document.getElementById("editCategory");
+const editType = document.getElementById("editType");
+const editCatigorie = document.getElementById("editCatigorie");
 const editTrigger = document.getElementById("editTrigger");
 const editScoreD = document.getElementById("editScoreD");
 const editScoreStar = document.getElementById("editScoreStar");
@@ -108,6 +110,14 @@ async function apiFetch(path, options = {}) {
   return null;
 }
 
+function getTypeValue(record) {
+  return record?.Type || record?.type || record?.category || "";
+}
+
+function getCatigorieValue(record) {
+  return record?.Catigorie || record?.catigorie || "";
+}
+
 function parseScore(value) {
   const num = Number(value);
   return Number.isFinite(num) ? num : Number.NEGATIVE_INFINITY;
@@ -138,33 +148,56 @@ function withRank(records) {
   }));
 }
 
-function setCategoryOptions(records) {
-  const previous = categoryFilter.value || "all";
-  const categories = new Set();
+function setTypeOptions(records) {
+  const previous = typeFilter.value || "all";
+  const types = new Set();
   records.forEach((record) => {
-    if (record.category) {
-      categories.add(record.category);
+    const value = getTypeValue(record);
+    if (value) {
+      types.add(value);
     }
   });
 
-  categoryFilter.innerHTML = '<option value="all">All categories</option>';
-  Array.from(categories).sort().forEach((category) => {
+  typeFilter.innerHTML = '<option value="all">All types</option>';
+  Array.from(types).sort().forEach((type) => {
     const option = document.createElement("option");
-    option.value = category;
-    option.textContent = category;
-    categoryFilter.appendChild(option);
+    option.value = type;
+    option.textContent = type;
+    typeFilter.appendChild(option);
   });
 
-  const hasPrevious = Array.from(categoryFilter.options).some((option) => option.value === previous);
-  categoryFilter.value = hasPrevious ? previous : "all";
+  const hasPrevious = Array.from(typeFilter.options).some((option) => option.value === previous);
+  typeFilter.value = hasPrevious ? previous : "all";
+}
+
+function setCatigorieOptions(records) {
+  const previous = catigorieFilter.value || "all";
+  const catigories = new Set();
+  records.forEach((record) => {
+    const value = getCatigorieValue(record);
+    if (value) {
+      catigories.add(value);
+    }
+  });
+
+  catigorieFilter.innerHTML = '<option value="all">All catigories</option>';
+  Array.from(catigories).sort().forEach((catigorie) => {
+    const option = document.createElement("option");
+    option.value = catigorie;
+    option.textContent = catigorie;
+    catigorieFilter.appendChild(option);
+  });
+
+  const hasPrevious = Array.from(catigorieFilter.options).some((option) => option.value === previous);
+  catigorieFilter.value = hasPrevious ? previous : "all";
 }
 
 function setStatus(total, showing) {
   if (total === 0) {
-    statusText.textContent = "Showing 0 of 0 videos.";
+    statusText.textContent = "Showing 0 of 0 entries.";
     return;
   }
-  statusText.textContent = `Showing ${showing} of ${total} videos.`;
+  statusText.textContent = `Showing ${showing} of ${total} entries.`;
 }
 
 function getUrlLabel(url) {
@@ -259,6 +292,14 @@ function setEditLoading(isLoading) {
   editSaveBtn.textContent = modalMode === "create" ? "Create" : "Save";
 }
 
+function setSelectValue(selectElement, value) {
+  const nextValue = value || "";
+  selectElement.value = nextValue;
+  if (selectElement.value !== nextValue) {
+    selectElement.value = "";
+  }
+}
+
 function closeEditModal() {
   activeEditId = null;
   modalMode = "edit";
@@ -280,8 +321,9 @@ function openEditModal(recordId) {
   setEditLoading(false);
   editModalTitle.textContent = "Edit Video Entry";
   editTitle.value = record.title || "";
-  editCategory.value = record.category || "";
-  editTrigger.value = record.trigger_warning || "";
+  setSelectValue(editType, getTypeValue(record));
+  setSelectValue(editCatigorie, getCatigorieValue(record));
+  setSelectValue(editTrigger, record.trigger_warning || "");
   editScoreD.value = record.score_d ?? "";
   editScoreStar.value = record.score_star ?? "";
   editLink.value = record.link || "";
@@ -299,7 +341,8 @@ function openCreateModal() {
   setEditLoading(false);
   editModalTitle.textContent = "Add Video Entry";
   editTitle.value = "";
-  editCategory.value = "";
+  editType.value = "";
+  editCatigorie.value = "";
   editTrigger.value = "";
   editScoreD.value = "";
   editScoreStar.value = "";
@@ -313,7 +356,8 @@ function openCreateModal() {
 
 function refreshRecords(records) {
   allVideos = withRank(records);
-  setCategoryOptions(allVideos);
+  setTypeOptions(allVideos);
+  setCatigorieOptions(allVideos);
   applyFilter();
 }
 
@@ -406,9 +450,13 @@ function buildCard(video) {
   titleText.textContent = video.title || "Untitled";
   title.append(rankDot, titleText);
 
-  const category = document.createElement("div");
-  category.className = "db-value";
-  category.textContent = video.category || "Uncategorized";
+  const type = document.createElement("div");
+  type.className = "db-value";
+  type.textContent = getTypeValue(video) || "None";
+
+  const catigorie = document.createElement("div");
+  catigorie.className = "db-value";
+  catigorie.textContent = getCatigorieValue(video) || "None";
 
   const description = document.createElement("div");
   description.className = "db-value description";
@@ -454,7 +502,7 @@ function buildCard(video) {
   linkCell.appendChild(openLink);
   const actionCell = buildActionButtons(video);
 
-  topRow.append(title, category, description, scoreD, scoreStar, linkCell, warning, actionCell);
+  topRow.append(title, type, catigorie, description, scoreD, scoreStar, linkCell, warning, actionCell);
   card.append(topRow);
   return card;
 }
@@ -470,15 +518,29 @@ function renderVideos(list) {
 
 function applyFilter() {
   const query = searchInput.value.trim().toLowerCase();
-  const selectedCategory = categoryFilter.value;
+  const selectedType = typeFilter.value;
+  const selectedCatigorie = catigorieFilter.value;
 
   visibleVideos = allVideos.filter((video) => {
     const title = (video.title || "").toLowerCase();
     const notes = (video.notes || "").toLowerCase();
     const link = (video.link || "").toLowerCase();
-    const matchesSearch = !query || title.includes(query) || notes.includes(query) || link.includes(query);
-    const matchesCategory = selectedCategory === "all" || (video.category || "") === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const type = getTypeValue(video).toLowerCase();
+    const catigorie = getCatigorieValue(video).toLowerCase();
+    const warning = (video.trigger_warning || "").toLowerCase();
+
+    const matchesSearch = !query
+      || title.includes(query)
+      || notes.includes(query)
+      || link.includes(query)
+      || type.includes(query)
+      || catigorie.includes(query)
+      || warning.includes(query);
+
+    const matchesType = selectedType === "all" || getTypeValue(video) === selectedType;
+    const matchesCatigorie = selectedCatigorie === "all" || getCatigorieValue(video) === selectedCatigorie;
+
+    return matchesSearch && matchesType && matchesCatigorie;
   });
 
   renderVideos(visibleVideos);
@@ -531,7 +593,8 @@ editForm.addEventListener("submit", async (event) => {
 
   const payload = {
     title: editTitle.value.trim(),
-    category: editCategory.value || "",
+    Type: editType.value || "",
+    Catigorie: editCatigorie.value || "",
     trigger_warning: editTrigger.value || "",
     score_d: parseOptionalNumber(editScoreD.value),
     score_star: parseOptionalNumber(editScoreStar.value),
@@ -624,12 +687,13 @@ closeEditModal();
 if (!ensureAuthenticated()) {
   hubLoader.hidden = true;
 } else {
-addEntryBtn.addEventListener("click", () => {
-  openCreateModal();
-});
-searchInput.addEventListener("input", applyFilter);
-categoryFilter.addEventListener("change", applyFilter);
+  addEntryBtn.addEventListener("click", () => {
+    openCreateModal();
+  });
+  searchInput.addEventListener("input", applyFilter);
+  typeFilter.addEventListener("change", applyFilter);
+  catigorieFilter.addEventListener("change", applyFilter);
 
-loadVideos();
+  loadVideos();
 }
 })();

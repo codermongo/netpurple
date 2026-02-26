@@ -113,16 +113,16 @@
           <div class="edit-grid">
             <label class="edit-field">
               <span>Tier</span>
-              <input id="editTier" type="text" list="tierOptions" placeholder="Tier 1, Tier 2, Tier 3" />
+              <input id="editTier" type="text" list="tierOptions" placeholder="Tier_1, Tier_2, Tier_3" />
               <datalist id="tierOptions">
-                <option value="Tier 1"></option>
-                <option value="Tier 2"></option>
-                <option value="Tier 3"></option>
+                <option value="Tier_1"></option>
+                <option value="Tier_2"></option>
+                <option value="Tier_3"></option>
               </datalist>
             </label>
             <label class="edit-field">
               <span>Score</span>
-              <input id="editScore" type="number" step="0.1" min="0" max="10" />
+              <input id="editScore" type="number" step="0.1" min="0" max="15" />
             </label>
           </div>
           <label class="edit-field">
@@ -140,6 +140,7 @@
     </div>
 
     <script src="../particles.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
     <script src="app.js"></script>
   </body>
 </html>
