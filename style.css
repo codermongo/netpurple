@@ -540,6 +540,51 @@ body.dark-mode .menu-item-circle .moon-icon {
   font-size: 0.9rem;
 }
 
+.form-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px 0;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.form-divider::before,
+.form-divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--card-glass-stroke);
+}
+
+.form-divider span {
+  margin: 0 10px;
+}
+
+.oauth-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+  padding: 11px 16px;
+  text-decoration: none;
+}
+
+.auth-register {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--card-glass-stroke);
+}
+
+.auth-register h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
 .tool-button {
   background: var(--button-purple);
   color: white;

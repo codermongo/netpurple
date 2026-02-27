@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="darkreader-lock">
-    <title>NetPurple Login | Sign In</title>
-    <meta name="description" content="Sign in to your NetPurple account to access personalized features.">
+    <title>NetPurple Login | Appwrite Auth</title>
+    <meta name="description" content="Sign in or register with your NetPurple account using Appwrite.">
     <meta name="robots" content="noindex, nofollow, noarchive">
     <meta name="author" content="NetPurple">
     <link rel="canonical" href="https://www.netpurple.com/login/">
@@ -15,16 +15,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <meta property="og:title" content="NetPurple Login | Sign In">
-    <meta property="og:description" content="Sign in to your NetPurple account to access personalized features.">
+    <meta property="og:title" content="NetPurple Login | Appwrite Auth">
+    <meta property="og:description" content="Sign in or register with your NetPurple account using Appwrite.">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="NetPurple">
     <meta property="og:locale" content="de_DE">
     <meta property="og:url" content="https://www.netpurple.com/login/">
     <meta property="og:image" content="https://www.netpurple.com/logo.png">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="NetPurple Login | Sign In">
-    <meta name="twitter:description" content="Sign in to your NetPurple account to access personalized features.">
+    <meta name="twitter:title" content="NetPurple Login | Appwrite Auth">
+    <meta name="twitter:description" content="Sign in or register with your NetPurple account using Appwrite.">
     <meta name="twitter:image" content="https://www.netpurple.com/logo.png">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
@@ -60,19 +60,19 @@
     <section class="hero" style="min-height: 25vh; padding-top: 100px;">
         <div class="hero-content">
             <h1 class="hero-title">Sign in</h1>
-            <p class="hero-subtitle">Access your NetPurple account</p>
+            <p class="hero-subtitle">Access your NetPurple account with Appwrite</p>
         </div>
     </section>
 
     <section class="services">
         <div class="container auth-grid">
             <div class="tool-card auth-card" id="login-panel">
-                <h2>Sign in with PocketBase</h2>
-                <p>Use your email or username to continue.</p>
+                <h2>Sign in</h2>
+                <p>Use your Appwrite account to continue.</p>
                 <form id="login-form" class="form">
                     <label class="field">
-                        <span>Email or username</span>
-                        <input type="text" name="identity" id="login-identity" placeholder="you@example.com" required />
+                        <span>Email</span>
+                        <input type="email" name="email" id="login-email" placeholder="you@example.com" required />
                     </label>
                     <label class="field">
                         <span>Password</span>
@@ -81,12 +81,44 @@
                     <button class="primary" id="login-btn" type="submit">Sign in</button>
                     <p class="form-error" id="login-error" role="alert"></p>
                 </form>
+
+                <div class="form-divider" aria-hidden="true"><span>or</span></div>
+
+                <a class="btn-secondary oauth-btn" id="google-login-btn" href="https://fra.cloud.appwrite.io/v1/account/sessions/oauth2/callback/google/699f23920000d9667d3e">
+                    <i class="fa-brands fa-google" aria-hidden="true"></i>
+                    Continue with Google
+                </a>
+
+                <div class="auth-register">
+                    <h3>Create account</h3>
+                    <form id="register-form" class="form">
+                        <label class="field">
+                            <span>Name</span>
+                            <input type="text" name="name" id="register-name" placeholder="Your name" required />
+                        </label>
+                        <label class="field">
+                            <span>Email</span>
+                            <input type="email" name="email" id="register-email" placeholder="you@example.com" required />
+                        </label>
+                        <label class="field">
+                            <span>Password</span>
+                            <input type="password" name="password" id="register-password" placeholder="At least 8 characters" minlength="8" required />
+                        </label>
+                        <label class="field">
+                            <span>Confirm password</span>
+                            <input type="password" name="password-confirm" id="register-password-confirm" placeholder="Repeat password" minlength="8" required />
+                        </label>
+                        <button class="primary" id="register-btn" type="submit">Register</button>
+                        <p class="form-error" id="register-error" role="alert"></p>
+                    </form>
+                </div>
             </div>
         </div>
     </section>
 
     <script src="../particles.js"></script>
     <script src="../menu.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
     <script src="../auth.js"></script>
 </body>
 </html>
