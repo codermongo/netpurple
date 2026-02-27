@@ -1,9 +1,10 @@
-﻿const API_BASE = "https://api.netpurple.net";
-const AUTH_COLLECTION = "users";
-const AUTH_STORAGE_KEY = "pb_auth";
+const APPWRITE_ENDPOINT = "https://api.netpurple.net/v1";
+const APPWRITE_PROJECT_ID = "699f23920000d9667d3e";
+const AUTH_STORAGE_KEY = "appwrite_auth";
+const LEGACY_AUTH_STORAGE_KEY = "pb_auth";
+const GOOGLE_OAUTH_URL = "https://fra.cloud.appwrite.io/v1/account/sessions/oauth2/callback/google/699f23920000d9667d3e";
 
 const state = {
-  token: null,
   user: null
 };
 
@@ -11,11 +12,22 @@ const elements = {
   loginForm: document.querySelector("#login-form"),
   loginBtn: document.querySelector("#login-btn"),
   loginError: document.querySelector("#login-error"),
-  identity: document.querySelector("#login-identity"),
-  password: document.querySelector("#login-password"),
+  loginEmail: document.querySelector("#login-email") || document.querySelector("#login-identity"),
+  loginPassword: document.querySelector("#login-password"),
+  registerForm: document.querySelector("#register-form"),
+  registerBtn: document.querySelector("#register-btn"),
+  registerError: document.querySelector("#register-error"),
+  registerName: document.querySelector("#register-name"),
+  registerEmail: document.querySelector("#register-email"),
+  registerPassword: document.querySelector("#register-password"),
+  registerPasswordConfirm: document.querySelector("#register-password-confirm"),
+  googleLoginBtn: document.querySelector("#google-login-btn"),
   logoutBtn: document.querySelector("#logout-btn"),
   userHandle: document.querySelector("#user-handle")
 };
+
+let account = null;
+let AppwriteID = null;
 
 function normalizePath(path) {
   return path.replace(/\/+$/, "");
@@ -23,7 +35,7 @@ function normalizePath(path) {
 
 function isLoginPage() {
   const path = normalizePath(window.location.pathname);
-  return path == "/login" || path == "/login/index.html";
+  return path === "/login" || path === "/login/index.html" || path.endsWith("/login");
 }
 
 function setReturnTargetFromReferrer() {
@@ -36,11 +48,11 @@ function setReturnTargetFromReferrer() {
   }
   try {
     const url = new URL(referrer);
-    if (url.origin != window.location.origin) {
+    if (url.origin !== window.location.origin) {
       return;
     }
     const refPath = normalizePath(url.pathname);
-    if (!refPath || refPath == "/login" || refPath == "/login/index.html") {
+    if (!refPath || refPath === "/login" || refPath === "/login/index.html") {
       return;
     }
     const target = `${url.pathname}${url.search}${url.hash}`;
@@ -64,18 +76,21 @@ function getReturnTarget() {
 }
 
 function getUserHandle(user) {
+  const name = user?.name || "";
+  if (name.trim()) {
+    return name.trim();
+  }
   const email = user?.email || "";
   if (email.includes("@")) {
     return email.split("@")[0];
   }
-  return user?.username || email || "User";
+  return "User";
 }
 
-function setAuth(auth) {
-  state.token = auth?.token ?? null;
-  state.user = auth?.record ?? null;
+function setAuth(user) {
+  state.user = user || null;
 
-  if (state.token) {
+  if (state.user) {
     document.body.dataset.auth = "in";
     if (elements.userHandle) {
       elements.userHandle.textContent = getUserHandle(state.user);
@@ -88,16 +103,21 @@ function setAuth(auth) {
   }
 }
 
-function saveAuth(auth) {
-  if (auth) {
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
-  } else {
+function saveAuthSnapshot(user) {
+  if (!user) {
     localStorage.removeItem(AUTH_STORAGE_KEY);
+    return;
   }
-  setAuth(auth);
+
+  const snapshot = {
+    $id: user.$id || "",
+    name: user.name || "",
+    email: user.email || ""
+  };
+  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(snapshot));
 }
 
-function loadAuth() {
+function loadAuthSnapshot() {
   const raw = localStorage.getItem(AUTH_STORAGE_KEY);
   if (!raw) {
     return null;
@@ -117,103 +137,204 @@ function setError(element, message) {
   element.textContent = message || "";
 }
 
-function setLoading(button, isLoading) {
+function setLoading(button, isLoading, workingLabel) {
   if (!button) {
     return;
   }
+  if (!button.dataset.label) {
+    button.dataset.label = button.textContent;
+  }
   button.disabled = isLoading;
-  button.textContent = isLoading ? "Working..." : button.dataset.label || button.textContent;
+  button.textContent = isLoading ? workingLabel : button.dataset.label;
 }
 
-async function apiFetch(path, options = {}) {
-  const headers = { "Content-Type": "application/json" };
-  if (state.token) {
-    headers.Authorization = `Bearer ${state.token}`;
+function initAppwrite() {
+  if (typeof Appwrite === "undefined") {
+    console.warn("Appwrite SDK is not loaded.");
+    return false;
   }
 
-  const response = await fetch(`${API_BASE}${path}`,
-    {
-      ...options,
-      headers: {
-        ...headers,
-        ...(options.headers || {})
-      }
-    }
-  );
+  const { Client, Account, ID } = Appwrite;
+  const client = new Client()
+    .setEndpoint(APPWRITE_ENDPOINT)
+    .setProject(APPWRITE_PROJECT_ID);
 
-  if (!response.ok) {
-    let message = "Request failed";
-    try {
-      const data = await response.json();
-      message = data?.message || message;
-    } catch (error) {
-      message = response.statusText || message;
-    }
-    throw new Error(message);
-  }
-
-  return response.json();
+  account = new Account(client);
+  AppwriteID = ID;
+  return true;
 }
 
-async function login(identity, password) {
-  setError(elements.loginError, "");
-  if (elements.loginBtn) {
-    elements.loginBtn.dataset.label = elements.loginBtn.textContent;
+async function refreshAuthState() {
+  if (!account) {
+    return false;
   }
-  setLoading(elements.loginBtn, true);
 
   try {
-    const result = await apiFetch(`/api/collections/${AUTH_COLLECTION}/auth-with-password`, {
-      method: "POST",
-      body: JSON.stringify({ identity, password })
-    });
-    saveAuth(result);
-    if (isLoginPage()) {
-      const target = getReturnTarget();
-      sessionStorage.removeItem("login_return");
-      window.location.href = target;
-      return;
-    }
-    if (elements.password) {
-      elements.password.value = "";
-    }
+    const user = await account.get();
+    setAuth(user);
+    saveAuthSnapshot(user);
+    return true;
   } catch (error) {
-    setError(elements.loginError, error.message || "Login failed.");
-  } finally {
-    setLoading(elements.loginBtn, false);
+    setAuth(null);
+    saveAuthSnapshot(null);
+    return false;
   }
 }
 
-function initAuth() {
-  setReturnTargetFromReferrer();
-  const existingAuth = loadAuth();
-  if (existingAuth?.token) {
-    setAuth(existingAuth);
-  } else {
-    setAuth(null);
+function redirectAfterLoginIfNeeded() {
+  if (!isLoginPage()) {
+    return;
+  }
+  if (!state.user) {
+    return;
   }
 
+  const target = getReturnTarget();
+  sessionStorage.removeItem("login_return");
+  window.location.href = target;
+}
+
+async function login(email, password) {
+  if (!account) {
+    setError(elements.loginError, "Appwrite SDK not loaded.");
+    return;
+  }
+
+  setError(elements.loginError, "");
+  setLoading(elements.loginBtn, true, "Signing in...");
+
+  try {
+    await account.createEmailPasswordSession(email, password);
+    const user = await account.get();
+    setAuth(user);
+    saveAuthSnapshot(user);
+
+    if (elements.loginPassword) {
+      elements.loginPassword.value = "";
+    }
+    redirectAfterLoginIfNeeded();
+  } catch (error) {
+    setError(elements.loginError, error?.message || "Login failed.");
+  } finally {
+    setLoading(elements.loginBtn, false, "Signing in...");
+  }
+}
+
+async function register(name, email, password) {
+  if (!account || !AppwriteID) {
+    setError(elements.registerError, "Appwrite SDK not loaded.");
+    return;
+  }
+
+  setError(elements.registerError, "");
+  setLoading(elements.registerBtn, true, "Creating account...");
+
+  try {
+    await account.create(AppwriteID.unique(), email, password, name || undefined);
+    await account.createEmailPasswordSession(email, password);
+    const user = await account.get();
+    setAuth(user);
+    saveAuthSnapshot(user);
+    redirectAfterLoginIfNeeded();
+  } catch (error) {
+    setError(elements.registerError, error?.message || "Registration failed.");
+  } finally {
+    setLoading(elements.registerBtn, false, "Creating account...");
+  }
+}
+
+function startGoogleLogin() {
+  sessionStorage.setItem("login_return", getReturnTarget());
+  window.location.href = GOOGLE_OAUTH_URL;
+}
+
+async function logout() {
+  if (account) {
+    try {
+      await account.deleteSession("current");
+    } catch (error) {
+      // Ignore logout errors; local UI state is still reset.
+    }
+  }
+
+  setAuth(null);
+  saveAuthSnapshot(null);
+}
+
+function initEventHandlers() {
   if (elements.loginForm) {
     elements.loginForm.addEventListener("submit", (event) => {
       event.preventDefault();
-      const identity = elements.identity ? elements.identity.value.trim() : "";
-      const password = elements.password ? elements.password.value : "";
-      if (!identity || !password) {
-        setError(elements.loginError, "Please enter your credentials.");
+      const email = elements.loginEmail ? elements.loginEmail.value.trim() : "";
+      const password = elements.loginPassword ? elements.loginPassword.value : "";
+
+      if (!email || !password) {
+        setError(elements.loginError, "Please enter your email and password.");
         return;
       }
-      login(identity, password);
+
+      void login(email, password);
+    });
+  }
+
+  if (elements.registerForm) {
+    elements.registerForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const name = elements.registerName ? elements.registerName.value.trim() : "";
+      const email = elements.registerEmail ? elements.registerEmail.value.trim() : "";
+      const password = elements.registerPassword ? elements.registerPassword.value : "";
+      const confirm = elements.registerPasswordConfirm ? elements.registerPasswordConfirm.value : "";
+
+      if (!name || !email || !password) {
+        setError(elements.registerError, "Please complete all required fields.");
+        return;
+      }
+      if (password.length < 8) {
+        setError(elements.registerError, "Password must be at least 8 characters.");
+        return;
+      }
+      if (confirm && confirm !== password) {
+        setError(elements.registerError, "Passwords do not match.");
+        return;
+      }
+
+      void register(name, email, password);
+    });
+  }
+
+  if (elements.googleLoginBtn) {
+    elements.googleLoginBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      startGoogleLogin();
     });
   }
 
   if (elements.logoutBtn) {
     elements.logoutBtn.addEventListener("click", () => {
-      saveAuth(null);
+      void logout();
     });
   }
 }
 
-initAuth();
+async function initAuth() {
+  localStorage.removeItem(LEGACY_AUTH_STORAGE_KEY);
+  setReturnTargetFromReferrer();
+  initEventHandlers();
 
+  const snapshot = loadAuthSnapshot();
+  if (snapshot) {
+    setAuth(snapshot);
+  } else {
+    setAuth(null);
+  }
 
+  if (!initAppwrite()) {
+    return;
+  }
 
+  await refreshAuthState();
+  redirectAfterLoginIfNeeded();
+}
+
+void initAuth();
