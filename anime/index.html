@@ -108,7 +108,8 @@
         <form id="editForm" class="edit-form">
           <label class="edit-field">
             <span>Title *</span>
-            <input id="editTitle" type="text" required />
+            <input id="editTitle" type="text" autocomplete="off" required />
+            <div class="title-suggestions" id="titleSuggestions" hidden></div>
           </label>
           <div class="edit-grid">
             <label class="edit-field">

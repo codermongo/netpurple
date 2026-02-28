@@ -6,6 +6,9 @@ const PAGE_SIZE = 100;
 const THEME_KEY = "darkMode";
 const COVER_CACHE_KEY = "anime_cover_cache_v1";
 const JIKAN_BASE = "https://api.jikan.moe/v4/anime";
+const TITLE_SUGGESTION_LIMIT = 5;
+const TITLE_SUGGESTION_MIN_LENGTH = 2;
+const TITLE_SUGGESTION_DEBOUNCE_MS = 220;
 
 const TIER_VALUES = new Set(["Tier_1", "Tier_2", "Tier_3", "Tier 1", "Tier 2", "Tier 3"]);
 
@@ -30,6 +33,7 @@ const elements = {
   editTitleText: document.querySelector("#editTitleText"),
   editForm: document.querySelector("#editForm"),
   editTitle: document.querySelector("#editTitle"),
+  titleSuggestions: document.querySelector("#titleSuggestions"),
   editTier: document.querySelector("#editTier"),
   editScore: document.querySelector("#editScore"),
   editNotes: document.querySelector("#editNotes"),
@@ -43,6 +47,9 @@ let account = null;
 let Query = null;
 let AppwriteID = null;
 let coverRenderJob = 0;
+let titleSuggestionTimer = null;
+let titleSuggestionAbortController = null;
+let titleSuggestionRequestId = 0;
 
 function escapeHtml(value) {
   return String(value)
@@ -300,6 +307,151 @@ async function fetchCover(title) {
   }
 
   return "";
+}
+
+function clearTitleSuggestions() {
+  if (!elements.titleSuggestions) {
+    return;
+  }
+  elements.titleSuggestions.innerHTML = "";
+  elements.titleSuggestions.hidden = true;
+}
+
+function getSuggestionTitle(item) {
+  const raw = item?.title || item?.title_english || item?.title_japanese || "";
+  return String(raw).trim();
+}
+
+function renderTitleSuggestions(items) {
+  if (!elements.titleSuggestions) {
+    return;
+  }
+
+  if (!Array.isArray(items) || !items.length) {
+    clearTitleSuggestions();
+    return;
+  }
+
+  const markup = items.map((item) => {
+    const safeTitle = escapeHtml(item.title);
+    const image = item.image
+      ? `<img class="title-suggestion-cover" src="${escapeHtml(item.image)}" alt="${safeTitle} cover" loading="lazy" referrerpolicy="no-referrer" />`
+      : `<span class="title-suggestion-cover" aria-hidden="true"></span>`;
+    return `
+      <button class="title-suggestion-btn" type="button" data-suggestion-title="${safeTitle}">
+        ${image}
+        <span class="title-suggestion-name">${safeTitle}</span>
+      </button>
+    `;
+  }).join("");
+
+  elements.titleSuggestions.innerHTML = markup;
+  elements.titleSuggestions.hidden = false;
+}
+
+function normalizeSuggestionKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function abortPendingTitleSuggestionRequest() {
+  if (titleSuggestionAbortController) {
+    titleSuggestionAbortController.abort();
+    titleSuggestionAbortController = null;
+  }
+}
+
+async function loadTitleSuggestions(rawQuery) {
+  const query = String(rawQuery || "").trim();
+  if (query.length < TITLE_SUGGESTION_MIN_LENGTH) {
+    clearTitleSuggestions();
+    return;
+  }
+
+  abortPendingTitleSuggestionRequest();
+  const controller = new AbortController();
+  titleSuggestionAbortController = controller;
+  const requestId = ++titleSuggestionRequestId;
+
+  try {
+    const response = await fetch(
+      `${JIKAN_BASE}?q=${encodeURIComponent(query)}&limit=${TITLE_SUGGESTION_LIMIT + 3}&sfw=true`,
+      { signal: controller.signal }
+    );
+
+    if (!response.ok) {
+      clearTitleSuggestions();
+      return;
+    }
+
+    const payload = await response.json();
+    if (requestId !== titleSuggestionRequestId) {
+      return;
+    }
+
+    const seen = new Set();
+    const items = [];
+    const data = Array.isArray(payload?.data) ? payload.data : [];
+
+    for (const entry of data) {
+      const title = getSuggestionTitle(entry);
+      if (!title) {
+        continue;
+      }
+      const key = normalizeSuggestionKey(title);
+      if (!key || seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      items.push({
+        title,
+        image: getCoverUrlFromItem(entry)
+      });
+      if (items.length >= TITLE_SUGGESTION_LIMIT) {
+        break;
+      }
+    }
+
+    renderTitleSuggestions(items);
+  } catch (error) {
+    if (error?.name !== "AbortError") {
+      clearTitleSuggestions();
+    }
+  } finally {
+    if (titleSuggestionAbortController === controller) {
+      titleSuggestionAbortController = null;
+    }
+  }
+}
+
+function queueTitleSuggestions() {
+  if (titleSuggestionTimer) {
+    window.clearTimeout(titleSuggestionTimer);
+  }
+
+  const value = elements.editTitle ? elements.editTitle.value : "";
+  const query = String(value || "").trim();
+
+  if (query.length < TITLE_SUGGESTION_MIN_LENGTH) {
+    abortPendingTitleSuggestionRequest();
+    clearTitleSuggestions();
+    return;
+  }
+
+  titleSuggestionTimer = window.setTimeout(() => {
+    titleSuggestionTimer = null;
+    void loadTitleSuggestions(query);
+  }, TITLE_SUGGESTION_DEBOUNCE_MS);
+}
+
+function applySuggestedTitle(title) {
+  if (!elements.editTitle) {
+    return;
+  }
+  elements.editTitle.value = String(title || "").trim();
+  clearTitleSuggestions();
+  elements.editTitle.focus();
 }
 
 function createPlaceholder(title) {
@@ -635,6 +787,8 @@ function openEditor(record) {
     elements.editNotes.value = record?.notes || "";
   }
 
+  abortPendingTitleSuggestionRequest();
+  clearTitleSuggestions();
   setEditError("");
   elements.editOverlay.hidden = false;
   elements.editOverlay.setAttribute("aria-hidden", "false");
@@ -652,6 +806,12 @@ function closeEditor() {
   }
 
   state.activeEditId = null;
+  if (titleSuggestionTimer) {
+    window.clearTimeout(titleSuggestionTimer);
+    titleSuggestionTimer = null;
+  }
+  abortPendingTitleSuggestionRequest();
+  clearTitleSuggestions();
   setEditError("");
   setEditLoading(false);
   elements.editOverlay.hidden = true;
@@ -788,6 +948,11 @@ function handleGlobalKeydown(event) {
     return;
   }
 
+  if (elements.titleSuggestions && !elements.titleSuggestions.hidden) {
+    clearTitleSuggestions();
+    return;
+  }
+
   if (!elements.editOverlay || elements.editOverlay.hidden) {
     return;
   }
@@ -822,6 +987,38 @@ function initEvents() {
   if (elements.editForm) {
     elements.editForm.addEventListener("submit", (event) => {
       void saveEditor(event);
+    });
+  }
+
+  if (elements.editTitle) {
+    elements.editTitle.addEventListener("input", () => {
+      queueTitleSuggestions();
+    });
+
+    elements.editTitle.addEventListener("focus", () => {
+      queueTitleSuggestions();
+    });
+
+    elements.editTitle.addEventListener("blur", () => {
+      window.setTimeout(() => {
+        clearTitleSuggestions();
+      }, 130);
+    });
+  }
+
+  if (elements.titleSuggestions) {
+    elements.titleSuggestions.addEventListener("mousedown", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+      const button = target.closest("[data-suggestion-title]");
+      if (!button) {
+        return;
+      }
+      event.preventDefault();
+      const title = button.getAttribute("data-suggestion-title") || "";
+      applySuggestedTitle(title);
     });
   }
 
