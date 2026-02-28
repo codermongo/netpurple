@@ -65,52 +65,54 @@
                 <button class="btn-secondary settings-resend" id="resend-verification-btn" type="button" hidden>Resend verification email</button>
                 <p class="form-feedback" id="verify-feedback" role="status" aria-live="polite"></p>
 
-                <div class="settings-section">
-                    <h3>Update name</h3>
-                    <form class="form" id="name-form">
-                        <label class="field">
-                            <span>Name</span>
-                            <input type="text" id="name-input" name="name" placeholder="Your display name" required />
-                        </label>
-                        <button class="primary" id="name-save-btn" type="submit">Save name</button>
-                        <p class="form-feedback" id="name-feedback" role="status" aria-live="polite"></p>
-                    </form>
-                </div>
+                <div class="settings-sections-grid">
+                    <div class="settings-section">
+                        <h3>Update name</h3>
+                        <form class="form" id="name-form">
+                            <label class="field">
+                                <span>Name</span>
+                                <input type="text" id="name-input" name="name" placeholder="Your display name" required />
+                            </label>
+                            <button class="primary" id="name-save-btn" type="submit">Save name</button>
+                            <p class="form-feedback" id="name-feedback" role="status" aria-live="polite"></p>
+                        </form>
+                    </div>
 
-                <div class="settings-section">
-                    <h3>Update email</h3>
-                    <form class="form" id="email-form">
-                        <label class="field">
-                            <span>Email</span>
-                            <input type="email" id="email-input" name="email" placeholder="you@example.com" required />
-                        </label>
-                        <label class="field">
-                            <span>Current password</span>
-                            <input type="password" id="email-password-input" name="password" placeholder="Required to change email" required />
-                        </label>
-                        <button class="primary" id="email-save-btn" type="submit">Save email</button>
-                        <p class="form-feedback" id="email-feedback" role="status" aria-live="polite"></p>
-                    </form>
-                </div>
+                    <div class="settings-section">
+                        <h3>Update email</h3>
+                        <form class="form" id="email-form">
+                            <label class="field">
+                                <span>Email</span>
+                                <input type="email" id="email-input" name="email" placeholder="you@example.com" required />
+                            </label>
+                            <label class="field">
+                                <span>Current password</span>
+                                <input type="password" id="email-password-input" name="password" placeholder="Required to change email" required />
+                            </label>
+                            <button class="primary" id="email-save-btn" type="submit">Save email</button>
+                            <p class="form-feedback" id="email-feedback" role="status" aria-live="polite"></p>
+                        </form>
+                    </div>
 
-                <div class="settings-section">
-                    <h3>Update password</h3>
-                    <form class="form" id="password-form">
-                        <label class="field">
-                            <span>Current password</span>
-                            <input type="password" id="password-current-input" name="current-password" placeholder="Current password" required />
-                        </label>
-                        <label class="field">
-                            <span>New password</span>
-                            <input type="password" id="password-new-input" name="new-password" placeholder="At least 8 characters" minlength="8" required />
-                        </label>
-                        <label class="field">
-                            <span>Confirm new password</span>
-                            <input type="password" id="password-confirm-input" name="confirm-password" placeholder="Repeat new password" minlength="8" required />
-                        </label>
-                        <button class="primary" id="password-save-btn" type="submit">Save password</button>
-                        <p class="form-feedback" id="password-feedback" role="status" aria-live="polite"></p>
-                    </form>
+                    <div class="settings-section">
+                        <h3>Update password</h3>
+                        <form class="form" id="password-form">
+                            <label class="field">
+                                <span>Current password</span>
+                                <input type="password" id="password-current-input" name="current-password" placeholder="Current password" required />
+                            </label>
+                            <label class="field">
+                                <span>New password</span>
+                                <input type="password" id="password-new-input" name="new-password" placeholder="At least 8 characters" minlength="8" required />
+                            </label>
+                            <label class="field">
+                                <span>Confirm new password</span>
+                                <input type="password" id="password-confirm-input" name="confirm-password" placeholder="Repeat new password" minlength="8" required />
+                            </label>
+                            <button class="primary" id="password-save-btn" type="submit">Save password</button>
+                            <p class="form-feedback" id="password-feedback" role="status" aria-live="polite"></p>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
