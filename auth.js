@@ -30,6 +30,7 @@ const elements = {
   showLoginLink: document.querySelector("#show-login-link"),
   loginView: document.querySelector("#login-view"),
   registerView: document.querySelector("#register-view"),
+  userMenu: document.querySelector("#user-menu"),
   logoutBtn: document.querySelector("#logout-btn"),
   userHandle: document.querySelector("#user-handle")
 };
@@ -531,6 +532,17 @@ function initEventHandlers() {
   if (elements.logoutBtn) {
     elements.logoutBtn.addEventListener("click", () => {
       void logout();
+    });
+  }
+
+  if (elements.userMenu) {
+    elements.userMenu.addEventListener("click", (event) => {
+      if (event.target instanceof Element && event.target.closest("#logout-btn")) {
+        return;
+      }
+      if (state.user) {
+        window.location.href = "/user";
+      }
     });
   }
 }

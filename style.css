@@ -649,6 +649,94 @@ body.dark-mode .menu-item-circle .moon-icon {
   text-align: center;
 }
 
+.settings-grid {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.settings-card {
+  cursor: default;
+  text-align: left;
+  max-width: 700px;
+  width: 100%;
+  gap: 10px;
+}
+
+.settings-subtitle {
+  margin-bottom: 2px;
+}
+
+.settings-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 4px 0;
+}
+
+.settings-status-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.verify-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid var(--card-glass-stroke);
+  color: var(--text-secondary);
+  background: rgba(12, 12, 20, 0.45);
+}
+
+.verify-pill[data-state="verified"] {
+  color: #2f855a;
+  border-color: rgba(47, 133, 90, 0.35);
+  background: rgba(47, 133, 90, 0.12);
+}
+
+.verify-pill[data-state="unverified"] {
+  color: #c53030;
+  border-color: rgba(197, 48, 48, 0.35);
+  background: rgba(197, 48, 48, 0.12);
+}
+
+.settings-resend {
+  width: fit-content;
+}
+
+.settings-section {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--card-glass-stroke);
+}
+
+.settings-section h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.form-feedback {
+  min-height: 18px;
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.form-feedback[data-tone="error"] {
+  color: #c53030;
+}
+
+.form-feedback[data-tone="success"] {
+  color: #2f855a;
+}
+
 .auth-register {
   margin-top: 10px;
   padding-top: 8px;
@@ -787,6 +875,15 @@ body.low-power-mode .tool-card:hover .tool-icon {
   }
 
   .tool-card { padding: 1.2rem; }
+
+  .settings-status-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .settings-resend {
+    width: 100%;
+  }
 }
 
 @media (max-width: 768px), (prefers-reduced-motion: reduce), (prefers-reduced-data: reduce) {
