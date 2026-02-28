@@ -474,6 +474,10 @@ body.dark-mode .menu-item-circle .moon-icon {
   flex-grow: 0;
 }
 
+.auth-view[hidden] {
+  display: none !important;
+}
+
 .form {
   display: grid;
   gap: 16px;
@@ -571,6 +575,19 @@ body.dark-mode .menu-item-circle .moon-icon {
   border-radius: 8px;
   padding: 11px 16px;
   text-decoration: none;
+}
+
+.auth-switch {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.auth-switch a {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .auth-register {

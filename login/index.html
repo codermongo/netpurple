@@ -67,30 +67,37 @@
     <section class="services">
         <div class="container auth-grid">
             <div class="tool-card auth-card" id="login-panel">
-                <h2>Sign in</h2>
-                <p>Use your Appwrite account to continue.</p>
-                <form id="login-form" class="form">
-                    <label class="field">
-                        <span>Email</span>
-                        <input type="email" name="email" id="login-email" placeholder="you@example.com" required />
-                    </label>
-                    <label class="field">
-                        <span>Password</span>
-                        <input type="password" name="password" id="login-password" placeholder="********" required />
-                    </label>
-                    <button class="primary" id="login-btn" type="submit">Sign in</button>
-                    <p class="form-error" id="login-error" role="alert"></p>
-                </form>
+                <div class="auth-view" id="login-view">
+                    <h2>Sign in</h2>
+                    <p>Use your Appwrite account to continue.</p>
+                    <form id="login-form" class="form">
+                        <label class="field">
+                            <span>Email</span>
+                            <input type="email" name="email" id="login-email" placeholder="you@example.com" required />
+                        </label>
+                        <label class="field">
+                            <span>Password</span>
+                            <input type="password" name="password" id="login-password" placeholder="********" required />
+                        </label>
+                        <button class="primary" id="login-btn" type="submit">Sign in</button>
+                        <p class="form-error" id="login-error" role="alert"></p>
+                    </form>
 
-                <div class="form-divider" aria-hidden="true"><span>or</span></div>
+                    <div class="form-divider" aria-hidden="true"><span>or</span></div>
 
-                <a class="btn-secondary oauth-btn" id="google-login-btn" href="/login">
-                    <i class="fa-brands fa-google" aria-hidden="true"></i>
-                    Continue with Google
-                </a>
+                    <a class="btn-secondary oauth-btn" id="google-login-btn" href="/login">
+                        <i class="fa-brands fa-google" aria-hidden="true"></i>
+                        Continue with Google
+                    </a>
 
-                <div class="auth-register">
-                    <h3>Create account</h3>
+                    <p class="auth-switch">
+                        Neeed a account?
+                        <a href="/login?view=register" id="show-register-link">Register</a>
+                    </p>
+                </div>
+
+                <div class="auth-view" id="register-view" hidden>
+                    <h2>Create account</h2>
                     <form id="register-form" class="form">
                         <label class="field">
                             <span>Name</span>
@@ -111,6 +118,9 @@
                         <button class="primary" id="register-btn" type="submit">Register</button>
                         <p class="form-error" id="register-error" role="alert"></p>
                     </form>
+                    <p class="auth-switch">
+                        <a href="/login" id="show-login-link">Back to sign in</a>
+                    </p>
                 </div>
             </div>
         </div>

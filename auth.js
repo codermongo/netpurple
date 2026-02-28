@@ -21,6 +21,10 @@ const elements = {
   registerPassword: document.querySelector("#register-password"),
   registerPasswordConfirm: document.querySelector("#register-password-confirm"),
   googleLoginBtn: document.querySelector("#google-login-btn"),
+  showRegisterLink: document.querySelector("#show-register-link"),
+  showLoginLink: document.querySelector("#show-login-link"),
+  loginView: document.querySelector("#login-view"),
+  registerView: document.querySelector("#register-view"),
   logoutBtn: document.querySelector("#logout-btn"),
   userHandle: document.querySelector("#user-handle")
 };
@@ -73,6 +77,36 @@ function getReturnTarget() {
     return stored;
   }
   return "/";
+}
+
+function getRequestedAuthView() {
+  const params = new URLSearchParams(window.location.search);
+  const view = params.get("view");
+  return view === "register" ? "register" : "login";
+}
+
+function updateAuthViewInUrl(view) {
+  const url = new URL(window.location.href);
+  if (view === "register") {
+    url.searchParams.set("view", "register");
+  } else {
+    url.searchParams.delete("view");
+  }
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function setAuthView(view) {
+  const showRegister = view === "register";
+
+  if (elements.loginView) {
+    elements.loginView.hidden = showRegister;
+  }
+  if (elements.registerView) {
+    elements.registerView.hidden = !showRegister;
+  }
+
+  setError(elements.loginError, "");
+  setError(elements.registerError, "");
 }
 
 function getUserHandle(user) {
@@ -327,6 +361,22 @@ function initEventHandlers() {
     });
   }
 
+  if (elements.showRegisterLink) {
+    elements.showRegisterLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      setAuthView("register");
+      updateAuthViewInUrl("register");
+    });
+  }
+
+  if (elements.showLoginLink) {
+    elements.showLoginLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      setAuthView("login");
+      updateAuthViewInUrl("login");
+    });
+  }
+
   if (elements.logoutBtn) {
     elements.logoutBtn.addEventListener("click", () => {
       void logout();
@@ -336,6 +386,7 @@ function initEventHandlers() {
 
 async function initAuth() {
   localStorage.removeItem(LEGACY_AUTH_STORAGE_KEY);
+  setAuthView(getRequestedAuthView());
   setReturnTargetFromReferrer();
   initEventHandlers();
 
