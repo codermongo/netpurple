@@ -85,10 +85,13 @@ function getReturnTarget() {
 }
 
 function getEmailVerificationTarget() {
-  const url = new URL("/login", window.location.origin);
-  const target = getReturnTarget();
-  if (target.startsWith("/")) {
-    url.searchParams.set("return", target);
+  return new URL("/verify", window.location.origin).toString();
+}
+
+function getVerificationPageTarget(verificationSent) {
+  const url = new URL("/verify", window.location.origin);
+  if (!verificationSent) {
+    url.searchParams.set("sent", "0");
   }
   return url.toString();
 }
@@ -365,14 +368,7 @@ async function register(name, email, password) {
     setAuth(user);
     saveAuthSnapshot(user);
     clearRegisterForm();
-    setAuthView("login");
-    updateAuthViewInUrl("login");
-    if (verificationSent) {
-      setVerificationMessage("Account created. Check your email for the verification link.", "success");
-    } else {
-      setVerificationMessage("Account created, but verification email could not be sent. Try again.", "error");
-    }
-    redirectAfterLoginIfNeeded();
+    window.location.href = getVerificationPageTarget(verificationSent);
   } catch (error) {
     setError(elements.registerError, error?.message || "Registration failed.");
   } finally {
