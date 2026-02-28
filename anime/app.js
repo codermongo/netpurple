@@ -363,8 +363,8 @@ function normalizeAnimeDocument(document) {
   const score = Number(document?.score);
   if (!Number.isFinite(score)) {
     errors.push("score is required and must be a number.");
-  } else if (score < 0 || score > 10) {
-    errors.push("score must be between 0 and 10.");
+  } else if (score < 0 || score > 15) {
+    errors.push("score must be between 0 and 15.");
   }
 
   let tier = null;
@@ -673,8 +673,8 @@ function getEditorPayload() {
   if (!Number.isFinite(score)) {
     return { ok: false, error: "Score must be a valid number." };
   }
-  if (score < 0 || score > 10) {
-    return { ok: false, error: "Score must be between 0 and 10." };
+  if (score < 0 || score > 15) {
+    return { ok: false, error: "Score must be between 0 and 15." };
   }
 
   if (tierRaw && !TIER_VALUES.has(tierRaw)) {
