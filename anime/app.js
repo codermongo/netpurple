@@ -115,6 +115,13 @@ function normalizeTierValue(tier) {
   return value;
 }
 
+function parseScoreInput(value) {
+  const normalized = String(value || "")
+    .trim()
+    .replace(",", ".");
+  return Number(normalized);
+}
+
 function getLoginHref() {
   const returnPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   const url = new URL("/login", window.location.origin);
@@ -669,7 +676,7 @@ function getEditorPayload() {
     return { ok: false, error: "Score is required." };
   }
 
-  const score = Number(scoreRaw);
+  const score = parseScoreInput(scoreRaw);
   if (!Number.isFinite(score)) {
     return { ok: false, error: "Score must be a valid number." };
   }
