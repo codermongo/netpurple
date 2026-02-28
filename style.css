@@ -722,6 +722,20 @@ body.dark-mode .menu-item-circle .moon-icon {
   font-weight: 600;
 }
 
+.settings-sections-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.settings-sections-grid .settings-section {
+  margin-top: 0;
+  padding: 12px;
+  border: 1px solid var(--card-glass-stroke);
+  border-radius: 10px;
+  background: rgba(12, 12, 20, 0.28);
+}
+
 .form-feedback {
   min-height: 18px;
   margin: 0;
@@ -883,6 +897,10 @@ body.low-power-mode .tool-card:hover .tool-icon {
 
   .settings-resend {
     width: 100%;
+  }
+
+  .settings-sections-grid {
+    grid-template-columns: 1fr;
   }
 }
 
