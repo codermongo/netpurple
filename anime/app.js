@@ -7,7 +7,7 @@ const THEME_KEY = "darkMode";
 const COVER_CACHE_KEY = "anime_cover_cache_v1";
 const JIKAN_BASE = "https://api.jikan.moe/v4/anime";
 
-const TIER_VALUES = new Set(["Tier_1", "Tier_2", "Tier_3"]);
+const TIER_VALUES = new Set(["Tier_1", "Tier_2", "Tier_3", "Tier 1", "Tier 2", "Tier 3"]);
 
 const state = {
   records: [],
@@ -70,16 +70,49 @@ function formatScore(score) {
 }
 
 function getTierClass(tier) {
-  if (tier === "Tier_1") {
+  if (tier === "Tier_1" || tier === "Tier 1") {
     return "tier-1";
   }
-  if (tier === "Tier_2") {
+  if (tier === "Tier_2" || tier === "Tier 2") {
     return "tier-2";
   }
-  if (tier === "Tier_3") {
+  if (tier === "Tier_3" || tier === "Tier 3") {
     return "tier-3";
   }
   return "";
+}
+
+function formatTierLabel(tier) {
+  if (!tier) {
+    return "No tier";
+  }
+  if (tier === "Tier_1" || tier === "Tier 1") {
+    return "Tier 1";
+  }
+  if (tier === "Tier_2" || tier === "Tier 2") {
+    return "Tier 2";
+  }
+  if (tier === "Tier_3" || tier === "Tier 3") {
+    return "Tier 3";
+  }
+  return String(tier);
+}
+
+function normalizeTierValue(tier) {
+  const value = String(tier || "").trim();
+  if (!value) {
+    return "";
+  }
+  if (value === "Tier 1") {
+    return "Tier_1";
+  }
+  if (value === "Tier 2") {
+    return "Tier_2";
+  }
+  if (value === "Tier 3") {
+    return "Tier_3";
+  }
+  return value;
 }
 
 function getLoginHref() {
@@ -330,15 +363,15 @@ function normalizeAnimeDocument(document) {
   const score = Number(document?.score);
   if (!Number.isFinite(score)) {
     errors.push("score is required and must be a number.");
-  } else if (score < 0 || score > 15) {
-    errors.push("score must be between 0 and 15.");
+  } else if (score < 0 || score > 10) {
+    errors.push("score must be between 0 and 10.");
   }
 
   let tier = null;
   if (document?.tier !== null && document?.tier !== undefined && String(document.tier).trim() !== "") {
-    tier = String(document.tier).trim();
+    tier = normalizeTierValue(document.tier);
     if (!TIER_VALUES.has(tier)) {
-      errors.push("tier must be one of Tier_1, Tier_2, Tier_3.");
+      errors.push("tier must be Tier_1/Tier_2/Tier_3 (or Tier 1/Tier 2/Tier 3).");
     }
   }
 
@@ -387,20 +420,6 @@ function sortAnime(records) {
   return records
     .slice()
     .sort((left, right) => {
-      const leftRank = left.rank;
-      const rightRank = right.rank;
-      const hasLeftRank = leftRank !== null;
-      const hasRightRank = rightRank !== null;
-
-      if (hasLeftRank && hasRightRank && leftRank !== rightRank) {
-        return leftRank - rightRank;
-      }
-      if (hasLeftRank && !hasRightRank) {
-        return -1;
-      }
-      if (!hasLeftRank && hasRightRank) {
-        return 1;
-      }
       if (left.score !== right.score) {
         return right.score - left.score;
       }
@@ -489,9 +508,8 @@ function renderList() {
   }
 
   const cards = filtered.map((record, index) => {
-    const fallbackRank = index + 1;
-    const rankText = record.rank !== null ? `#${record.rank}` : `#${fallbackRank}`;
-    const tierText = record.tier || "No tier";
+    const rankText = `#${index + 1}`;
+    const tierText = formatTierLabel(record.tier);
     const tierClass = getTierClass(record.tier);
     const notes = record.notes ? `<p class="card-notes">${escapeHtml(record.notes)}</p>` : "";
     const actions = state.canManage
@@ -514,7 +532,7 @@ function renderList() {
               <p class="card-meta ${tierClass}">Tier: ${escapeHtml(tierText)}</p>
             </div>
             <div class="head-right">
-              <span class="score-pill">Score: ${escapeHtml(formatScore(record.score))}/15</span>
+              <span class="score-pill">Score: ${escapeHtml(formatScore(record.score))}/10</span>
               ${actions}
             </div>
           </div>
@@ -601,7 +619,7 @@ function openEditor(record) {
     elements.editTitle.value = record?.title || "";
   }
   if (elements.editTier) {
-    elements.editTier.value = record?.tier || "";
+    elements.editTier.value = record?.tier ? formatTierLabel(record.tier) : "";
   }
   if (elements.editScore) {
     elements.editScore.value = Number.isFinite(record?.score) ? String(record.score) : "";
@@ -636,7 +654,7 @@ function closeEditor() {
 
 function getEditorPayload() {
   const title = elements.editTitle ? elements.editTitle.value.trim() : "";
-  const tierRaw = elements.editTier ? elements.editTier.value.trim() : "";
+  const tierRaw = elements.editTier ? normalizeTierValue(elements.editTier.value) : "";
   const scoreRaw = elements.editScore ? elements.editScore.value.trim() : "";
   const notes = elements.editNotes ? elements.editNotes.value.trim() : "";
 
@@ -655,12 +673,12 @@ function getEditorPayload() {
   if (!Number.isFinite(score)) {
     return { ok: false, error: "Score must be a valid number." };
   }
-  if (score < 0 || score > 15) {
-    return { ok: false, error: "Score must be between 0 and 15." };
+  if (score < 0 || score > 10) {
+    return { ok: false, error: "Score must be between 0 and 10." };
   }
 
   if (tierRaw && !TIER_VALUES.has(tierRaw)) {
-    return { ok: false, error: "Tier must be Tier_1, Tier_2, or Tier_3." };
+    return { ok: false, error: "Tier must be Tier_1/Tier_2/Tier_3 (or Tier 1/Tier 2/Tier 3)." };
   }
 
   if (notes.length > 1000) {
