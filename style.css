@@ -590,6 +590,46 @@ body.dark-mode .menu-item-circle .moon-icon {
   text-underline-offset: 2px;
 }
 
+.verify-panel {
+  margin-top: 6px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-glass-stroke);
+  background: rgba(12, 12, 20, 0.45);
+}
+
+.verify-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.verify-text {
+  margin: 6px 0 10px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.verify-btn {
+  width: 100%;
+}
+
+.verify-message {
+  min-height: 18px;
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.verify-message[data-tone="error"] {
+  color: #c53030;
+}
+
+.verify-message[data-tone="success"] {
+  color: #2f855a;
+}
+
 .auth-register {
   margin-top: 10px;
   padding-top: 8px;
