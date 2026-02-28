@@ -708,6 +708,10 @@ body.dark-mode .menu-item-circle .moon-icon {
 
 .settings-resend {
   width: fit-content;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .settings-section {
@@ -734,6 +738,23 @@ body.dark-mode .menu-item-circle .moon-icon {
   border: 1px solid var(--card-glass-stroke);
   border-radius: 10px;
   background: rgba(12, 12, 20, 0.28);
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-sections-grid .form {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-sections-grid .primary {
+  min-height: 44px;
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .form-feedback {
