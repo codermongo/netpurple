@@ -630,6 +630,25 @@ body.dark-mode .menu-item-circle .moon-icon {
   color: #2f855a;
 }
 
+.verify-card {
+  max-width: 520px;
+}
+
+.verify-description {
+  margin: 6px 0 10px;
+}
+
+.verify-action {
+  width: 100%;
+}
+
+.verify-auto {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
 .auth-register {
   margin-top: 10px;
   padding-top: 8px;
