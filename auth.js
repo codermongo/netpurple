@@ -4,7 +4,8 @@ const AUTH_STORAGE_KEY = "appwrite_auth";
 const LEGACY_AUTH_STORAGE_KEY = "pb_auth";
 
 const state = {
-  user: null
+  user: null,
+  justVerifiedEmail: false
 };
 
 const elements = {
@@ -22,6 +23,7 @@ const elements = {
   registerPasswordConfirm: document.querySelector("#register-password-confirm"),
   googleLoginBtn: document.querySelector("#google-login-btn"),
   verifyPanel: document.querySelector("#verify-panel"),
+  verifyTitle: document.querySelector("#verify-title"),
   sendVerificationBtn: document.querySelector("#send-verification-btn"),
   verificationMessage: document.querySelector("#verification-message"),
   showRegisterLink: document.querySelector("#show-register-link"),
@@ -126,6 +128,12 @@ function setVerificationMessage(message, tone) {
     return;
   }
 
+  if (elements.verifyTitle) {
+    elements.verifyTitle.textContent = tone === "success"
+      ? "Email verified"
+      : "Email verification required";
+  }
+
   elements.verificationMessage.textContent = message || "";
   if (tone) {
     elements.verificationMessage.dataset.tone = tone;
@@ -150,13 +158,15 @@ function updateVerificationUi(user) {
 
 function clearVerificationParamsFromUrl() {
   const url = new URL(window.location.href);
-  const hasVerificationParams = url.searchParams.has("userId") || url.searchParams.has("secret");
+  const sensitiveParams = ["userId", "secret", "expire", "expires", "token"];
+  const hasVerificationParams = sensitiveParams.some((key) => url.searchParams.has(key));
   if (!hasVerificationParams) {
     return;
   }
 
-  url.searchParams.delete("userId");
-  url.searchParams.delete("secret");
+  for (const key of sensitiveParams) {
+    url.searchParams.delete(key);
+  }
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
@@ -290,6 +300,10 @@ function redirectAfterLoginIfNeeded() {
     return;
   }
   if (!state.user) {
+    return;
+  }
+  if (state.justVerifiedEmail) {
+    state.justVerifiedEmail = false;
     return;
   }
   if (state.user.emailVerification === false) {
@@ -437,8 +451,10 @@ async function handleEmailVerificationCallback() {
 
   try {
     await account.updateVerification(userId, secret);
+    state.justVerifiedEmail = true;
     setVerificationMessage("Email verified successfully.", "success");
   } catch (error) {
+    state.justVerifiedEmail = false;
     setVerificationMessage(error?.message || "Email verification failed.", "error");
   } finally {
     clearVerificationParamsFromUrl();
