@@ -21,6 +21,9 @@ const elements = {
   registerPassword: document.querySelector("#register-password"),
   registerPasswordConfirm: document.querySelector("#register-password-confirm"),
   googleLoginBtn: document.querySelector("#google-login-btn"),
+  verifyPanel: document.querySelector("#verify-panel"),
+  sendVerificationBtn: document.querySelector("#send-verification-btn"),
+  verificationMessage: document.querySelector("#verification-message"),
   showRegisterLink: document.querySelector("#show-register-link"),
   showLoginLink: document.querySelector("#show-login-link"),
   loginView: document.querySelector("#login-view"),
@@ -79,6 +82,15 @@ function getReturnTarget() {
   return "/";
 }
 
+function getEmailVerificationTarget() {
+  const url = new URL("/login", window.location.origin);
+  const target = getReturnTarget();
+  if (target.startsWith("/")) {
+    url.searchParams.set("return", target);
+  }
+  return url.toString();
+}
+
 function getRequestedAuthView() {
   const params = new URLSearchParams(window.location.search);
   const view = params.get("view");
@@ -109,6 +121,45 @@ function setAuthView(view) {
   setError(elements.registerError, "");
 }
 
+function setVerificationMessage(message, tone) {
+  if (!elements.verificationMessage) {
+    return;
+  }
+
+  elements.verificationMessage.textContent = message || "";
+  if (tone) {
+    elements.verificationMessage.dataset.tone = tone;
+  } else {
+    delete elements.verificationMessage.dataset.tone;
+  }
+}
+
+function updateVerificationUi(user) {
+  if (!elements.verifyPanel) {
+    return;
+  }
+
+  const needsVerification = Boolean(user && user.emailVerification === false);
+  const hasMessage = Boolean(elements.verificationMessage?.textContent);
+  elements.verifyPanel.hidden = !needsVerification && !hasMessage;
+
+  if (needsVerification && !hasMessage) {
+    setVerificationMessage("Email not verified yet.", "error");
+  }
+}
+
+function clearVerificationParamsFromUrl() {
+  const url = new URL(window.location.href);
+  const hasVerificationParams = url.searchParams.has("userId") || url.searchParams.has("secret");
+  if (!hasVerificationParams) {
+    return;
+  }
+
+  url.searchParams.delete("userId");
+  url.searchParams.delete("secret");
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
 function getUserHandle(user) {
   const name = user?.name || "";
   if (name.trim()) {
@@ -135,6 +186,8 @@ function setAuth(user) {
       elements.userHandle.textContent = "User";
     }
   }
+
+  updateVerificationUi(state.user);
 }
 
 function saveAuthSnapshot(user) {
@@ -146,7 +199,8 @@ function saveAuthSnapshot(user) {
   const snapshot = {
     $id: user.$id || "",
     name: user.name || "",
-    email: user.email || ""
+    email: user.email || "",
+    emailVerification: Boolean(user.emailVerification)
   };
   localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(snapshot));
 }
@@ -180,6 +234,21 @@ function setLoading(button, isLoading, workingLabel) {
   }
   button.disabled = isLoading;
   button.textContent = isLoading ? workingLabel : button.dataset.label;
+}
+
+function clearRegisterForm() {
+  if (elements.registerName) {
+    elements.registerName.value = "";
+  }
+  if (elements.registerEmail) {
+    elements.registerEmail.value = "";
+  }
+  if (elements.registerPassword) {
+    elements.registerPassword.value = "";
+  }
+  if (elements.registerPasswordConfirm) {
+    elements.registerPasswordConfirm.value = "";
+  }
 }
 
 function initAppwrite() {
@@ -221,6 +290,10 @@ function redirectAfterLoginIfNeeded() {
     return;
   }
   if (!state.user) {
+    return;
+  }
+  if (state.user.emailVerification === false) {
+    setVerificationMessage("Please verify your email before continuing.", "error");
     return;
   }
 
@@ -267,14 +340,48 @@ async function register(name, email, password) {
   try {
     await account.create(AppwriteID.unique(), email, password, name || undefined);
     await account.createEmailPasswordSession(email, password);
+    let verificationSent = false;
+    try {
+      await account.createVerification(getEmailVerificationTarget());
+      verificationSent = true;
+    } catch {
+      verificationSent = false;
+    }
     const user = await account.get();
     setAuth(user);
     saveAuthSnapshot(user);
+    clearRegisterForm();
+    setAuthView("login");
+    updateAuthViewInUrl("login");
+    if (verificationSent) {
+      setVerificationMessage("Account created. Check your email for the verification link.", "success");
+    } else {
+      setVerificationMessage("Account created, but verification email could not be sent. Try again.", "error");
+    }
     redirectAfterLoginIfNeeded();
   } catch (error) {
     setError(elements.registerError, error?.message || "Registration failed.");
   } finally {
     setLoading(elements.registerBtn, false, "Creating account...");
+  }
+}
+
+async function sendVerificationEmail() {
+  if (!account) {
+    setVerificationMessage("Appwrite SDK not loaded.", "error");
+    return;
+  }
+
+  setVerificationMessage("");
+  setLoading(elements.sendVerificationBtn, true, "Sending...");
+
+  try {
+    await account.createVerification(getEmailVerificationTarget());
+    setVerificationMessage("Verification email sent.", "success");
+  } catch (error) {
+    setVerificationMessage(error?.message || "Failed to send verification email.", "error");
+  } finally {
+    setLoading(elements.sendVerificationBtn, false, "Sending...");
   }
 }
 
@@ -310,6 +417,32 @@ async function logout() {
 
   setAuth(null);
   saveAuthSnapshot(null);
+  setVerificationMessage("");
+}
+
+async function handleEmailVerificationCallback() {
+  if (!isLoginPage() || !account) {
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const userId = params.get("userId");
+  const secret = params.get("secret");
+  if (!userId || !secret) {
+    return;
+  }
+
+  setAuthView("login");
+  updateAuthViewInUrl("login");
+
+  try {
+    await account.updateVerification(userId, secret);
+    setVerificationMessage("Email verified successfully.", "success");
+  } catch (error) {
+    setVerificationMessage(error?.message || "Email verification failed.", "error");
+  } finally {
+    clearVerificationParamsFromUrl();
+  }
 }
 
 function initEventHandlers() {
@@ -361,6 +494,12 @@ function initEventHandlers() {
     });
   }
 
+  if (elements.sendVerificationBtn) {
+    elements.sendVerificationBtn.addEventListener("click", () => {
+      void sendVerificationEmail();
+    });
+  }
+
   if (elements.showRegisterLink) {
     elements.showRegisterLink.addEventListener("click", (event) => {
       event.preventDefault();
@@ -401,6 +540,7 @@ async function initAuth() {
     return;
   }
 
+  await handleEmailVerificationCallback();
   await refreshAuthState();
   redirectAfterLoginIfNeeded();
 }
