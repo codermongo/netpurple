@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="darkreader-lock">
+    <title>User Settings | NetPurple</title>
+    <meta name="description" content="Manage your NetPurple account details, password, and email verification status.">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="author" content="NetPurple">
+    <meta name="theme-color" content="#121224">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body data-auth="out">
+    <div class="theme-toggle-container">
+        <a href="../index.html" class="menu-item-circle visible" aria-label="Back to NetPurple">
+            <i class="fa-solid fa-house" aria-hidden="true"></i>
+        </a>
+        <button class="menu-item-circle visible" id="themeToggleItem" aria-label="Toggle dark mode">
+            <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 1v4m0 14v4M1 12h4m14 0h4M4.22 4.22l2.83 2.83m10.9 10.9l2.83 2.83M4.22 19.78l2.83-2.83m10.9-10.9l2.83-2.83" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+        </button>
+        <a href="https://github.com/codermongo/netpurple" class="menu-item-circle visible" aria-label="GitHub" target="_blank" rel="noopener" style="text-decoration: none;">
+            <i class="fa-brands fa-github" style="font-size: 24px;"></i>
+        </a>
+    </div>
+
+    <div class="user-menu auth-only" id="user-menu" role="group" aria-label="Account">
+        <button class="user-logout" id="logout-btn" type="button" aria-label="Log out">X</button>
+        <span class="user-handle" id="user-handle">User</span>
+    </div>
+    <a class="menu-item-circle user-login auth-out" id="login-link" href="/login" aria-label="Login">
+        <i class="fa-solid fa-user" aria-hidden="true"></i>
+    </a>
+
+    <canvas id="bg-particles" aria-hidden="true"></canvas>
+
+    <section class="hero" style="min-height: 25vh; padding-top: 100px;">
+        <div class="hero-content">
+            <h1 class="hero-title">User Settings</h1>
+            <p class="hero-subtitle">Manage your account details</p>
+        </div>
+    </section>
+
+    <section class="services">
+        <div class="container settings-grid">
+            <div class="tool-card settings-card">
+                <h2>Account</h2>
+                <p class="settings-subtitle" id="settings-user-email">Loading account...</p>
+
+                <div class="settings-status-row">
+                    <span class="settings-status-label">Email status</span>
+                    <span class="verify-pill" id="email-verify-state">Checking...</span>
+                </div>
+                <button class="btn-secondary settings-resend" id="resend-verification-btn" type="button" hidden>Resend verification email</button>
+                <p class="form-feedback" id="verify-feedback" role="status" aria-live="polite"></p>
+
+                <div class="settings-section">
+                    <h3>Update name</h3>
+                    <form class="form" id="name-form">
+                        <label class="field">
+                            <span>Name</span>
+                            <input type="text" id="name-input" name="name" placeholder="Your display name" required />
+                        </label>
+                        <button class="primary" id="name-save-btn" type="submit">Save name</button>
+                        <p class="form-feedback" id="name-feedback" role="status" aria-live="polite"></p>
+                    </form>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Update email</h3>
+                    <form class="form" id="email-form">
+                        <label class="field">
+                            <span>Email</span>
+                            <input type="email" id="email-input" name="email" placeholder="you@example.com" required />
+                        </label>
+                        <label class="field">
+                            <span>Current password</span>
+                            <input type="password" id="email-password-input" name="password" placeholder="Required to change email" required />
+                        </label>
+                        <button class="primary" id="email-save-btn" type="submit">Save email</button>
+                        <p class="form-feedback" id="email-feedback" role="status" aria-live="polite"></p>
+                    </form>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Update password</h3>
+                    <form class="form" id="password-form">
+                        <label class="field">
+                            <span>Current password</span>
+                            <input type="password" id="password-current-input" name="current-password" placeholder="Current password" required />
+                        </label>
+                        <label class="field">
+                            <span>New password</span>
+                            <input type="password" id="password-new-input" name="new-password" placeholder="At least 8 characters" minlength="8" required />
+                        </label>
+                        <label class="field">
+                            <span>Confirm new password</span>
+                            <input type="password" id="password-confirm-input" name="confirm-password" placeholder="Repeat new password" minlength="8" required />
+                        </label>
+                        <button class="primary" id="password-save-btn" type="submit">Save password</button>
+                        <p class="form-feedback" id="password-feedback" role="status" aria-live="polite"></p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="../particles.js"></script>
+    <script src="../menu.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
+    <script src="user.js"></script>
+</body>
+</html>
