@@ -2,7 +2,6 @@ const APPWRITE_ENDPOINT = "https://api.netpurple.net/v1";
 const APPWRITE_PROJECT_ID = "699f23920000d9667d3e";
 const AUTH_STORAGE_KEY = "appwrite_auth";
 const LEGACY_AUTH_STORAGE_KEY = "pb_auth";
-const GOOGLE_OAUTH_URL = "https://fra.cloud.appwrite.io/v1/account/sessions/oauth2/callback/google/699f23920000d9667d3e";
 
 const state = {
   user: null
@@ -28,6 +27,7 @@ const elements = {
 
 let account = null;
 let AppwriteID = null;
+let AppwriteOAuthProvider = null;
 
 function normalizePath(path) {
   return path.replace(/\/+$/, "");
@@ -154,13 +154,14 @@ function initAppwrite() {
     return false;
   }
 
-  const { Client, Account, ID } = Appwrite;
+  const { Client, Account, ID, OAuthProvider } = Appwrite;
   const client = new Client()
     .setEndpoint(APPWRITE_ENDPOINT)
     .setProject(APPWRITE_PROJECT_ID);
 
   account = new Account(client);
   AppwriteID = ID;
+  AppwriteOAuthProvider = OAuthProvider;
   return true;
 }
 
@@ -244,8 +245,24 @@ async function register(name, email, password) {
 }
 
 function startGoogleLogin() {
-  sessionStorage.setItem("login_return", getReturnTarget());
-  window.location.href = GOOGLE_OAUTH_URL;
+  if (!account || !AppwriteOAuthProvider) {
+    setError(elements.loginError, "Appwrite SDK not loaded.");
+    return;
+  }
+
+  const target = getReturnTarget();
+  sessionStorage.setItem("login_return", target);
+
+  const successUrl = new URL(target, window.location.origin).toString();
+  const failureUrl = new URL("/login", window.location.origin);
+  failureUrl.searchParams.set("return", target);
+  failureUrl.searchParams.set("error", "google_oauth");
+
+  account.createOAuth2Session(
+    AppwriteOAuthProvider.Google,
+    successUrl,
+    failureUrl.toString()
+  );
 }
 
 async function logout() {
