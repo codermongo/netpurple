@@ -12,6 +12,8 @@ const TIER_VALUES = new Set(["Tier_1", "Tier_2", "Tier_3"]);
 const state = {
   records: [],
   query: "",
+  canManage: false,
+  activeEditId: null,
   coverCache: loadCoverCache(),
   pendingCovers: new Set()
 };
@@ -22,12 +24,24 @@ const elements = {
   search: document.querySelector("#searchInput"),
   refresh: document.querySelector("#refreshBtn"),
   add: document.querySelector("#addBtn"),
+  loginLink: document.querySelector(".login-link"),
   themeToggle: document.querySelector("#themeToggleItem"),
-  editOverlay: document.querySelector("#editOverlay")
+  editOverlay: document.querySelector("#editOverlay"),
+  editTitleText: document.querySelector("#editTitleText"),
+  editForm: document.querySelector("#editForm"),
+  editTitle: document.querySelector("#editTitle"),
+  editTier: document.querySelector("#editTier"),
+  editScore: document.querySelector("#editScore"),
+  editNotes: document.querySelector("#editNotes"),
+  editError: document.querySelector("#editError"),
+  editCancelBtn: document.querySelector("#editCancelBtn"),
+  editSaveBtn: document.querySelector("#editSaveBtn")
 };
 
 let databases = null;
+let account = null;
 let Query = null;
+let AppwriteID = null;
 let coverRenderJob = 0;
 
 function escapeHtml(value) {
@@ -68,6 +82,33 @@ function getTierClass(tier) {
   return "";
 }
 
+function getLoginHref() {
+  const returnPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const url = new URL("/login", window.location.origin);
+  url.searchParams.set("return", returnPath);
+  return `${url.pathname}${url.search}`;
+}
+
+function updateAuthUi() {
+  if (elements.add) {
+    elements.add.hidden = !state.canManage;
+  }
+
+  if (!elements.loginLink) {
+    return;
+  }
+
+  if (state.canManage) {
+    elements.loginLink.href = "/user";
+    elements.loginLink.setAttribute("aria-label", "Account settings");
+    elements.loginLink.title = "Account settings";
+  } else {
+    elements.loginLink.href = getLoginHref();
+    elements.loginLink.setAttribute("aria-label", "Login");
+    elements.loginLink.removeAttribute("title");
+  }
+}
+
 function initThemeToggle() {
   const saved = localStorage.getItem(THEME_KEY);
   if (saved === "true") {
@@ -92,7 +133,7 @@ function loadCoverCache() {
   try {
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === "object" ? parsed : {};
-  } catch (error) {
+  } catch {
     localStorage.removeItem(COVER_CACHE_KEY);
     return {};
   }
@@ -211,7 +252,7 @@ async function fetchCover(title) {
       if (imageUrl) {
         return imageUrl;
       }
-    } catch (error) {
+    } catch {
       continue;
     }
 
@@ -453,6 +494,13 @@ function renderList() {
     const tierText = record.tier || "No tier";
     const tierClass = getTierClass(record.tier);
     const notes = record.notes ? `<p class="card-notes">${escapeHtml(record.notes)}</p>` : "";
+    const actions = state.canManage
+      ? `
+        <div class="card-actions">
+          <button class="card-action-btn" type="button" data-action="edit" data-id="${escapeHtml(record.id)}">Edit</button>
+        </div>
+      `
+      : "";
 
     return `
       <article class="anime-card ${tierClass}">
@@ -467,6 +515,7 @@ function renderList() {
             </div>
             <div class="head-right">
               <span class="score-pill">Score: ${escapeHtml(formatScore(record.score))}/15</span>
+              ${actions}
             </div>
           </div>
           ${notes}
@@ -514,6 +563,213 @@ async function loadAnimeList() {
   }
 }
 
+function setEditError(message) {
+  if (elements.editError) {
+    elements.editError.textContent = message || "";
+  }
+}
+
+function setEditLoading(isLoading) {
+  if (!elements.editSaveBtn) {
+    return;
+  }
+
+  if (!elements.editSaveBtn.dataset.label) {
+    elements.editSaveBtn.dataset.label = elements.editSaveBtn.textContent;
+  }
+
+  elements.editSaveBtn.disabled = isLoading;
+  elements.editSaveBtn.textContent = isLoading ? "Saving..." : elements.editSaveBtn.dataset.label;
+
+  if (elements.editCancelBtn) {
+    elements.editCancelBtn.disabled = isLoading;
+  }
+}
+
+function openEditor(record) {
+  if (!state.canManage || !elements.editOverlay) {
+    return;
+  }
+
+  state.activeEditId = record?.id || null;
+
+  if (elements.editTitleText) {
+    elements.editTitleText.textContent = state.activeEditId ? "Edit Anime" : "Add Anime";
+  }
+
+  if (elements.editTitle) {
+    elements.editTitle.value = record?.title || "";
+  }
+  if (elements.editTier) {
+    elements.editTier.value = record?.tier || "";
+  }
+  if (elements.editScore) {
+    elements.editScore.value = Number.isFinite(record?.score) ? String(record.score) : "";
+  }
+  if (elements.editNotes) {
+    elements.editNotes.value = record?.notes || "";
+  }
+
+  setEditError("");
+  elements.editOverlay.hidden = false;
+  elements.editOverlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+
+  if (elements.editTitle) {
+    elements.editTitle.focus();
+    elements.editTitle.select();
+  }
+}
+
+function closeEditor() {
+  if (!elements.editOverlay) {
+    return;
+  }
+
+  state.activeEditId = null;
+  setEditError("");
+  setEditLoading(false);
+  elements.editOverlay.hidden = true;
+  elements.editOverlay.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+}
+
+function getEditorPayload() {
+  const title = elements.editTitle ? elements.editTitle.value.trim() : "";
+  const tierRaw = elements.editTier ? elements.editTier.value.trim() : "";
+  const scoreRaw = elements.editScore ? elements.editScore.value.trim() : "";
+  const notes = elements.editNotes ? elements.editNotes.value.trim() : "";
+
+  if (!title) {
+    return { ok: false, error: "Title is required." };
+  }
+  if (title.length > 255) {
+    return { ok: false, error: "Title must be 255 characters or fewer." };
+  }
+
+  if (!scoreRaw) {
+    return { ok: false, error: "Score is required." };
+  }
+
+  const score = Number(scoreRaw);
+  if (!Number.isFinite(score)) {
+    return { ok: false, error: "Score must be a valid number." };
+  }
+  if (score < 0 || score > 15) {
+    return { ok: false, error: "Score must be between 0 and 15." };
+  }
+
+  if (tierRaw && !TIER_VALUES.has(tierRaw)) {
+    return { ok: false, error: "Tier must be Tier_1, Tier_2, or Tier_3." };
+  }
+
+  if (notes.length > 1000) {
+    return { ok: false, error: "Notes must be 1000 characters or fewer." };
+  }
+
+  return {
+    ok: true,
+    payload: {
+      title,
+      score,
+      tier: tierRaw || null,
+      notes
+    }
+  };
+}
+
+async function saveEditor(event) {
+  event.preventDefault();
+
+  if (!state.canManage) {
+    setEditError("You need to sign in to modify entries.");
+    return;
+  }
+
+  if (!databases || !AppwriteID) {
+    setEditError("Appwrite SDK is not initialized.");
+    return;
+  }
+
+  const parsed = getEditorPayload();
+  if (!parsed.ok) {
+    setEditError(parsed.error);
+    return;
+  }
+
+  setEditError("");
+  setEditLoading(true);
+
+  const editId = state.activeEditId;
+  const successText = editId ? "Anime entry updated." : "Anime entry created.";
+
+  try {
+    if (editId) {
+      await databases.updateDocument(
+        APPWRITE_DATABASE_ID,
+        ANIME_COLLECTION_ID,
+        editId,
+        parsed.payload
+      );
+    } else {
+      await databases.createDocument(
+        APPWRITE_DATABASE_ID,
+        ANIME_COLLECTION_ID,
+        AppwriteID.unique(),
+        parsed.payload
+      );
+    }
+
+    closeEditor();
+    await loadAnimeList();
+    setStatus(successText);
+  } catch (error) {
+    setEditError(error?.message || "Could not save anime entry.");
+    setEditLoading(false);
+  }
+}
+
+function handleListClick(event) {
+  const target = event.target;
+  if (!(target instanceof Element)) {
+    return;
+  }
+
+  const editButton = target.closest('[data-action="edit"]');
+  if (!editButton) {
+    return;
+  }
+
+  if (!state.canManage) {
+    return;
+  }
+
+  const recordId = editButton.getAttribute("data-id") || "";
+  if (!recordId) {
+    return;
+  }
+
+  const record = state.records.find((entry) => entry.id === recordId);
+  if (!record) {
+    setStatus("Could not find that anime entry. Refresh and try again.");
+    return;
+  }
+
+  openEditor(record);
+}
+
+function handleGlobalKeydown(event) {
+  if (event.key !== "Escape") {
+    return;
+  }
+
+  if (!elements.editOverlay || elements.editOverlay.hidden) {
+    return;
+  }
+
+  closeEditor();
+}
+
 function initEvents() {
   if (elements.search) {
     elements.search.addEventListener("input", (event) => {
@@ -527,6 +783,38 @@ function initEvents() {
       void loadAnimeList();
     });
   }
+
+  if (elements.add) {
+    elements.add.addEventListener("click", () => {
+      openEditor(null);
+    });
+  }
+
+  if (elements.list) {
+    elements.list.addEventListener("click", handleListClick);
+  }
+
+  if (elements.editForm) {
+    elements.editForm.addEventListener("submit", (event) => {
+      void saveEditor(event);
+    });
+  }
+
+  if (elements.editCancelBtn) {
+    elements.editCancelBtn.addEventListener("click", () => {
+      closeEditor();
+    });
+  }
+
+  if (elements.editOverlay) {
+    elements.editOverlay.addEventListener("click", (event) => {
+      if (event.target === elements.editOverlay) {
+        closeEditor();
+      }
+    });
+  }
+
+  document.addEventListener("keydown", handleGlobalKeydown);
 }
 
 function initAppwrite() {
@@ -534,17 +822,36 @@ function initAppwrite() {
     throw new Error("Appwrite SDK is not loaded. Check the CDN <script> tag.");
   }
 
-  const { Client, Databases, Query: AppwriteQuery } = Appwrite;
+  const { Client, Databases, Query: AppwriteQuery, Account, ID } = Appwrite;
   Query = AppwriteQuery;
+  AppwriteID = ID;
 
   const client = new Client()
     .setEndpoint(APPWRITE_ENDPOINT)
     .setProject(APPWRITE_PROJECT_ID);
 
   databases = new Databases(client);
+  account = new Account(client);
 }
 
-function init() {
+async function refreshAuthState() {
+  if (!account) {
+    state.canManage = false;
+    updateAuthUi();
+    return;
+  }
+
+  try {
+    await account.get();
+    state.canManage = true;
+  } catch {
+    state.canManage = false;
+  }
+
+  updateAuthUi();
+}
+
+async function init() {
   if (elements.add) {
     elements.add.hidden = true;
   }
@@ -559,12 +866,13 @@ function init() {
   try {
     initAppwrite();
   } catch (error) {
-    renderEmpty(error.message || "Appwrite initialization failed.");
+    renderEmpty(error?.message || "Appwrite initialization failed.");
     setStatus("Failed to initialize Appwrite.");
     return;
   }
 
-  void loadAnimeList();
+  await refreshAuthState();
+  await loadAnimeList();
 }
 
-init();
+void init();
