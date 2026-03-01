@@ -607,16 +607,15 @@ body.modal-open {
 }
 
 .title-suggestions {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  z-index: 20;
+  position: relative;
+  margin-top: 6px;
   background: rgba(12, 12, 20, 0.96);
   border: 1px solid var(--card-glass-stroke);
   border-radius: 10px;
   box-shadow: var(--shadow-strong);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 220px;
 }
 
 .title-suggestion-btn {

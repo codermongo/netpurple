@@ -7,7 +7,7 @@ const THEME_KEY = "darkMode";
 const COVER_CACHE_KEY = "anime_cover_cache_v1";
 const JIKAN_BASE = "https://api.jikan.moe/v4/anime";
 const TITLE_SUGGESTION_LIMIT = 5;
-const TITLE_SUGGESTION_MIN_LENGTH = 2;
+const TITLE_SUGGESTION_MIN_LENGTH = 3;
 const TITLE_SUGGESTION_DEBOUNCE_MS = 220;
 
 const TIER_VALUES = new Set(["Tier_1", "Tier_2", "Tier_3", "Tier 1", "Tier 2", "Tier 3"]);
@@ -355,6 +355,76 @@ function normalizeSuggestionKey(value) {
     .replace(/[^a-z0-9]/g, "");
 }
 
+function tokenizeForMatch(value) {
+  return normalizeForMatch(value)
+    .split(" ")
+    .filter(Boolean);
+}
+
+function isLikelyAnimeSearchQuery(query) {
+  const normalized = normalizeForMatch(query);
+  if (normalized.length < TITLE_SUGGESTION_MIN_LENGTH) {
+    return false;
+  }
+
+  const hasLetter = /[a-z]/.test(normalized);
+  if (!hasLetter) {
+    return false;
+  }
+
+  if (normalized.length < 4) {
+    return false;
+  }
+
+  return true;
+}
+
+function getSuggestionRelevance(query, title) {
+  const queryNormalized = normalizeForMatch(query);
+  const titleNormalized = normalizeForMatch(title);
+  if (!queryNormalized || !titleNormalized) {
+    return 0;
+  }
+
+  if (titleNormalized === queryNormalized) {
+    return 100;
+  }
+
+  if (titleNormalized.startsWith(queryNormalized)) {
+    return 80;
+  }
+
+  if (titleNormalized.includes(queryNormalized)) {
+    return 65;
+  }
+
+  const queryTokens = tokenizeForMatch(queryNormalized);
+  const titleTokens = tokenizeForMatch(titleNormalized);
+  if (!queryTokens.length || !titleTokens.length) {
+    return 0;
+  }
+
+  let overlap = 0;
+  for (const token of queryTokens) {
+    if (titleTokens.some((candidate) => candidate.startsWith(token) || token.startsWith(candidate))) {
+      overlap += 1;
+    }
+  }
+
+  const coverage = overlap / queryTokens.length;
+  if (coverage >= 1) {
+    return 60;
+  }
+  if (coverage >= 0.66) {
+    return 45;
+  }
+  if (coverage >= 0.5) {
+    return 30;
+  }
+
+  return 0;
+}
+
 function abortPendingTitleSuggestionRequest() {
   if (titleSuggestionAbortController) {
     titleSuggestionAbortController.abort();
@@ -364,7 +434,7 @@ function abortPendingTitleSuggestionRequest() {
 
 async function loadTitleSuggestions(rawQuery) {
   const query = String(rawQuery || "").trim();
-  if (query.length < TITLE_SUGGESTION_MIN_LENGTH) {
+  if (!isLikelyAnimeSearchQuery(query)) {
     clearTitleSuggestions();
     return;
   }
@@ -391,7 +461,7 @@ async function loadTitleSuggestions(rawQuery) {
     }
 
     const seen = new Set();
-    const items = [];
+    const candidates = [];
     const data = Array.isArray(payload?.data) ? payload.data : [];
 
     for (const entry of data) {
@@ -404,16 +474,19 @@ async function loadTitleSuggestions(rawQuery) {
         continue;
       }
       seen.add(key);
-      items.push({
-        title,
-        image: getCoverUrlFromItem(entry)
-      });
-      if (items.length >= TITLE_SUGGESTION_LIMIT) {
-        break;
+      const relevance = getSuggestionRelevance(query, title);
+      if (relevance < 45) {
+        continue;
       }
+      candidates.push({
+        title,
+        image: getCoverUrlFromItem(entry),
+        relevance
+      });
     }
 
-    renderTitleSuggestions(items);
+    candidates.sort((left, right) => right.relevance - left.relevance || left.title.localeCompare(right.title));
+    renderTitleSuggestions(candidates.slice(0, TITLE_SUGGESTION_LIMIT));
   } catch (error) {
     if (error?.name !== "AbortError") {
       clearTitleSuggestions();
@@ -433,7 +506,7 @@ function queueTitleSuggestions() {
   const value = elements.editTitle ? elements.editTitle.value : "";
   const query = String(value || "").trim();
 
-  if (query.length < TITLE_SUGGESTION_MIN_LENGTH) {
+  if (!isLikelyAnimeSearchQuery(query)) {
     abortPendingTitleSuggestionRequest();
     clearTitleSuggestions();
     return;
@@ -992,10 +1065,6 @@ function initEvents() {
 
   if (elements.editTitle) {
     elements.editTitle.addEventListener("input", () => {
-      queueTitleSuggestions();
-    });
-
-    elements.editTitle.addEventListener("focus", () => {
       queueTitleSuggestions();
     });
 
