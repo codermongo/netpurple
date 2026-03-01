@@ -5,7 +5,7 @@ const ANIME_COLLECTION_ID = "anime_ranking";
 const PAGE_SIZE = 100;
 const THEME_KEY = "darkMode";
 const COVER_CACHE_KEY = "anime_cover_cache_v1";
-const JIKAN_BASE = "https://api.jikan.moe/v4/anime";
+const JIKAN_BASE = "https://jikan-cache-proxy.kampfflugzeuge.workers.dev";
 const TITLE_SUGGESTION_LIMIT = 5;
 const TITLE_SUGGESTION_MIN_LENGTH = 3;
 const TITLE_SUGGESTION_DEBOUNCE_MS = 220;
@@ -282,7 +282,7 @@ async function fetchCover(title) {
   for (const query of queries) {
     try {
       const response = await fetch(
-        `${JIKAN_BASE}?q=${encodeURIComponent(query)}&limit=8&sfw=true`
+        `${JIKAN_BASE}?q=${encodeURIComponent(query)}`
       );
 
       if (!response.ok) {
@@ -317,9 +317,12 @@ function clearTitleSuggestions() {
   elements.titleSuggestions.hidden = true;
 }
 
-function getSuggestionTitle(item) {
-  const raw = item?.title || item?.title_english || item?.title_japanese || "";
-  return String(raw).trim();
+function getEnglishSuggestionTitle(item) {
+  if (!item || typeof item !== "object") {
+    return "";
+  }
+  const raw = typeof item.title_english === "string" ? item.title_english : "";
+  return raw.trim();
 }
 
 function renderTitleSuggestions(items) {
@@ -446,7 +449,7 @@ async function loadTitleSuggestions(rawQuery) {
 
   try {
     const response = await fetch(
-      `${JIKAN_BASE}?q=${encodeURIComponent(query)}&limit=${TITLE_SUGGESTION_LIMIT + 3}&sfw=true`,
+      `${JIKAN_BASE}?q=${encodeURIComponent(query)}`,
       { signal: controller.signal }
     );
 
@@ -465,7 +468,7 @@ async function loadTitleSuggestions(rawQuery) {
     const data = Array.isArray(payload?.data) ? payload.data : [];
 
     for (const entry of data) {
-      const title = getSuggestionTitle(entry);
+      const title = getEnglishSuggestionTitle(entry);
       if (!title) {
         continue;
       }
