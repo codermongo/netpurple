@@ -1,8 +1,9 @@
 ﻿(() => {
-const API_BASE = "https://api.netpurple.net";
-const FAVORITES_COLLECTION = "favorites";
+const APPWRITE_ENDPOINT = "https://api.netpurple.net/v1";
+const APPWRITE_PROJECT_ID = "699f23920000d9667d3e";
+const APPWRITE_DATABASE_ID = "699f251000346ad6c5e7";
+const FAVORITES_COLLECTION_ID = "favorites";
 const FAVORITE_TYPE = "sound";
-const AUTH_STORAGE_KEY = "pb_auth";
 
 const audioElements = {};
 const spinnerElement = document.getElementById("spinner");
@@ -24,27 +25,11 @@ let queueActive = false;
 
 const favoriteRecords = new Map();
 const pendingFavorites = new Set();
-
-function readAuth() {
-  const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-  if (!raw) {
-    return null;
-  }
-  try {
-    return JSON.parse(raw);
-  } catch (error) {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    return null;
-  }
-}
-
-function getAuthToken() {
-  return readAuth()?.token || null;
-}
-
-function getUserId() {
-  return readAuth()?.record?.id || null;
-}
+let account = null;
+let databases = null;
+let AppwriteID = null;
+let AppwriteQuery = null;
+let currentUserId = null;
 
 function redirectToLogin() {
   const target = encodeURIComponent(
@@ -53,43 +38,57 @@ function redirectToLogin() {
   window.location.href = `/login?return=${target}`;
 }
 
-async function apiFetch(path, options = {}) {
-  const headers = { "Content-Type": "application/json" };
-  const token = getAuthToken();
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
+function initAppwrite() {
+  if (typeof Appwrite === "undefined") {
+    console.warn("Appwrite SDK not available for favorites.");
+    return false;
   }
 
-  const response = await fetch(`${API_BASE}${path}`,
-    {
-      ...options,
-      headers: {
-        ...headers,
-        ...(options.headers || {})
-      }
-    }
-  );
+  const { Client, Account, Databases, ID, Query } = Appwrite;
+  const client = new Client()
+    .setEndpoint(APPWRITE_ENDPOINT)
+    .setProject(APPWRITE_PROJECT_ID);
 
-  if (!response.ok) {
-    let message = "Request failed";
-    try {
-      const data = await response.json();
-      message = data?.message || message;
-    } catch (error) {
-      message = response.statusText || message;
-    }
-    throw new Error(message);
+  account = new Account(client);
+  databases = new Databases(client);
+  AppwriteID = ID;
+  AppwriteQuery = Query;
+  return true;
+}
+
+async function getCurrentUserId() {
+  if (currentUserId) {
+    return currentUserId;
   }
-
-  if (response.status === 204) {
+  if (!account) {
     return null;
   }
-
-  return response.json();
+  try {
+    const user = await account.get();
+    currentUserId = user?.$id || null;
+    return currentUserId;
+  } catch {
+    currentUserId = null;
+    return null;
+  }
 }
 
 function getSoundKey(sound) {
   return sound.name;
+}
+
+function normalizeFavoriteRecord(record) {
+  if (!record) {
+    return null;
+  }
+  const pinOrder = Number(record.pin_order);
+  return {
+    id: record.$id || record.id || "",
+    item_key: record.item_key || "",
+    pin_order: Number.isFinite(pinOrder) ? pinOrder : 0,
+    updated: record.$updatedAt || record.updated || "",
+    created: record.$createdAt || record.created || ""
+  };
 }
 
 function getFavoriteRank(record) {
@@ -162,21 +161,26 @@ function buildFavoriteToggle(soundKey) {
 
 async function loadFavorites() {
   favoriteRecords.clear();
-  const userId = getUserId();
-  const token = getAuthToken();
-  if (!userId || !token) {
+  const userId = await getCurrentUserId();
+  if (!userId || !databases || !AppwriteQuery) {
     return;
   }
 
-  const filter = encodeURIComponent(`user="${userId}" && item_type="${FAVORITE_TYPE}"`);
   try {
-    const data = await apiFetch(
-      `/api/collections/${FAVORITES_COLLECTION}/records?page=1&perPage=200&filter=${filter}`
+    const data = await databases.listDocuments(
+      APPWRITE_DATABASE_ID,
+      FAVORITES_COLLECTION_ID,
+      [
+        AppwriteQuery.equal("user", userId),
+        AppwriteQuery.equal("item_type", FAVORITE_TYPE),
+        AppwriteQuery.limit(200)
+      ]
     );
-    const items = Array.isArray(data?.items) ? data.items : [];
+    const items = Array.isArray(data?.documents) ? data.documents : [];
     items.forEach((record) => {
-      if (record?.item_key) {
-        favoriteRecords.set(record.item_key, record);
+      const normalized = normalizeFavoriteRecord(record);
+      if (normalized?.item_key) {
+        favoriteRecords.set(normalized.item_key, normalized);
       }
     });
   } catch (error) {
@@ -185,9 +189,8 @@ async function loadFavorites() {
 }
 
 async function toggleFavorite(soundKey) {
-  const userId = getUserId();
-  const token = getAuthToken();
-  if (!userId || !token) {
+  const userId = await getCurrentUserId();
+  if (!userId || !databases || !AppwriteID) {
     redirectToLogin();
     return;
   }
@@ -202,8 +205,10 @@ async function toggleFavorite(soundKey) {
     favoriteRecords.delete(soundKey);
     applyFilter();
     try {
-      await apiFetch(`/api/collections/${FAVORITES_COLLECTION}/records/${existing.id}`,
-        { method: "DELETE" }
+      await databases.deleteDocument(
+        APPWRITE_DATABASE_ID,
+        FAVORITES_COLLECTION_ID,
+        existing.id
       );
     } catch (error) {
       console.warn("Failed to remove favorite", error);
@@ -233,14 +238,15 @@ async function toggleFavorite(soundKey) {
   applyFilter();
 
   try {
-    const created = await apiFetch(`/api/collections/${FAVORITES_COLLECTION}/records`,
-      {
-        method: "POST",
-        body: JSON.stringify(payload)
-      }
+    const created = await databases.createDocument(
+      APPWRITE_DATABASE_ID,
+      FAVORITES_COLLECTION_ID,
+      AppwriteID.unique(),
+      payload
     );
-    if (created?.id) {
-      favoriteRecords.set(soundKey, created);
+    const normalized = normalizeFavoriteRecord(created);
+    if (normalized?.id) {
+      favoriteRecords.set(soundKey, normalized);
     }
   } catch (error) {
     console.warn("Failed to add favorite", error);
@@ -420,11 +426,13 @@ stopAllButton.addEventListener("click", () => {
 
 if (logoutButton) {
   logoutButton.addEventListener("click", () => {
+    currentUserId = null;
     favoriteRecords.clear();
     applyFilter();
   });
 }
 
+initAppwrite();
 loadSounds();
 
 setTimeout(() => {
