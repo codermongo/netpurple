@@ -6,10 +6,17 @@ const AUTH_STORAGE_KEY = "appwrite_auth";
 const elements = {
   logoutBtn: document.querySelector("#logout-btn"),
   userHandle: document.querySelector("#user-handle"),
-  userEmail: document.querySelector("#settings-user-email"),
-  emailState: document.querySelector("#email-verify-state"),
+  accountName: document.querySelector("#account-name"),
+  accountEmail: document.querySelector("#account-email"),
+  accountVerified: document.querySelector("#account-verified"),
   verifyFeedback: document.querySelector("#verify-feedback"),
   resendBtn: document.querySelector("#resend-verification-btn"),
+  actionNameBtn: document.querySelector("#action-name-btn"),
+  actionEmailBtn: document.querySelector("#action-email-btn"),
+  actionPasswordBtn: document.querySelector("#action-password-btn"),
+  paneName: document.querySelector("#pane-name"),
+  paneEmail: document.querySelector("#pane-email"),
+  panePassword: document.querySelector("#pane-password"),
   nameForm: document.querySelector("#name-form"),
   nameInput: document.querySelector("#name-input"),
   nameSaveBtn: document.querySelector("#name-save-btn"),
@@ -105,8 +112,11 @@ function initAppwrite() {
 }
 
 function populateAccountFields(user) {
-  if (elements.userEmail) {
-    elements.userEmail.textContent = user?.email || "";
+  if (elements.accountName) {
+    elements.accountName.textContent = user?.name?.trim() || "Not set";
+  }
+  if (elements.accountEmail) {
+    elements.accountEmail.textContent = user?.email || "";
   }
   if (elements.nameInput) {
     elements.nameInput.value = user?.name || "";
@@ -117,14 +127,32 @@ function populateAccountFields(user) {
 }
 
 function updateVerificationState(user) {
-  const verified = Boolean(user?.emailVerification);
-  if (elements.emailState) {
-    elements.emailState.textContent = verified ? "Verified" : "Not verified";
-    elements.emailState.dataset.state = verified ? "verified" : "unverified";
+  const verified = user?.emailVerification === true || user?.emailVerification === "true";
+  if (elements.accountVerified) {
+    elements.accountVerified.textContent = verified ? "Yes" : "No";
+    elements.accountVerified.dataset.state = verified ? "verified" : "unverified";
   }
   if (elements.resendBtn) {
     elements.resendBtn.hidden = verified;
   }
+}
+
+function setActiveUpdatePane(targetPane) {
+  const map = [
+    { key: "name", button: elements.actionNameBtn, pane: elements.paneName },
+    { key: "email", button: elements.actionEmailBtn, pane: elements.paneEmail },
+    { key: "password", button: elements.actionPasswordBtn, pane: elements.panePassword }
+  ];
+
+  map.forEach((item) => {
+    const isActive = item.key === targetPane;
+    if (item.button) {
+      item.button.classList.toggle("is-active", isActive);
+    }
+    if (item.pane) {
+      item.pane.hidden = !isActive;
+    }
+  });
 }
 
 async function refreshUser() {
@@ -318,6 +346,21 @@ function initEventHandlers() {
       void logout();
     });
   }
+  if (elements.actionNameBtn) {
+    elements.actionNameBtn.addEventListener("click", () => {
+      setActiveUpdatePane("name");
+    });
+  }
+  if (elements.actionEmailBtn) {
+    elements.actionEmailBtn.addEventListener("click", () => {
+      setActiveUpdatePane("email");
+    });
+  }
+  if (elements.actionPasswordBtn) {
+    elements.actionPasswordBtn.addEventListener("click", () => {
+      setActiveUpdatePane("password");
+    });
+  }
 }
 
 async function initUserSettings() {
@@ -325,6 +368,7 @@ async function initUserSettings() {
   if (!initAppwrite()) {
     return;
   }
+  setActiveUpdatePane("name");
   initEventHandlers();
   await refreshUser();
 }

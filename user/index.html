@@ -56,18 +56,32 @@
         <div class="container settings-grid">
             <div class="tool-card settings-card">
                 <h2>Account</h2>
-                <p class="settings-subtitle" id="settings-user-email">Loading account...</p>
-
-                <div class="settings-status-row">
-                    <span class="settings-status-label">Email status</span>
-                    <span class="verify-pill" id="email-verify-state">Checking...</span>
+                <div class="account-overview" aria-live="polite">
+                    <div class="account-overview-row">
+                        <span class="account-overview-label">Name:</span>
+                        <span class="account-overview-value" id="account-name">Loading...</span>
+                    </div>
+                    <div class="account-overview-row">
+                        <span class="account-overview-label">Email:</span>
+                        <span class="account-overview-value" id="account-email">Loading...</span>
+                    </div>
+                    <div class="account-overview-row">
+                        <span class="account-overview-label">Verified:</span>
+                        <span class="account-overview-value" id="account-verified">Checking...</span>
+                    </div>
                 </div>
                 <button class="btn-secondary settings-resend" id="resend-verification-btn" type="button" hidden>Resend verification email</button>
                 <p class="form-feedback" id="verify-feedback" role="status" aria-live="polite"></p>
 
-                <div class="settings-sections-grid">
-                    <div class="settings-section">
-                        <h3>Update name</h3>
+                <div class="settings-section settings-update-card">
+                    <h3>Update account</h3>
+                    <div class="settings-action-row" role="tablist" aria-label="Update account actions">
+                        <button class="btn-secondary settings-action-btn is-active" id="action-name-btn" data-pane="name" type="button">Update name</button>
+                        <button class="btn-secondary settings-action-btn" id="action-email-btn" data-pane="email" type="button">Update email</button>
+                        <button class="btn-secondary settings-action-btn" id="action-password-btn" data-pane="password" type="button">Update password</button>
+                    </div>
+
+                    <div class="settings-pane" id="pane-name">
                         <form class="form" id="name-form">
                             <label class="field">
                                 <span>Name</span>
@@ -78,8 +92,7 @@
                         </form>
                     </div>
 
-                    <div class="settings-section">
-                        <h3>Update email</h3>
+                    <div class="settings-pane" id="pane-email" hidden>
                         <form class="form" id="email-form">
                             <label class="field">
                                 <span>Email</span>
@@ -94,8 +107,7 @@
                         </form>
                     </div>
 
-                    <div class="settings-section">
-                        <h3>Update password</h3>
+                    <div class="settings-pane" id="pane-password" hidden>
                         <form class="form" id="password-form">
                             <label class="field">
                                 <span>Current password</span>
