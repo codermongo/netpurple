@@ -5,7 +5,9 @@ const ANIME_COLLECTION_ID = "anime_ranking";
 const PAGE_SIZE = 100;
 const THEME_KEY = "darkMode";
 const COVER_CACHE_KEY = "anime_cover_cache_v1";
-const JIKAN_BASE = "https://jikan-cache-proxy.kampfflugzeuge.workers.dev";
+const ANIME_WORKER_BASE = "https://anime.kampfflugzeuge.workers.dev";
+const JIKAN_PROXY_BASE = `${ANIME_WORKER_BASE}/jikan`;
+const APPWRITE_PROXY_URL = `${ANIME_WORKER_BASE}/appwrite`;
 const TITLE_SUGGESTION_LIMIT = 5;
 const TITLE_SUGGESTION_MIN_LENGTH = 3;
 const TITLE_SUGGESTION_DEBOUNCE_MS = 220;
@@ -282,7 +284,7 @@ async function fetchCover(title) {
   for (const query of queries) {
     try {
       const response = await fetch(
-        `${JIKAN_BASE}?q=${encodeURIComponent(query)}`
+        `${JIKAN_PROXY_BASE}?q=${encodeURIComponent(query)}`
       );
 
       if (!response.ok) {
@@ -449,7 +451,7 @@ async function loadTitleSuggestions(rawQuery) {
 
   try {
     const response = await fetch(
-      `${JIKAN_BASE}?q=${encodeURIComponent(query)}`,
+      `${JIKAN_PROXY_BASE}?q=${encodeURIComponent(query)}`,
       { signal: controller.signal }
     );
 
@@ -662,7 +664,7 @@ function sortAnime(records) {
     });
 }
 
-async function fetchAnimeRanking() {
+async function fetchAnimeRankingDirect() {
   const records = [];
   let cursorAfter = null;
   let safetyCounter = 0;
@@ -706,6 +708,43 @@ async function fetchAnimeRanking() {
     records: sortAnime(records),
     invalid
   };
+}
+
+async function fetchAnimeRanking() {
+  const invalid = [];
+
+  try {
+    const response = await fetch(APPWRITE_PROXY_URL);
+    if (!response.ok) {
+      throw new Error(`Anime worker responded with status ${response.status}.`);
+    }
+
+    const payload = await response.json();
+    const documents = Array.isArray(payload?.documents) ? payload.documents : [];
+    const records = [];
+
+    for (const document of documents) {
+      const normalized = normalizeAnimeDocument(document);
+      if (normalized.ok) {
+        records.push(normalized.value);
+      } else {
+        invalid.push(normalized.error);
+      }
+    }
+
+    const total = Number(payload?.total);
+    if (Number.isFinite(total) && total > documents.length) {
+      // Worker /appwrite route currently returns the first page only; fallback keeps list complete.
+      return await fetchAnimeRankingDirect();
+    }
+
+    return {
+      records: sortAnime(records),
+      invalid
+    };
+  } catch {
+    return await fetchAnimeRankingDirect();
+  }
 }
 
 function getFilteredRecords() {
@@ -795,7 +834,7 @@ async function loadAnimeList() {
   if (elements.refresh) {
     elements.refresh.disabled = true;
   }
-  setStatus("Loading anime list from Appwrite...");
+  setStatus("Loading anime list...");
 
   try {
     const result = await fetchAnimeRanking();
