@@ -251,6 +251,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             let toolsData = [];
             let activeCategory = 'all';
+            const WORKER_BASE = 'https://anime.kampfflugzeuge.workers.dev';
+            const LIST_API_URL = `${WORKER_BASE}/appwrite/list`;
 
             const container = document.getElementById('list-container');
             const searchInput = document.getElementById('searchInput');
@@ -264,14 +266,23 @@
                 'Web': 'fa-solid fa-globe'
             };
 
-            fetch('data.json')
-                .then(response => response.json())
-                .then(data => {
-                    toolsData = data;
+            fetch(LIST_API_URL)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(payload => {
+                    const docs = Array.isArray(payload?.documents) ? payload.documents : [];
+                    toolsData = docs;
                     renderCategories();
                     renderList();
                 })
-                .catch(error => console.error('Error loading data:', error));
+                .catch(error => {
+                    console.error('Error loading list data:', error);
+                    container.innerHTML = '<p style="text-align:center; color: var(--text-secondary); grid-column: 1/-1;">Failed to load data.</p>';
+                });
 
             // Search functionality
             searchInput.addEventListener('input', (e) => {
