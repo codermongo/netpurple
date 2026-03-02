@@ -7,10 +7,13 @@ const THEME_KEY = "darkMode";
 const COVER_CACHE_KEY = "anime_cover_cache_v1";
 const ANIME_WORKER_BASE = "https://anime.kampfflugzeuge.workers.dev";
 const JIKAN_PROXY_BASE = `${ANIME_WORKER_BASE}/jikan`;
-const APPWRITE_PROXY_URL = `${ANIME_WORKER_BASE}/appwrite`;
+const APPWRITE_PROXY_URL = `${ANIME_WORKER_BASE}/appwrite/anime`;
 const TITLE_SUGGESTION_LIMIT = 5;
 const TITLE_SUGGESTION_MIN_LENGTH = 3;
 const TITLE_SUGGESTION_DEBOUNCE_MS = 220;
+const COVER_FETCH_MIN_INTERVAL_MS = 950;
+const COVER_FETCH_COOLDOWN_MS = 25000;
+const COVER_FETCH_RESUME_BUFFER_MS = 450;
 
 const TIER_VALUES = new Set(["Tier_1", "Tier_2", "Tier_3", "Tier 1", "Tier 2", "Tier 3"]);
 
@@ -52,6 +55,9 @@ let coverRenderJob = 0;
 let titleSuggestionTimer = null;
 let titleSuggestionAbortController = null;
 let titleSuggestionRequestId = 0;
+let nextCoverFetchAt = 0;
+let coverRateLimitedUntil = 0;
+let coverRetryTimer = null;
 
 function escapeHtml(value) {
   return String(value)
@@ -277,20 +283,41 @@ function sleep(ms) {
   });
 }
 
+function isCoverRateLimited() {
+  return Date.now() < coverRateLimitedUntil;
+}
+
+function setCoverRateLimit(durationMs) {
+  const next = Date.now() + durationMs;
+  if (next > coverRateLimitedUntil) {
+    coverRateLimitedUntil = next;
+  }
+}
+
+async function waitForCoverRequestSlot() {
+  const now = Date.now();
+  const waitMs = Math.max(0, nextCoverFetchAt - now, coverRateLimitedUntil - now);
+  if (waitMs > 0) {
+    await sleep(waitMs);
+  }
+  nextCoverFetchAt = Date.now() + COVER_FETCH_MIN_INTERVAL_MS;
+}
+
 async function fetchCover(title) {
   const cleanTitle = sanitizeTitle(title);
   const queries = [title, cleanTitle].filter(Boolean);
 
   for (const query of queries) {
     try {
+      await waitForCoverRequestSlot();
       const response = await fetch(
         `${JIKAN_PROXY_BASE}?q=${encodeURIComponent(query)}`
       );
 
       if (!response.ok) {
         if (response.status === 429) {
-          await sleep(750);
-          continue;
+          setCoverRateLimit(COVER_FETCH_COOLDOWN_MS);
+          return "";
         }
         continue;
       }
@@ -555,6 +582,23 @@ function renderCardCover(record) {
 }
 
 async function enrichVisibleCovers(records, jobId) {
+  if (isCoverRateLimited()) {
+    if (coverRetryTimer) {
+      window.clearTimeout(coverRetryTimer);
+    }
+    const delay = Math.max(
+      COVER_FETCH_RESUME_BUFFER_MS,
+      coverRateLimitedUntil - Date.now() + COVER_FETCH_RESUME_BUFFER_MS
+    );
+    coverRetryTimer = window.setTimeout(() => {
+      coverRetryTimer = null;
+      if (jobId === coverRenderJob) {
+        void enrichVisibleCovers(records, jobId);
+      }
+    }, delay);
+    return;
+  }
+
   for (const record of records) {
     if (jobId !== coverRenderJob) {
       return;
@@ -582,7 +626,7 @@ async function enrichVisibleCovers(records, jobId) {
     }
 
     slot.innerHTML = `<img class="card-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(record.title || "Anime")} cover" loading="lazy" referrerpolicy="no-referrer" />`;
-    await sleep(180);
+    await sleep(120);
   }
 }
 
