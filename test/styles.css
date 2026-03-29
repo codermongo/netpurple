@@ -365,7 +365,7 @@ body.dark-mode .menu-item-circle .moon-icon {
   font-size: 0.95rem;
 }
 
-.tier-row-best .tier-row-label  { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #1a0800; }
+.tier-row-best .tier-row-label  { background: #000; color: #ef4444; box-shadow: inset 0 0 0 2px #ef4444; }
 .tier-row-s    .tier-row-label  { background: #e83030; color: #fff; }
 .tier-row-a    .tier-row-label  { background: #e87020; color: #1a0800; }
 .tier-row-b    .tier-row-label  { background: #d4b800; color: #1a0800; }

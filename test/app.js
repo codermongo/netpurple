@@ -758,40 +758,7 @@ async function fetchAnimeRankingDirect() {
 }
 
 async function fetchAnimeRanking() {
-  const invalid = [];
-
-  try {
-    const response = await fetch(APPWRITE_PROXY_URL);
-    if (!response.ok) {
-      throw new Error(`Anime worker responded with status ${response.status}.`);
-    }
-
-    const payload = await response.json();
-    const documents = Array.isArray(payload?.documents) ? payload.documents : [];
-    const records = [];
-
-    for (const document of documents) {
-      const normalized = normalizeAnimeDocument(document);
-      if (normalized.ok) {
-        records.push(normalized.value);
-      } else {
-        invalid.push(normalized.error);
-      }
-    }
-
-    const total = Number(payload?.total);
-    if (Number.isFinite(total) && total > documents.length) {
-      // Worker /appwrite route currently returns the first page only; fallback keeps list complete.
-      return await fetchAnimeRankingDirect();
-    }
-
-    return {
-      records,
-      invalid
-    };
-  } catch {
-    return await fetchAnimeRankingDirect();
-  }
+  return await fetchAnimeRankingDirect();
 }
 
 function getFilteredRecords() {
