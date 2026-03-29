@@ -504,6 +504,116 @@ body.dark-mode .menu-item-circle .moon-icon {
   flex: 0 0 auto;
 }
 
+/* ── Unranked pool ──────────────────────────────── */
+.unranked-pool {
+  margin-top: 40px;
+  padding: 20px;
+  border: 1px solid var(--card-glass-stroke);
+  border-radius: 12px;
+  background: var(--card-glass-bg);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  transition: outline 0.15s ease;
+}
+
+.unranked-pool.drag-over {
+  outline: 2px dashed rgba(139, 92, 246, 0.7);
+  outline-offset: -2px;
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.unranked-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.unranked-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.unranked-empty {
+  min-height: 60px;
+  align-items: center;
+}
+
+.unranked-empty-text {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.unranked-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  width: 100px;
+}
+
+.unranked-card[draggable="true"] {
+  cursor: grab;
+}
+
+.unranked-card.dragging {
+  opacity: 0.35;
+  cursor: grabbing;
+}
+
+.unranked-cover {
+  width: 100px;
+  height: 140px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(12, 12, 20, 0.55);
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  flex: 0 0 140px;
+}
+
+.unranked-cover .card-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.unranked-cover .card-cover-placeholder {
+  width: 100%;
+  height: 100%;
+  font-size: 1.4rem;
+}
+
+.unranked-title {
+  font-size: 0.76rem;
+  text-align: center;
+  color: var(--text-primary);
+  line-height: 1.3;
+  word-break: break-word;
+  width: 100%;
+}
+
+.unranked-card .card-action-btn {
+  font-size: 0.7rem;
+  padding: 2px 7px;
+  box-shadow: none;
+}
+
+@media (max-width: 520px) {
+  .unranked-card {
+    width: 80px;
+  }
+
+  .unranked-cover {
+    width: 80px;
+    height: 112px;
+    flex: 0 0 112px;
+  }
+}
+
 .anime-card {
   background: var(--card-glass-bg);
   backdrop-filter: blur(8px) saturate(120%);

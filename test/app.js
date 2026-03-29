@@ -865,26 +865,30 @@ function renderList() {
   }
   html += "</div>";
 
-  // Detail sections below the chart
-  const allSections = [
-    ...TIER_NAMES.filter((t) => groups[t].length > 0).map((t) => ({ label: t, slug: TIER_SLUG[t], items: groups[t] })),
-    ...(unranked.length ? [{ label: "Unranked", slug: "unranked", items: unranked }] : [])
-  ];
-
-  if (allSections.length > 0) {
-    html += '<div class="tier-details">';
-    for (const section of allSections) {
-      html += `<div class="tier-detail-section"><h3 class="tier-detail-heading tier-detail-heading-${section.slug}">${escapeHtml(section.label)}</h3><div class="tier-detail-titles">`;
-      for (const record of section.items) {
-        const editBtn = state.canManage
-          ? `<button class="tier-title-edit-btn card-action-btn" type="button" data-action="edit" data-id="${escapeHtml(record.id)}">Edit</button>`
-          : "";
-        html += `<span class="tier-title-item">${escapeHtml(record.title)}${editBtn}</span>`;
-      }
-      html += "</div></div>";
+  // Unranked pool below the chart
+  html += '<div class="unranked-pool">';
+  html += '<h3 class="unranked-heading">Unranked</h3>';
+  if (unranked.length > 0) {
+    html += '<div class="unranked-items">';
+    for (const record of unranked) {
+      const editBtn = state.canManage
+        ? `<button class="card-action-btn" type="button" data-action="edit" data-id="${escapeHtml(record.id)}">Edit</button>`
+        : "";
+      html += `
+        <div class="unranked-card" data-record-id="${escapeHtml(record.id)}" title="${escapeHtml(record.title)}">
+          <div class="unranked-cover" data-cover-slot="${escapeHtml(record.id)}">
+            ${renderCardCover(record)}
+          </div>
+          <p class="unranked-title">${escapeHtml(record.title)}</p>
+          ${editBtn}
+        </div>
+      `;
     }
-    html += "</div>";
+    html += '</div>';
+  } else {
+    html += '<div class="unranked-items unranked-empty"><p class="unranked-empty-text">No unranked anime.</p></div>';
   }
+  html += '</div>';
 
   if (elements.list) {
     elements.list.innerHTML = html;
@@ -909,69 +913,66 @@ function addDragAndDrop() {
     return;
   }
 
-  elements.list.querySelectorAll(".tier-thumb[data-record-id]").forEach((thumb) => {
-    thumb.setAttribute("draggable", "true");
-    thumb.addEventListener("dragstart", (e) => {
-      currentDragId = thumb.dataset.recordId;
+  function makeDraggable(el) {
+    el.setAttribute("draggable", "true");
+    el.addEventListener("dragstart", (e) => {
+      currentDragId = el.dataset.recordId;
       e.dataTransfer.setData("text/plain", currentDragId);
       e.dataTransfer.effectAllowed = "move";
-      thumb.classList.add("dragging");
+      el.classList.add("dragging");
     });
-    thumb.addEventListener("dragend", () => {
-      thumb.classList.remove("dragging");
-      elements.list.querySelectorAll(".tier-row.drag-over").forEach((el) => el.classList.remove("drag-over"));
+    el.addEventListener("dragend", () => {
+      el.classList.remove("dragging");
+      elements.list.querySelectorAll(".tier-row.drag-over, .unranked-pool.drag-over").forEach((t) => t.classList.remove("drag-over"));
       currentDragId = null;
+    });
+  }
+
+  elements.list.querySelectorAll(".tier-thumb[data-record-id], .unranked-card[data-record-id]").forEach(makeDraggable);
+
+  async function handleTierDrop(e, newTier) {
+    e.preventDefault();
+    const recordId = currentDragId || e.dataTransfer.getData("text/plain");
+    if (!recordId || !databases) return;
+    const record = state.records.find((r) => r.id === recordId);
+    if (!record) return;
+    if (normalizeTierForDisplay(record.tier) === newTier) return;
+    try {
+      await databases.updateDocument(APPWRITE_DATABASE_ID, ANIME_COLLECTION_ID, recordId, { tier: newTier });
+      record.tier = newTier;
+      renderList();
+      setStatus(`Moved "${record.title}" to ${newTier !== null ? newTier : "Unranked"}.`);
+    } catch (error) {
+      setStatus(`Failed to update tier: ${error?.message || "Unknown error"}`);
+    }
+  }
+
+  elements.list.querySelectorAll(".tier-row[data-tier]").forEach((row) => {
+    row.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
+    row.addEventListener("dragenter", (e) => { e.preventDefault(); row.classList.add("drag-over"); });
+    row.addEventListener("dragleave", (e) => { if (!row.contains(e.relatedTarget)) row.classList.remove("drag-over"); });
+    row.addEventListener("drop", async (e) => {
+      row.classList.remove("drag-over");
+      const slug = row.dataset.tier;
+      const newTier = TIER_NAMES.find((t) => TIER_SLUG[t] === slug);
+      if (newTier) await handleTierDrop(e, newTier);
     });
   });
 
-  elements.list.querySelectorAll(".tier-row[data-tier]").forEach((row) => {
-    row.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-    });
-    row.addEventListener("dragenter", (e) => {
-      e.preventDefault();
-      row.classList.add("drag-over");
-    });
-    row.addEventListener("dragleave", (e) => {
-      if (!row.contains(e.relatedTarget)) {
-        row.classList.remove("drag-over");
-      }
-    });
-    row.addEventListener("drop", async (e) => {
-      e.preventDefault();
-      row.classList.remove("drag-over");
+  const unrankedPool = elements.list.querySelector(".unranked-pool");
+  if (unrankedPool) {
+    unrankedPool.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
+    unrankedPool.addEventListener("dragenter", (e) => { e.preventDefault(); unrankedPool.classList.add("drag-over"); });
+    unrankedPool.addEventListener("dragleave", (e) => { if (!unrankedPool.contains(e.relatedTarget)) unrankedPool.classList.remove("drag-over"); });
+    unrankedPool.addEventListener("drop", async (e) => {
+      unrankedPool.classList.remove("drag-over");
       const recordId = currentDragId || e.dataTransfer.getData("text/plain");
-      if (!recordId || !databases) {
-        return;
-      }
-      const slug = row.dataset.tier;
-      const newTier = TIER_NAMES.find((t) => TIER_SLUG[t] === slug);
-      if (!newTier) {
-        return;
-      }
+      if (!recordId || !databases) return;
       const record = state.records.find((r) => r.id === recordId);
-      if (!record) {
-        return;
-      }
-      if (normalizeTierForDisplay(record.tier) === newTier) {
-        return;
-      }
-      try {
-        await databases.updateDocument(
-          APPWRITE_DATABASE_ID,
-          ANIME_COLLECTION_ID,
-          recordId,
-          { tier: newTier }
-        );
-        record.tier = newTier;
-        renderList();
-        setStatus(`Moved "${record.title}" to ${newTier}.`);
-      } catch (error) {
-        setStatus(`Failed to update tier: ${error?.message || "Unknown error"}`);
-      }
+      if (!record || !record.tier) return;
+      await handleTierDrop(e, null);
     });
-  });
+  }
 }
 
 async function loadAnimeList() {
