@@ -1,7 +1,7 @@
 const APPWRITE_ENDPOINT = "https://api.netpurple.net/v1";
 const APPWRITE_PROJECT_ID = "699f23920000d9667d3e";
 const APPWRITE_DATABASE_ID = "699f251000346ad6c5e7";
-const ANIME_COLLECTION_ID = "anime_ranking";
+const ANIME_COLLECTION_ID = "anime_ranking_1";
 const PAGE_SIZE = 100;
 const THEME_KEY = "darkMode";
 const COVER_CACHE_KEY = "anime_cover_cache_v1";
@@ -72,6 +72,7 @@ let titleSuggestionAbortController = null;
 let titleSuggestionRequestId = 0;
 let nextCoverFetchAt = 0;
 let coverRateLimitedUntil = 0;
+let currentDragId = null;
 let coverRetryTimer = null;
 
 function escapeHtml(value) {
@@ -632,15 +633,12 @@ async function enrichVisibleCovers(records, jobId) {
       continue;
     }
 
-    const slots = elements.list.querySelectorAll(`[data-cover-slot="${record.id}"]`);
-    if (!slots.length) {
+    const slot = elements.list.querySelector(`[data-cover-slot="${record.id}"]`);
+    if (!slot) {
       continue;
     }
 
-    const imgHtml = `<img class="card-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(record.title || "Anime")} cover" loading="lazy" referrerpolicy="no-referrer" />`;
-    for (const slot of slots) {
-      slot.innerHTML = imgHtml;
-    }
+    slot.innerHTML = `<img class="card-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(record.title || "Anime")} cover" loading="lazy" referrerpolicy="no-referrer" />`;
     await sleep(120);
   }
 }
@@ -712,16 +710,6 @@ function normalizeAnimeDocument(document) {
   };
 }
 
-function sortAnime(records) {
-  return records
-    .slice()
-    .sort((left, right) => {
-      if (left.score !== right.score) {
-        return right.score - left.score;
-      }
-      return left.title.localeCompare(right.title);
-    });
-}
 
 async function fetchAnimeRankingDirect() {
   const records = [];
@@ -764,7 +752,7 @@ async function fetchAnimeRankingDirect() {
   }
 
   return {
-    records: sortAnime(records),
+    records,
     invalid
   };
 }
@@ -798,7 +786,7 @@ async function fetchAnimeRanking() {
     }
 
     return {
-      records: sortAnime(records),
+      records,
       invalid
     };
   } catch {
@@ -862,14 +850,14 @@ function renderList() {
     const items = groups[tier];
     const slug = TIER_SLUG[tier];
     const thumbnails = items.map((record) => `
-      <div class="tier-thumb" title="${escapeHtml(record.title)}">
+      <div class="tier-thumb" title="${escapeHtml(record.title)}" data-record-id="${escapeHtml(record.id)}">
         <div class="tier-thumb-media" data-cover-slot="${escapeHtml(record.id)}">
           ${renderCardCover(record)}
         </div>
       </div>
     `).join("");
     html += `
-      <div class="tier-row tier-row-${slug}">
+      <div class="tier-row tier-row-${slug}" data-tier="${slug}">
         <div class="tier-row-label"><span>${escapeHtml(tier)}</span></div>
         <div class="tier-row-items">${thumbnails}</div>
       </div>
@@ -886,20 +874,12 @@ function renderList() {
   if (allSections.length > 0) {
     html += '<div class="tier-details">';
     for (const section of allSections) {
-      html += `<div class="tier-detail-section"><h3 class="tier-detail-heading tier-detail-heading-${section.slug}">${escapeHtml(section.label)}</h3><div class="tier-detail-items">`;
+      html += `<div class="tier-detail-section"><h3 class="tier-detail-heading tier-detail-heading-${section.slug}">${escapeHtml(section.label)}</h3><div class="tier-detail-titles">`;
       for (const record of section.items) {
-        const actions = state.canManage
-          ? `<button class="card-action-btn" type="button" data-action="edit" data-id="${escapeHtml(record.id)}">Edit</button>`
+        const editBtn = state.canManage
+          ? `<button class="tier-title-edit-btn card-action-btn" type="button" data-action="edit" data-id="${escapeHtml(record.id)}">Edit</button>`
           : "";
-        html += `
-          <div class="tier-detail-card">
-            <div class="tier-detail-cover" data-cover-slot="${escapeHtml(record.id)}">
-              ${renderCardCover(record)}
-            </div>
-            <p class="tier-detail-title">${escapeHtml(record.title)}</p>
-            ${actions}
-          </div>
-        `;
+        html += `<span class="tier-title-item">${escapeHtml(record.title)}${editBtn}</span>`;
       }
       html += "</div></div>";
     }
@@ -918,6 +898,80 @@ function renderList() {
 
   coverRenderJob += 1;
   void enrichVisibleCovers(filtered, coverRenderJob);
+
+  if (state.canManage) {
+    addDragAndDrop();
+  }
+}
+
+function addDragAndDrop() {
+  if (!state.canManage || !elements.list) {
+    return;
+  }
+
+  elements.list.querySelectorAll(".tier-thumb[data-record-id]").forEach((thumb) => {
+    thumb.setAttribute("draggable", "true");
+    thumb.addEventListener("dragstart", (e) => {
+      currentDragId = thumb.dataset.recordId;
+      e.dataTransfer.setData("text/plain", currentDragId);
+      e.dataTransfer.effectAllowed = "move";
+      thumb.classList.add("dragging");
+    });
+    thumb.addEventListener("dragend", () => {
+      thumb.classList.remove("dragging");
+      elements.list.querySelectorAll(".tier-row.drag-over").forEach((el) => el.classList.remove("drag-over"));
+      currentDragId = null;
+    });
+  });
+
+  elements.list.querySelectorAll(".tier-row[data-tier]").forEach((row) => {
+    row.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+    });
+    row.addEventListener("dragenter", (e) => {
+      e.preventDefault();
+      row.classList.add("drag-over");
+    });
+    row.addEventListener("dragleave", (e) => {
+      if (!row.contains(e.relatedTarget)) {
+        row.classList.remove("drag-over");
+      }
+    });
+    row.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      row.classList.remove("drag-over");
+      const recordId = currentDragId || e.dataTransfer.getData("text/plain");
+      if (!recordId || !databases) {
+        return;
+      }
+      const slug = row.dataset.tier;
+      const newTier = TIER_NAMES.find((t) => TIER_SLUG[t] === slug);
+      if (!newTier) {
+        return;
+      }
+      const record = state.records.find((r) => r.id === recordId);
+      if (!record) {
+        return;
+      }
+      if (normalizeTierForDisplay(record.tier) === newTier) {
+        return;
+      }
+      try {
+        await databases.updateDocument(
+          APPWRITE_DATABASE_ID,
+          ANIME_COLLECTION_ID,
+          recordId,
+          { tier: newTier }
+        );
+        record.tier = newTier;
+        renderList();
+        setStatus(`Moved "${record.title}" to ${newTier}.`);
+      } catch (error) {
+        setStatus(`Failed to update tier: ${error?.message || "Unknown error"}`);
+      }
+    });
+  });
 }
 
 async function loadAnimeList() {
