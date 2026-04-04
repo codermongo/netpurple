@@ -654,13 +654,6 @@ function normalizeAnimeDocument(document) {
     errors.push("title exceeds max length 255.");
   }
 
-  const score = Number(document?.score);
-  if (!Number.isFinite(score)) {
-    errors.push("score is required and must be a number.");
-  } else if (score < 0 || score > 15) {
-    errors.push("score must be between 0 and 15.");
-  }
-
   let tier = null;
   if (document?.tier !== null && document?.tier !== undefined && String(document.tier).trim() !== "") {
     tier = normalizeTierValue(document.tier);
@@ -702,7 +695,6 @@ function normalizeAnimeDocument(document) {
     value: {
       id,
       title,
-      score,
       tier,
       notes,
       rank
@@ -1039,9 +1031,6 @@ function openEditor(record) {
   if (elements.editTier) {
     elements.editTier.value = record?.tier ? formatTierLabel(record.tier) : "";
   }
-  if (elements.editScore) {
-    elements.editScore.value = Number.isFinite(record?.score) ? String(record.score) : "";
-  }
   if (elements.editNotes) {
     elements.editNotes.value = record?.notes || "";
   }
@@ -1081,7 +1070,6 @@ function closeEditor() {
 function getEditorPayload() {
   const title = elements.editTitle ? elements.editTitle.value.trim() : "";
   const tierRaw = elements.editTier ? normalizeTierValue(elements.editTier.value) : "";
-  const scoreRaw = elements.editScore ? elements.editScore.value.trim() : "";
   const notes = elements.editNotes ? elements.editNotes.value.trim() : "";
 
   if (!title) {
@@ -1089,18 +1077,6 @@ function getEditorPayload() {
   }
   if (title.length > 255) {
     return { ok: false, error: "Title must be 255 characters or fewer." };
-  }
-
-  if (!scoreRaw) {
-    return { ok: false, error: "Score is required." };
-  }
-
-  const score = parseScoreInput(scoreRaw);
-  if (!Number.isFinite(score)) {
-    return { ok: false, error: "Score must be a valid number." };
-  }
-  if (score < 0 || score > 15) {
-    return { ok: false, error: "Score must be between 0 and 15." };
   }
 
   if (tierRaw && !TIER_VALUES.has(tierRaw)) {
@@ -1115,7 +1091,6 @@ function getEditorPayload() {
     ok: true,
     payload: {
       title,
-      score,
       tier: tierRaw || null,
       notes
     }
