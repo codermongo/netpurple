@@ -318,18 +318,16 @@ async function waitForCoverRequestSlot() {
 
 async function fetchCover(title) {
   const cleanTitle = sanitizeTitle(title);
-  const queries = [title, cleanTitle].filter(Boolean);
+  const queries = [...new Set([title, cleanTitle].filter(Boolean))];
 
   for (const query of queries) {
     try {
-      await waitForCoverRequestSlot();
       const response = await fetch(
         `${JIKAN_PROXY_BASE}?q=${encodeURIComponent(query)}`
       );
 
       if (!response.ok) {
         if (response.status === 429) {
-          setCoverRateLimit(COVER_FETCH_COOLDOWN_MS);
           return "";
         }
         continue;
@@ -344,8 +342,6 @@ async function fetchCover(title) {
     } catch {
       continue;
     }
-
-    await sleep(220);
   }
 
   return "";
@@ -595,51 +591,41 @@ function renderCardCover(record) {
 }
 
 async function enrichVisibleCovers(records, jobId) {
-  if (isCoverRateLimited()) {
-    if (coverRetryTimer) {
-      window.clearTimeout(coverRetryTimer);
-    }
-    const delay = Math.max(
-      COVER_FETCH_RESUME_BUFFER_MS,
-      coverRateLimitedUntil - Date.now() + COVER_FETCH_RESUME_BUFFER_MS
-    );
-    coverRetryTimer = window.setTimeout(() => {
-      coverRetryTimer = null;
-      if (jobId === coverRenderJob) {
-        void enrichVisibleCovers(records, jobId);
-      }
-    }, delay);
-    return;
-  }
+  const BATCH_SIZE = 3;
+  const BATCH_DELAY_MS = 1100;
 
-  for (const record of records) {
-    if (jobId !== coverRenderJob) {
-      return;
-    }
-
+  const pending = records.filter((record) => {
     const key = getCoverKey(record.title);
-    if (!key || Object.prototype.hasOwnProperty.call(state.coverCache, key) || state.pendingCovers.has(key)) {
-      continue;
+    return key && !Object.prototype.hasOwnProperty.call(state.coverCache, key) && !state.pendingCovers.has(key);
+  });
+
+  for (let i = 0; i < pending.length; i += BATCH_SIZE) {
+    if (jobId !== coverRenderJob) return;
+
+    const batch = pending.slice(i, i + BATCH_SIZE);
+
+    await Promise.all(batch.map(async (record) => {
+      const key = getCoverKey(record.title);
+      if (!key || Object.prototype.hasOwnProperty.call(state.coverCache, key) || state.pendingCovers.has(key)) return;
+
+      state.pendingCovers.add(key);
+      const cover = await fetchCover(record.title || "");
+      state.pendingCovers.delete(key);
+
+      state.coverCache[key] = cover || "";
+      saveCoverCache();
+
+      if (jobId !== coverRenderJob || !cover) return;
+
+      const slot = elements.list.querySelector(`[data-cover-slot="${record.id}"]`);
+      if (slot) {
+        slot.innerHTML = `<img class="card-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(record.title || "Anime")} cover" loading="lazy" referrerpolicy="no-referrer" />`;
+      }
+    }));
+
+    if (i + BATCH_SIZE < pending.length) {
+      await sleep(BATCH_DELAY_MS);
     }
-
-    state.pendingCovers.add(key);
-    const cover = await fetchCover(record.title || "");
-    state.pendingCovers.delete(key);
-
-    state.coverCache[key] = cover || "";
-    saveCoverCache();
-
-    if (jobId !== coverRenderJob || !cover) {
-      continue;
-    }
-
-    const slot = elements.list.querySelector(`[data-cover-slot="${record.id}"]`);
-    if (!slot) {
-      continue;
-    }
-
-    slot.innerHTML = `<img class="card-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(record.title || "Anime")} cover" loading="lazy" referrerpolicy="no-referrer" />`;
-    await sleep(120);
   }
 }
 
