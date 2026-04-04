@@ -973,7 +973,7 @@ async function loadAnimeList() {
   setStatus("Loading anime list...");
 
   try {
-    const result = await fetchAnimeRanking();
+    const result = await fetchAnimeRankingDirect();
     state.records = result.records;
     renderList();
 
