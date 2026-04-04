@@ -11,8 +11,8 @@ const APPWRITE_PROXY_URL = `${ANIME_WORKER_BASE}/appwrite/anime`;
 const TITLE_SUGGESTION_LIMIT = 5;
 const TITLE_SUGGESTION_MIN_LENGTH = 3;
 const TITLE_SUGGESTION_DEBOUNCE_MS = 220;
-const COVER_FETCH_MIN_INTERVAL_MS = 950;
-const COVER_FETCH_COOLDOWN_MS = 25000;
+const COVER_FETCH_MIN_INTERVAL_MS = 300;
+const COVER_FETCH_COOLDOWN_MS = 3000;
 const COVER_FETCH_RESUME_BUFFER_MS = 450;
 
 const TIER_NAMES = ["Best of All Time", "S", "A", "B", "C", "D", "E", "F", "-F"];
@@ -973,7 +973,7 @@ async function loadAnimeList() {
   setStatus("Loading anime list...");
 
   try {
-    const result = await fetchAnimeRankingDirect();
+    const result = await fetchAnimeRanking();
     state.records = result.records;
     renderList();
 
