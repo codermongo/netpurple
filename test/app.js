@@ -883,13 +883,11 @@ function renderList() {
   coverRenderJob += 1;
   void enrichVisibleCovers(filtered, coverRenderJob);
 
-  if (state.canManage) {
-    addDragAndDrop();
-  }
+  addDragAndDrop();
 }
 
 function addDragAndDrop() {
-  if (!state.canManage || !elements.list) {
+  if (!elements.list) {
     return;
   }
 
@@ -949,7 +947,7 @@ function addDragAndDrop() {
       const recordId = currentDragId || e.dataTransfer.getData("text/plain");
       if (!recordId || !databases) return;
       const record = state.records.find((r) => r.id === recordId);
-      if (!record || !record.tier) return;
+      if (!record) return;
       await handleTierDrop(e, null);
     });
   }
