@@ -591,42 +591,31 @@ function renderCardCover(record) {
 }
 
 async function enrichVisibleCovers(records, jobId) {
-  const BATCH_SIZE = 3;
-  const BATCH_DELAY_MS = 1100;
-
   const pending = records.filter((record) => {
     const key = getCoverKey(record.title);
     return key && !Object.prototype.hasOwnProperty.call(state.coverCache, key) && !state.pendingCovers.has(key);
   });
 
-  for (let i = 0; i < pending.length; i += BATCH_SIZE) {
+  await Promise.all(pending.map(async (record) => {
     if (jobId !== coverRenderJob) return;
 
-    const batch = pending.slice(i, i + BATCH_SIZE);
+    const key = getCoverKey(record.title);
+    if (!key || Object.prototype.hasOwnProperty.call(state.coverCache, key) || state.pendingCovers.has(key)) return;
 
-    await Promise.all(batch.map(async (record) => {
-      const key = getCoverKey(record.title);
-      if (!key || Object.prototype.hasOwnProperty.call(state.coverCache, key) || state.pendingCovers.has(key)) return;
+    state.pendingCovers.add(key);
+    const cover = await fetchCover(record.title || "");
+    state.pendingCovers.delete(key);
 
-      state.pendingCovers.add(key);
-      const cover = await fetchCover(record.title || "");
-      state.pendingCovers.delete(key);
+    state.coverCache[key] = cover || "";
+    saveCoverCache();
 
-      state.coverCache[key] = cover || "";
-      saveCoverCache();
+    if (jobId !== coverRenderJob || !cover) return;
 
-      if (jobId !== coverRenderJob || !cover) return;
-
-      const slot = elements.list.querySelector(`[data-cover-slot="${record.id}"]`);
-      if (slot) {
-        slot.innerHTML = `<img class="card-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(record.title || "Anime")} cover" loading="lazy" referrerpolicy="no-referrer" />`;
-      }
-    }));
-
-    if (i + BATCH_SIZE < pending.length) {
-      await sleep(BATCH_DELAY_MS);
+    const slot = elements.list.querySelector(`[data-cover-slot="${record.id}"]`);
+    if (slot) {
+      slot.innerHTML = `<img class="card-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(record.title || "Anime")} cover" loading="lazy" referrerpolicy="no-referrer" />`;
     }
-  }
+  }));
 }
 
 function normalizeAnimeDocument(document) {
