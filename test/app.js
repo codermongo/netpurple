@@ -591,31 +591,42 @@ function renderCardCover(record) {
 }
 
 async function enrichVisibleCovers(records, jobId) {
+  const BATCH_SIZE = 3;
+  const BATCH_DELAY_MS = 1100;
+
   const pending = records.filter((record) => {
     const key = getCoverKey(record.title);
     return key && !Object.prototype.hasOwnProperty.call(state.coverCache, key) && !state.pendingCovers.has(key);
   });
 
-  await Promise.all(pending.map(async (record) => {
+  for (let i = 0; i < pending.length; i += BATCH_SIZE) {
     if (jobId !== coverRenderJob) return;
 
-    const key = getCoverKey(record.title);
-    if (!key || Object.prototype.hasOwnProperty.call(state.coverCache, key) || state.pendingCovers.has(key)) return;
+    const batch = pending.slice(i, i + BATCH_SIZE);
 
-    state.pendingCovers.add(key);
-    const cover = await fetchCover(record.title || "");
-    state.pendingCovers.delete(key);
+    await Promise.all(batch.map(async (record) => {
+      const key = getCoverKey(record.title);
+      if (!key || Object.prototype.hasOwnProperty.call(state.coverCache, key) || state.pendingCovers.has(key)) return;
 
-    state.coverCache[key] = cover || "";
-    saveCoverCache();
+      state.pendingCovers.add(key);
+      const cover = await fetchCover(record.title || "");
+      state.pendingCovers.delete(key);
 
-    if (jobId !== coverRenderJob || !cover) return;
+      state.coverCache[key] = cover || "";
+      saveCoverCache();
 
-    const slot = elements.list.querySelector(`[data-cover-slot="${record.id}"]`);
-    if (slot) {
-      slot.innerHTML = `<img class="card-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(record.title || "Anime")} cover" loading="lazy" referrerpolicy="no-referrer" />`;
+      if (jobId !== coverRenderJob || !cover) return;
+
+      const slot = elements.list.querySelector(`[data-cover-slot="${record.id}"]`);
+      if (slot) {
+        slot.innerHTML = `<img class="card-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(record.title || "Anime")} cover" loading="lazy" referrerpolicy="no-referrer" />`;
+      }
+    }));
+
+    if (i + BATCH_SIZE < pending.length) {
+      await sleep(BATCH_DELAY_MS);
     }
-  }));
+  }
 }
 
 function normalizeAnimeDocument(document) {
