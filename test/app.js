@@ -579,12 +579,11 @@ function createPlaceholder(title) {
 }
 
 function renderCardCover(record) {
-  const key = getCoverKey(record.title);
-  const cached = state.coverCache[key] || "";
+  const url = record.cover_url || state.coverCache[getCoverKey(record.title)] || "";
   const safeTitle = escapeHtml(record.title || "Anime");
 
-  if (cached) {
-    return `<img class="card-cover" src="${escapeHtml(cached)}" alt="${safeTitle} cover" loading="lazy" referrerpolicy="no-referrer" />`;
+  if (url) {
+    return `<img class="card-cover" src="${escapeHtml(url)}" alt="${safeTitle} cover" loading="lazy" referrerpolicy="no-referrer" />`;
   }
 
   return createPlaceholder(record.title);
@@ -595,6 +594,7 @@ async function enrichVisibleCovers(records, jobId) {
   const BATCH_DELAY_MS = 1100;
 
   const pending = records.filter((record) => {
+    if (record.cover_url) return false;
     const key = getCoverKey(record.title);
     return key && !Object.prototype.hasOwnProperty.call(state.coverCache, key) && !state.pendingCovers.has(key);
   });
@@ -676,6 +676,8 @@ function normalizeAnimeDocument(document) {
     };
   }
 
+  const coverUrl = typeof document?.cover_url === "string" ? document.cover_url.trim() : "";
+
   return {
     ok: true,
     value: {
@@ -683,7 +685,8 @@ function normalizeAnimeDocument(document) {
       title,
       tier,
       notes,
-      rank
+      rank,
+      cover_url: coverUrl
     }
   };
 }

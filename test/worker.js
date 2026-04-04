@@ -19,9 +19,6 @@ export default {
     const LIST_COLLECTION_ID = "list";
 
     // TTL
-    const TTL_JIKAN_SECONDS = 86400;        // 24h success cache
-    const TTL_JIKAN_429_SECONDS = 120;      // 2m negative cache
-    const TTL_JIKAN_STALE_SECONDS = 604800; // 7d stale fallback
     const TTL_APPWRITE_SECONDS = 300;       // 5 minutes
 
     // Cache key namespace — bump to bust all Appwrite cache entries instantly
@@ -88,10 +85,6 @@ export default {
       return await response.text();
     }
 
-    function normalizeQuery(q) {
-      return String(q || "").trim().toLowerCase();
-    }
-
     function normalizePath(pathname) {
       return pathname.replace(/\/+$/, "");
     }
@@ -135,7 +128,7 @@ export default {
       let total = 0;
 
       while (true) {
-        const pageUrl = `${baseUrl}?limit=${limit}&offset=${offset}`;
+        const pageUrl = `${baseUrl}?queries[]=limit(${limit})&queries[]=offset(${offset})`;
         const res = await fetch(pageUrl, { method: "GET", headers });
 
         if (!res.ok) {
@@ -166,69 +159,13 @@ export default {
         if (all.length >= total) break;
       }
 
-      return json({ total: all.length, documents: all }, 200, corsBaseHeaders);
+      return json({ total: total, documents: all }, 200, corsBaseHeaders);
     }
 
     // -------------------- Routing --------------------
     const path = normalizePath(url.pathname);
 
-    // 1) Jikan: /jikan?q=naruto
-    if (path === "/jikan") {
-      const q = normalizeQuery(url.searchParams.get("q"));
-      if (!q) return json({ error: "Missing query 'q'" }, 400, corsBaseHeaders);
-
-      const bypass = url.searchParams.get("bypass") === BYPASS_TOKEN;
-      const purge = url.searchParams.get("purge") === BYPASS_TOKEN;
-
-      const jikanUrl = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(q)}&limit=8&sfw=true`;
-
-      const freshKey = new Request(`https://cache.netpurple.local/jikan/fresh?q=${encodeURIComponent(q)}`, request);
-      const staleKey = new Request(`https://cache.netpurple.local/jikan/stale?q=${encodeURIComponent(q)}`, request);
-
-      if (purge) {
-        const [a, b] = await Promise.all([cache.delete(freshKey), cache.delete(staleKey)]);
-        return json({ ok: true, purged: a || b }, 200, corsBaseHeaders);
-      }
-
-      if (!bypass) {
-        const hit = await cache.match(freshKey);
-        if (hit) return withCors(hit);
-      }
-
-      const upstream = await fetch(jikanUrl);
-
-      if (upstream.ok) {
-        const freshResp = cacheable(upstream, TTL_JIKAN_SECONDS, { "X-Proxy-Cache": "MISS-FETCHED" });
-        const staleResp = cacheable(freshResp.clone(), TTL_JIKAN_STALE_SECONDS, { "X-Proxy-Cache": "STALE-STORED" });
-
-        ctx.waitUntil(Promise.all([
-          cache.put(freshKey, freshResp.clone()),
-          cache.put(staleKey, staleResp.clone()),
-        ]));
-
-        return freshResp;
-      }
-
-      if (!bypass && (upstream.status === 429 || upstream.status >= 500)) {
-        const stale = await cache.match(staleKey);
-        if (stale) {
-          const out = withCors(stale);
-          out.headers.set("X-Proxy-Cache", "STALE-FALLBACK");
-          out.headers.set("X-Upstream-Status", String(upstream.status));
-          return out;
-        }
-      }
-
-      if (upstream.status === 429) {
-        const rateLimited = cacheable(upstream, TTL_JIKAN_429_SECONDS, { "X-Proxy-Cache": "NEGATIVE-429" });
-        ctx.waitUntil(cache.put(freshKey, rateLimited.clone()));
-        return rateLimited;
-      }
-
-      return withCors(upstream);
-    }
-
-    // 2) Appwrite: /appwrite/anime | /appwrite/tools | /appwrite/list
+    // Appwrite: /appwrite/anime | /appwrite/tools | /appwrite/list
     if (path.startsWith("/appwrite/")) {
       const bypass = url.searchParams.get("bypass") === BYPASS_TOKEN;
       const purge = url.searchParams.get("purge") === BYPASS_TOKEN;
