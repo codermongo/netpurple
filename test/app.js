@@ -1215,6 +1215,19 @@ async function saveEditor(event) {
         parsed.payload
       );
     } else {
+      try {
+        const jikanResp = await fetch(
+          `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(parsed.payload.title)}&limit=5&sfw=true`
+        );
+        if (jikanResp.ok) {
+          const jikanData = await jikanResp.json();
+          const best = pickBestMatch(jikanData?.data || [], parsed.payload.title);
+          const coverUrl = getCoverUrlFromItem(best);
+          if (coverUrl) parsed.payload.cover_url = coverUrl;
+        }
+      } catch {
+        // proceed without cover
+      }
       await databases.createDocument(
         APPWRITE_DATABASE_ID,
         ANIME_COLLECTION_ID,

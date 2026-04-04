@@ -104,27 +104,21 @@
             <input id="editTitle" type="text" autocomplete="off" required />
             <div class="title-suggestions" id="titleSuggestions" hidden></div>
           </label>
-          <div class="edit-grid">
-            <label class="edit-field">
-              <span>Tier</span>
-              <input id="editTier" type="text" list="tierOptions" placeholder="S, A, B, C..." />
-              <datalist id="tierOptions">
-                <option value="Best of All Time"></option>
-                <option value="S"></option>
-                <option value="A"></option>
-                <option value="B"></option>
-                <option value="C"></option>
-                <option value="D"></option>
-                <option value="E"></option>
-                <option value="F"></option>
-                <option value="-F"></option>
-              </datalist>
-            </label>
-            <label class="edit-field">
-              <span>Score</span>
-              <input id="editScore" type="number" step="any" min="0" max="15" />
-            </label>
-          </div>
+          <label class="edit-field">
+            <span>Tier</span>
+            <input id="editTier" type="text" list="tierOptions" placeholder="S, A, B, C..." />
+            <datalist id="tierOptions">
+              <option value="Best of All Time"></option>
+              <option value="S"></option>
+              <option value="A"></option>
+              <option value="B"></option>
+              <option value="C"></option>
+              <option value="D"></option>
+              <option value="E"></option>
+              <option value="F"></option>
+              <option value="-F"></option>
+            </datalist>
+          </label>
           <label class="edit-field">
             <span>Notes</span>
             <textarea id="editNotes" rows="4"></textarea>
