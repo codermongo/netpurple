@@ -468,6 +468,14 @@ body.dark-mode .menu-item-circle .moon-icon {
   cursor: grabbing;
 }
 
+.tier-thumb.drag-insert-before {
+  box-shadow: -3px 0 0 0 rgba(139, 92, 246, 0.9);
+}
+
+.tier-thumb.drag-insert-after {
+  box-shadow: 3px 0 0 0 rgba(139, 92, 246, 0.9);
+}
+
 .tier-row.drag-over {
   outline: 2px dashed rgba(139, 92, 246, 0.7);
   outline-offset: -2px;

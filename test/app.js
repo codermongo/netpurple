@@ -824,6 +824,15 @@ function renderList() {
     }
   }
 
+  for (const tier of TIER_NAMES) {
+    groups[tier].sort((a, b) => {
+      if (a.rank === null && b.rank === null) return 0;
+      if (a.rank === null) return 1;
+      if (b.rank === null) return -1;
+      return a.rank - b.rank;
+    });
+  }
+
   // Main tier chart
   let html = '<div class="tier-chart">';
   for (const tier of TIER_NAMES) {
@@ -887,8 +896,21 @@ function renderList() {
 }
 
 function addDragAndDrop() {
-  if (!elements.list) {
-    return;
+  if (!elements.list) return;
+
+  function clearInsertIndicators() {
+    elements.list.querySelectorAll(".drag-insert-before, .drag-insert-after").forEach((el) => {
+      el.classList.remove("drag-insert-before", "drag-insert-after");
+    });
+  }
+
+  function handleAutoScroll(e) {
+    const ZONE = 80;
+    const SPEED = 18;
+    const y = e.clientY;
+    const h = window.innerHeight;
+    if (y < ZONE) window.scrollBy(0, -SPEED * (1 - y / ZONE));
+    else if (y > h - ZONE) window.scrollBy(0, SPEED * (1 - (h - y) / ZONE));
   }
 
   function makeDraggable(el) {
@@ -898,11 +920,14 @@ function addDragAndDrop() {
       e.dataTransfer.setData("text/plain", currentDragId);
       e.dataTransfer.effectAllowed = "move";
       el.classList.add("dragging");
+      document.addEventListener("dragover", handleAutoScroll);
     });
     el.addEventListener("dragend", () => {
       el.classList.remove("dragging");
-      elements.list.querySelectorAll(".tier-row.drag-over, .unranked-pool.drag-over").forEach((t) => t.classList.remove("drag-over"));
+      elements.list.querySelectorAll(".drag-over").forEach((t) => t.classList.remove("drag-over"));
+      clearInsertIndicators();
       currentDragId = null;
+      document.removeEventListener("dragover", handleAutoScroll);
     });
   }
 
@@ -925,6 +950,77 @@ function addDragAndDrop() {
     }
   }
 
+  async function handleReorder(draggedId, targetId, insertBefore) {
+    if (draggedId === targetId) return;
+    const dragged = state.records.find((r) => r.id === draggedId);
+    const target = state.records.find((r) => r.id === targetId);
+    if (!dragged || !target) return;
+
+    const tier = normalizeTierForDisplay(target.tier);
+    const tierRecords = state.records
+      .filter((r) => normalizeTierForDisplay(r.tier) === tier)
+      .sort((a, b) => {
+        if (a.rank === null && b.rank === null) return 0;
+        if (a.rank === null) return 1;
+        if (b.rank === null) return -1;
+        return a.rank - b.rank;
+      });
+
+    const reordered = tierRecords.filter((r) => r.id !== draggedId);
+    const targetIndex = reordered.findIndex((r) => r.id === targetId);
+    reordered.splice(insertBefore ? targetIndex : targetIndex + 1, 0, dragged);
+
+    const updates = [];
+    reordered.forEach((record, i) => {
+      if (record.rank !== i) {
+        record.rank = i;
+        updates.push(databases.updateDocument(APPWRITE_DATABASE_ID, ANIME_COLLECTION_ID, record.id, { rank: i }));
+      }
+    });
+
+    if (!updates.length) return;
+    renderList();
+    try {
+      await Promise.all(updates);
+      setStatus(`Reordered in ${tier}.`);
+    } catch (error) {
+      setStatus(`Failed to reorder: ${error?.message || "Unknown error"}`);
+    }
+  }
+
+  // Per-thumb drop for reordering within tier
+  elements.list.querySelectorAll(".tier-thumb[data-record-id]").forEach((thumb) => {
+    thumb.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = "move";
+      const rect = thumb.getBoundingClientRect();
+      clearInsertIndicators();
+      thumb.classList.add(e.clientX < rect.left + rect.width / 2 ? "drag-insert-before" : "drag-insert-after");
+    });
+    thumb.addEventListener("dragleave", () => clearInsertIndicators());
+    thumb.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearInsertIndicators();
+      const draggedId = currentDragId || e.dataTransfer.getData("text/plain");
+      const targetId = thumb.dataset.recordId;
+      if (!draggedId || !databases) return;
+      const dragged = state.records.find((r) => r.id === draggedId);
+      const target = state.records.find((r) => r.id === targetId);
+      if (!dragged || !target) return;
+      const draggedTier = normalizeTierForDisplay(dragged.tier);
+      const targetTier = normalizeTierForDisplay(target.tier);
+      if (draggedTier === targetTier) {
+        const rect = thumb.getBoundingClientRect();
+        await handleReorder(draggedId, targetId, e.clientX < rect.left + rect.width / 2);
+      } else {
+        await handleTierDrop(e, targetTier);
+      }
+    });
+  });
+
+  // Tier row drop zone (empty space → append to end of tier)
   elements.list.querySelectorAll(".tier-row[data-tier]").forEach((row) => {
     row.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
     row.addEventListener("dragenter", (e) => { e.preventDefault(); row.classList.add("drag-over"); });
@@ -937,6 +1033,7 @@ function addDragAndDrop() {
     });
   });
 
+  // Unranked pool drop zone
   const unrankedPool = elements.list.querySelector(".unranked-pool");
   if (unrankedPool) {
     unrankedPool.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
