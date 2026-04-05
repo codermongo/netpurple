@@ -1,7 +1,7 @@
 const APPWRITE_ENDPOINT = "https://api.netpurple.net/v1";
 const APPWRITE_PROJECT_ID = "699f23920000d9667d3e";
 const APPWRITE_DATABASE_ID = "699f251000346ad6c5e7";
-const ANIME_COLLECTION_ID = "anime_ranking_1";
+const ANIME_COLLECTION_ID = "anime_ranking";
 const PAGE_SIZE = 100;
 const THEME_KEY = "darkMode";
 const COVER_CACHE_KEY = "anime_cover_cache_v1";
@@ -11,26 +11,11 @@ const APPWRITE_PROXY_URL = `${ANIME_WORKER_BASE}/appwrite/anime`;
 const TITLE_SUGGESTION_LIMIT = 5;
 const TITLE_SUGGESTION_MIN_LENGTH = 3;
 const TITLE_SUGGESTION_DEBOUNCE_MS = 220;
-const COVER_FETCH_MIN_INTERVAL_MS = 300;
-const COVER_FETCH_COOLDOWN_MS = 3000;
+const COVER_FETCH_MIN_INTERVAL_MS = 950;
+const COVER_FETCH_COOLDOWN_MS = 25000;
 const COVER_FETCH_RESUME_BUFFER_MS = 450;
 
-const TIER_NAMES = ["Best of All Time", "S", "A", "B", "C", "D", "E", "F", "-F"];
-const TIER_SLUG = {
-  "Best of All Time": "best",
-  "S": "s",
-  "A": "a",
-  "B": "b",
-  "C": "c",
-  "D": "d",
-  "E": "e",
-  "F": "f",
-  "-F": "neg-f"
-};
-const TIER_VALUES = new Set([
-  ...TIER_NAMES,
-  "Tier_1", "Tier_2", "Tier_3", "Tier 1", "Tier 2", "Tier 3"
-]);
+const TIER_VALUES = new Set(["Tier_1", "Tier_2", "Tier_3", "Tier 1", "Tier 2", "Tier 3"]);
 
 const state = {
   records: [],
@@ -72,7 +57,6 @@ let titleSuggestionAbortController = null;
 let titleSuggestionRequestId = 0;
 let nextCoverFetchAt = 0;
 let coverRateLimitedUntil = 0;
-let currentDragId = null;
 let coverRetryTimer = null;
 
 function escapeHtml(value) {
@@ -100,27 +84,33 @@ function formatScore(score) {
   return Number.isInteger(score) ? `${score}` : score.toFixed(1);
 }
 
-function normalizeTierForDisplay(tier) {
-  if (!tier) return null;
-  if (TIER_NAMES.includes(tier)) return tier;
-  if (tier === "Tier_1" || tier === "Tier 1") return "S";
-  if (tier === "Tier_2" || tier === "Tier 2") return "A";
-  if (tier === "Tier_3" || tier === "Tier 3") return "B";
-  return null;
-}
-
 function getTierClass(tier) {
-  const normalized = normalizeTierForDisplay(tier);
-  if (!normalized) return "";
-  return `tier-row-${TIER_SLUG[normalized]}`;
+  if (tier === "Tier_1" || tier === "Tier 1") {
+    return "tier-1";
+  }
+  if (tier === "Tier_2" || tier === "Tier 2") {
+    return "tier-2";
+  }
+  if (tier === "Tier_3" || tier === "Tier 3") {
+    return "tier-3";
+  }
+  return "";
 }
 
 function formatTierLabel(tier) {
   if (!tier) {
     return "No tier";
   }
-  const normalized = normalizeTierForDisplay(tier);
-  return normalized || String(tier);
+  if (tier === "Tier_1" || tier === "Tier 1") {
+    return "Tier 1";
+  }
+  if (tier === "Tier_2" || tier === "Tier 2") {
+    return "Tier 2";
+  }
+  if (tier === "Tier_3" || tier === "Tier 3") {
+    return "Tier 3";
+  }
+  return String(tier);
 }
 
 function normalizeTierValue(tier) {
@@ -128,17 +118,14 @@ function normalizeTierValue(tier) {
   if (!value) {
     return "";
   }
-  if (TIER_NAMES.includes(value)) {
-    return value;
+  if (value === "Tier 1") {
+    return "Tier_1";
   }
-  if (value === "Tier 1" || value === "Tier_1") {
-    return "S";
+  if (value === "Tier 2") {
+    return "Tier_2";
   }
-  if (value === "Tier 2" || value === "Tier_2") {
-    return "A";
-  }
-  if (value === "Tier 3" || value === "Tier_3") {
-    return "B";
+  if (value === "Tier 3") {
+    return "Tier_3";
   }
   return value;
 }
@@ -318,16 +305,18 @@ async function waitForCoverRequestSlot() {
 
 async function fetchCover(title) {
   const cleanTitle = sanitizeTitle(title);
-  const queries = [...new Set([title, cleanTitle].filter(Boolean))];
+  const queries = [title, cleanTitle].filter(Boolean);
 
   for (const query of queries) {
     try {
+      await waitForCoverRequestSlot();
       const response = await fetch(
         `${JIKAN_PROXY_BASE}?q=${encodeURIComponent(query)}`
       );
 
       if (!response.ok) {
         if (response.status === 429) {
+          setCoverRateLimit(COVER_FETCH_COOLDOWN_MS);
           return "";
         }
         continue;
@@ -342,6 +331,8 @@ async function fetchCover(title) {
     } catch {
       continue;
     }
+
+    await sleep(220);
   }
 
   return "";
@@ -579,53 +570,63 @@ function createPlaceholder(title) {
 }
 
 function renderCardCover(record) {
-  const url = record.cover_url || state.coverCache[getCoverKey(record.title)] || "";
+  const key = getCoverKey(record.title);
+  const cached = state.coverCache[key] || "";
   const safeTitle = escapeHtml(record.title || "Anime");
 
-  if (url) {
-    return `<img class="card-cover" src="${escapeHtml(url)}" alt="${safeTitle} cover" loading="lazy" referrerpolicy="no-referrer" />`;
+  if (cached) {
+    return `<img class="card-cover" src="${escapeHtml(cached)}" alt="${safeTitle} cover" loading="lazy" referrerpolicy="no-referrer" />`;
   }
 
   return createPlaceholder(record.title);
 }
 
 async function enrichVisibleCovers(records, jobId) {
-  const BATCH_SIZE = 3;
-  const BATCH_DELAY_MS = 1100;
-
-  const pending = records.filter((record) => {
-    if (record.cover_url) return false;
-    const key = getCoverKey(record.title);
-    return key && !Object.prototype.hasOwnProperty.call(state.coverCache, key) && !state.pendingCovers.has(key);
-  });
-
-  for (let i = 0; i < pending.length; i += BATCH_SIZE) {
-    if (jobId !== coverRenderJob) return;
-
-    const batch = pending.slice(i, i + BATCH_SIZE);
-
-    await Promise.all(batch.map(async (record) => {
-      const key = getCoverKey(record.title);
-      if (!key || Object.prototype.hasOwnProperty.call(state.coverCache, key) || state.pendingCovers.has(key)) return;
-
-      state.pendingCovers.add(key);
-      const cover = await fetchCover(record.title || "");
-      state.pendingCovers.delete(key);
-
-      state.coverCache[key] = cover || "";
-      saveCoverCache();
-
-      if (jobId !== coverRenderJob || !cover) return;
-
-      const slot = elements.list.querySelector(`[data-cover-slot="${record.id}"]`);
-      if (slot) {
-        slot.innerHTML = `<img class="card-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(record.title || "Anime")} cover" loading="lazy" referrerpolicy="no-referrer" />`;
-      }
-    }));
-
-    if (i + BATCH_SIZE < pending.length) {
-      await sleep(BATCH_DELAY_MS);
+  if (isCoverRateLimited()) {
+    if (coverRetryTimer) {
+      window.clearTimeout(coverRetryTimer);
     }
+    const delay = Math.max(
+      COVER_FETCH_RESUME_BUFFER_MS,
+      coverRateLimitedUntil - Date.now() + COVER_FETCH_RESUME_BUFFER_MS
+    );
+    coverRetryTimer = window.setTimeout(() => {
+      coverRetryTimer = null;
+      if (jobId === coverRenderJob) {
+        void enrichVisibleCovers(records, jobId);
+      }
+    }, delay);
+    return;
+  }
+
+  for (const record of records) {
+    if (jobId !== coverRenderJob) {
+      return;
+    }
+
+    const key = getCoverKey(record.title);
+    if (!key || Object.prototype.hasOwnProperty.call(state.coverCache, key) || state.pendingCovers.has(key)) {
+      continue;
+    }
+
+    state.pendingCovers.add(key);
+    const cover = await fetchCover(record.title || "");
+    state.pendingCovers.delete(key);
+
+    state.coverCache[key] = cover || "";
+    saveCoverCache();
+
+    if (jobId !== coverRenderJob || !cover) {
+      continue;
+    }
+
+    const slot = elements.list.querySelector(`[data-cover-slot="${record.id}"]`);
+    if (!slot) {
+      continue;
+    }
+
+    slot.innerHTML = `<img class="card-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(record.title || "Anime")} cover" loading="lazy" referrerpolicy="no-referrer" />`;
+    await sleep(120);
   }
 }
 
@@ -640,11 +641,18 @@ function normalizeAnimeDocument(document) {
     errors.push("title exceeds max length 255.");
   }
 
+  const score = Number(document?.score);
+  if (!Number.isFinite(score)) {
+    errors.push("score is required and must be a number.");
+  } else if (score < 0 || score > 15) {
+    errors.push("score must be between 0 and 15.");
+  }
+
   let tier = null;
   if (document?.tier !== null && document?.tier !== undefined && String(document.tier).trim() !== "") {
     tier = normalizeTierValue(document.tier);
     if (!TIER_VALUES.has(tier)) {
-      errors.push("tier must be one of: Best of All Time, S, A, B, C, D, E, F, -F.");
+      errors.push("tier must be Tier_1/Tier_2/Tier_3 (or Tier 1/Tier 2/Tier 3).");
     }
   }
 
@@ -676,21 +684,29 @@ function normalizeAnimeDocument(document) {
     };
   }
 
-  const coverUrl = typeof document?.cover_url === "string" ? document.cover_url.trim() : "";
-
   return {
     ok: true,
     value: {
       id,
       title,
+      score,
       tier,
       notes,
-      rank,
-      cover_url: coverUrl
+      rank
     }
   };
 }
 
+function sortAnime(records) {
+  return records
+    .slice()
+    .sort((left, right) => {
+      if (left.score !== right.score) {
+        return right.score - left.score;
+      }
+      return left.title.localeCompare(right.title);
+    });
+}
 
 async function fetchAnimeRankingDirect() {
   const records = [];
@@ -733,7 +749,7 @@ async function fetchAnimeRankingDirect() {
   }
 
   return {
-    records,
+    records: sortAnime(records),
     invalid
   };
 }
@@ -762,11 +778,12 @@ async function fetchAnimeRanking() {
 
     const total = Number(payload?.total);
     if (Number.isFinite(total) && total > documents.length) {
+      // Worker /appwrite route currently returns the first page only; fallback keeps list complete.
       return await fetchAnimeRankingDirect();
     }
 
     return {
-      records,
+      records: sortAnime(records),
       invalid
     };
   } catch {
@@ -783,7 +800,7 @@ function getFilteredRecords() {
   return state.records.filter((record) => {
     const haystack = [
       record.title,
-      normalizeTierForDisplay(record.tier) || record.tier || "",
+      record.tier || "",
       record.notes || "",
       record.score,
       record.rank
@@ -808,79 +825,43 @@ function renderList() {
     return;
   }
 
-  // Group records by display tier
-  const groups = {};
-  for (const name of TIER_NAMES) {
-    groups[name] = [];
-  }
-  const unranked = [];
+  const cards = filtered.map((record, index) => {
+    const rankText = `#${index + 1}`;
+    const tierText = formatTierLabel(record.tier);
+    const tierClass = getTierClass(record.tier);
+    const notes = record.notes ? `<p class="card-notes">${escapeHtml(record.notes)}</p>` : "";
+    const actions = state.canManage
+      ? `
+        <div class="card-actions">
+          <button class="card-action-btn" type="button" data-action="edit" data-id="${escapeHtml(record.id)}">Edit</button>
+        </div>
+      `
+      : "";
 
-  for (const record of filtered) {
-    const tier = normalizeTierForDisplay(record.tier);
-    if (tier) {
-      groups[tier].push(record);
-    } else {
-      unranked.push(record);
-    }
-  }
-
-  for (const tier of TIER_NAMES) {
-    groups[tier].sort((a, b) => {
-      if (a.rank === null && b.rank === null) return 0;
-      if (a.rank === null) return 1;
-      if (b.rank === null) return -1;
-      return a.rank - b.rank;
-    });
-  }
-
-  // Main tier chart
-  let html = '<div class="tier-chart">';
-  for (const tier of TIER_NAMES) {
-    const items = groups[tier];
-    const slug = TIER_SLUG[tier];
-    const thumbnails = items.map((record) => `
-      <div class="tier-thumb" title="${escapeHtml(record.title)}" data-record-id="${escapeHtml(record.id)}">
-        <div class="tier-thumb-media" data-cover-slot="${escapeHtml(record.id)}">
+    return `
+      <article class="anime-card ${tierClass}">
+        <div class="card-media" data-cover-slot="${escapeHtml(record.id)}">
           ${renderCardCover(record)}
         </div>
-      </div>
-    `).join("");
-    html += `
-      <div class="tier-row tier-row-${slug}" data-tier="${slug}">
-        <div class="tier-row-label"><span>${escapeHtml(tier)}</span></div>
-        <div class="tier-row-items">${thumbnails}</div>
-      </div>
-    `;
-  }
-  html += "</div>";
-
-  // Unranked pool below the chart
-  html += '<div class="unranked-pool">';
-  html += '<h3 class="unranked-heading">Unranked</h3>';
-  if (unranked.length > 0) {
-    html += '<div class="unranked-items">';
-    for (const record of unranked) {
-      const editBtn = state.canManage
-        ? `<button class="card-action-btn" type="button" data-action="edit" data-id="${escapeHtml(record.id)}">Edit</button>`
-        : "";
-      html += `
-        <div class="unranked-card" data-record-id="${escapeHtml(record.id)}" title="${escapeHtml(record.title)}">
-          <div class="unranked-cover" data-cover-slot="${escapeHtml(record.id)}">
-            ${renderCardCover(record)}
+        <div class="card-body">
+          <div class="card-head">
+            <div class="card-head-left">
+              <h2 class="card-title">${escapeHtml(rankText)} ${escapeHtml(record.title)}</h2>
+              <p class="card-meta ${tierClass}">Tier: ${escapeHtml(tierText)}</p>
+            </div>
+            <div class="head-right">
+              <span class="score-pill">Score: ${escapeHtml(formatScore(record.score))}/10</span>
+              ${actions}
+            </div>
           </div>
-          <p class="unranked-title">${escapeHtml(record.title)}</p>
-          ${editBtn}
+          ${notes}
         </div>
-      `;
-    }
-    html += '</div>';
-  } else {
-    html += '<div class="unranked-items unranked-empty"><p class="unranked-empty-text">No unranked anime.</p></div>';
-  }
-  html += '</div>';
+      </article>
+    `;
+  });
 
   if (elements.list) {
-    elements.list.innerHTML = html;
+    elements.list.innerHTML = cards.join("");
   }
 
   if (state.query) {
@@ -891,163 +872,6 @@ function renderList() {
 
   coverRenderJob += 1;
   void enrichVisibleCovers(filtered, coverRenderJob);
-
-  addDragAndDrop();
-}
-
-function addDragAndDrop() {
-  if (!elements.list) return;
-
-  function clearInsertIndicators() {
-    elements.list.querySelectorAll(".drag-insert-before, .drag-insert-after").forEach((el) => {
-      el.classList.remove("drag-insert-before", "drag-insert-after");
-    });
-  }
-
-  function handleAutoScroll(e) {
-    const ZONE = 80;
-    const SPEED = 18;
-    const y = e.clientY;
-    const h = window.innerHeight;
-    if (y < ZONE) window.scrollBy(0, -SPEED * (1 - y / ZONE));
-    else if (y > h - ZONE) window.scrollBy(0, SPEED * (1 - (h - y) / ZONE));
-  }
-
-  function makeDraggable(el) {
-    el.setAttribute("draggable", "true");
-    el.addEventListener("dragstart", (e) => {
-      currentDragId = el.dataset.recordId;
-      e.dataTransfer.setData("text/plain", currentDragId);
-      e.dataTransfer.effectAllowed = "move";
-      el.classList.add("dragging");
-      document.addEventListener("dragover", handleAutoScroll);
-    });
-    el.addEventListener("dragend", () => {
-      el.classList.remove("dragging");
-      elements.list.querySelectorAll(".drag-over").forEach((t) => t.classList.remove("drag-over"));
-      clearInsertIndicators();
-      currentDragId = null;
-      document.removeEventListener("dragover", handleAutoScroll);
-    });
-  }
-
-  elements.list.querySelectorAll(".tier-thumb[data-record-id], .unranked-card[data-record-id]").forEach(makeDraggable);
-
-  async function handleTierDrop(e, newTier) {
-    e.preventDefault();
-    const recordId = currentDragId || e.dataTransfer.getData("text/plain");
-    if (!recordId || !databases) return;
-    const record = state.records.find((r) => r.id === recordId);
-    if (!record) return;
-    if (normalizeTierForDisplay(record.tier) === newTier) return;
-    try {
-      await databases.updateDocument(APPWRITE_DATABASE_ID, ANIME_COLLECTION_ID, recordId, { tier: newTier });
-      record.tier = newTier;
-      renderList();
-      setStatus(`Moved "${record.title}" to ${newTier !== null ? newTier : "Unranked"}.`);
-    } catch (error) {
-      setStatus(`Failed to update tier: ${error?.message || "Unknown error"}`);
-    }
-  }
-
-  async function handleReorder(draggedId, targetId, insertBefore) {
-    if (draggedId === targetId) return;
-    const dragged = state.records.find((r) => r.id === draggedId);
-    const target = state.records.find((r) => r.id === targetId);
-    if (!dragged || !target) return;
-
-    const tier = normalizeTierForDisplay(target.tier);
-    const tierRecords = state.records
-      .filter((r) => normalizeTierForDisplay(r.tier) === tier)
-      .sort((a, b) => {
-        if (a.rank === null && b.rank === null) return 0;
-        if (a.rank === null) return 1;
-        if (b.rank === null) return -1;
-        return a.rank - b.rank;
-      });
-
-    const reordered = tierRecords.filter((r) => r.id !== draggedId);
-    const targetIndex = reordered.findIndex((r) => r.id === targetId);
-    reordered.splice(insertBefore ? targetIndex : targetIndex + 1, 0, dragged);
-
-    const updates = [];
-    reordered.forEach((record, i) => {
-      if (record.rank !== i) {
-        record.rank = i;
-        updates.push(databases.updateDocument(APPWRITE_DATABASE_ID, ANIME_COLLECTION_ID, record.id, { rank: i }));
-      }
-    });
-
-    if (!updates.length) return;
-    renderList();
-    try {
-      await Promise.all(updates);
-      setStatus(`Reordered in ${tier}.`);
-    } catch (error) {
-      setStatus(`Failed to reorder: ${error?.message || "Unknown error"}`);
-    }
-  }
-
-  // Per-thumb drop for reordering within tier
-  elements.list.querySelectorAll(".tier-thumb[data-record-id]").forEach((thumb) => {
-    thumb.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      e.dataTransfer.dropEffect = "move";
-      const rect = thumb.getBoundingClientRect();
-      clearInsertIndicators();
-      thumb.classList.add(e.clientX < rect.left + rect.width / 2 ? "drag-insert-before" : "drag-insert-after");
-    });
-    thumb.addEventListener("dragleave", () => clearInsertIndicators());
-    thumb.addEventListener("drop", async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      clearInsertIndicators();
-      const draggedId = currentDragId || e.dataTransfer.getData("text/plain");
-      const targetId = thumb.dataset.recordId;
-      if (!draggedId || !databases) return;
-      const dragged = state.records.find((r) => r.id === draggedId);
-      const target = state.records.find((r) => r.id === targetId);
-      if (!dragged || !target) return;
-      const draggedTier = normalizeTierForDisplay(dragged.tier);
-      const targetTier = normalizeTierForDisplay(target.tier);
-      if (draggedTier === targetTier) {
-        const rect = thumb.getBoundingClientRect();
-        await handleReorder(draggedId, targetId, e.clientX < rect.left + rect.width / 2);
-      } else {
-        await handleTierDrop(e, targetTier);
-      }
-    });
-  });
-
-  // Tier row drop zone (empty space → append to end of tier)
-  elements.list.querySelectorAll(".tier-row[data-tier]").forEach((row) => {
-    row.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
-    row.addEventListener("dragenter", (e) => { e.preventDefault(); row.classList.add("drag-over"); });
-    row.addEventListener("dragleave", (e) => { if (!row.contains(e.relatedTarget)) row.classList.remove("drag-over"); });
-    row.addEventListener("drop", async (e) => {
-      row.classList.remove("drag-over");
-      const slug = row.dataset.tier;
-      const newTier = TIER_NAMES.find((t) => TIER_SLUG[t] === slug);
-      if (newTier) await handleTierDrop(e, newTier);
-    });
-  });
-
-  // Unranked pool drop zone
-  const unrankedPool = elements.list.querySelector(".unranked-pool");
-  if (unrankedPool) {
-    unrankedPool.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
-    unrankedPool.addEventListener("dragenter", (e) => { e.preventDefault(); unrankedPool.classList.add("drag-over"); });
-    unrankedPool.addEventListener("dragleave", (e) => { if (!unrankedPool.contains(e.relatedTarget)) unrankedPool.classList.remove("drag-over"); });
-    unrankedPool.addEventListener("drop", async (e) => {
-      unrankedPool.classList.remove("drag-over");
-      const recordId = currentDragId || e.dataTransfer.getData("text/plain");
-      if (!recordId || !databases) return;
-      const record = state.records.find((r) => r.id === recordId);
-      if (!record) return;
-      await handleTierDrop(e, null);
-    });
-  }
 }
 
 async function loadAnimeList() {
@@ -1115,6 +939,9 @@ function openEditor(record) {
   if (elements.editTier) {
     elements.editTier.value = record?.tier ? formatTierLabel(record.tier) : "";
   }
+  if (elements.editScore) {
+    elements.editScore.value = Number.isFinite(record?.score) ? String(record.score) : "";
+  }
   if (elements.editNotes) {
     elements.editNotes.value = record?.notes || "";
   }
@@ -1154,6 +981,7 @@ function closeEditor() {
 function getEditorPayload() {
   const title = elements.editTitle ? elements.editTitle.value.trim() : "";
   const tierRaw = elements.editTier ? normalizeTierValue(elements.editTier.value) : "";
+  const scoreRaw = elements.editScore ? elements.editScore.value.trim() : "";
   const notes = elements.editNotes ? elements.editNotes.value.trim() : "";
 
   if (!title) {
@@ -1163,8 +991,20 @@ function getEditorPayload() {
     return { ok: false, error: "Title must be 255 characters or fewer." };
   }
 
+  if (!scoreRaw) {
+    return { ok: false, error: "Score is required." };
+  }
+
+  const score = parseScoreInput(scoreRaw);
+  if (!Number.isFinite(score)) {
+    return { ok: false, error: "Score must be a valid number." };
+  }
+  if (score < 0 || score > 15) {
+    return { ok: false, error: "Score must be between 0 and 15." };
+  }
+
   if (tierRaw && !TIER_VALUES.has(tierRaw)) {
-    return { ok: false, error: "Tier must be one of: Best of All Time, S, A, B, C, D, E, F, -F." };
+    return { ok: false, error: "Tier must be Tier_1/Tier_2/Tier_3 (or Tier 1/Tier 2/Tier 3)." };
   }
 
   if (notes.length > 1000) {
@@ -1175,6 +1015,7 @@ function getEditorPayload() {
     ok: true,
     payload: {
       title,
+      score,
       tier: tierRaw || null,
       notes
     }
@@ -1215,19 +1056,6 @@ async function saveEditor(event) {
         parsed.payload
       );
     } else {
-      try {
-        const jikanResp = await fetch(
-          `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(parsed.payload.title)}&limit=5&sfw=true`
-        );
-        if (jikanResp.ok) {
-          const jikanData = await jikanResp.json();
-          const best = pickBestMatch(jikanData?.data || [], parsed.payload.title);
-          const coverUrl = getCoverUrlFromItem(best);
-          if (coverUrl) parsed.payload.cover_url = coverUrl;
-        }
-      } catch {
-        // proceed without cover
-      }
       await databases.createDocument(
         APPWRITE_DATABASE_ID,
         ANIME_COLLECTION_ID,

@@ -78,14 +78,21 @@
       <section class="hero">
         <div class="hero-content">
           <div class="hero-logo"><div class="logo-geometric"></div></div>
+          <h1 class="hero-title">Anime Ranking</h1>
+          <p class="hero-subtitle">Public list sorted from top score to lowest.</p>
         </div>
       </section>
 
       <section class="content">
         <div class="container">
           <div class="toolbar">
+            <label class="search-field" for="searchInput">
+              <span class="sr-only">Search anime</span>
+              <input id="searchInput" type="search" placeholder="Search title, tier, notes, score" />
+            </label>
             <div class="toolbar-actions">
               <button class="tool-button add-button" id="addBtn" type="button" hidden>Add Anime</button>
+              <button class="tool-button" id="refreshBtn" type="button">Refresh list</button>
             </div>
           </div>
 
@@ -104,21 +111,21 @@
             <input id="editTitle" type="text" autocomplete="off" required />
             <div class="title-suggestions" id="titleSuggestions" hidden></div>
           </label>
-          <label class="edit-field">
-            <span>Tier</span>
-            <input id="editTier" type="text" list="tierOptions" placeholder="S, A, B, C..." />
-            <datalist id="tierOptions">
-              <option value="Best of All Time"></option>
-              <option value="S"></option>
-              <option value="A"></option>
-              <option value="B"></option>
-              <option value="C"></option>
-              <option value="D"></option>
-              <option value="E"></option>
-              <option value="F"></option>
-              <option value="-F"></option>
-            </datalist>
-          </label>
+          <div class="edit-grid">
+            <label class="edit-field">
+              <span>Tier</span>
+              <input id="editTier" type="text" list="tierOptions" placeholder="Tier 1, Tier 2, Tier 3" />
+              <datalist id="tierOptions">
+                <option value="Tier 1"></option>
+                <option value="Tier 2"></option>
+                <option value="Tier 3"></option>
+              </datalist>
+            </label>
+            <label class="edit-field">
+              <span>Score</span>
+              <input id="editScore" type="number" step="any" min="0" max="15" />
+            </label>
+          </div>
           <label class="edit-field">
             <span>Notes</span>
             <textarea id="editNotes" rows="4"></textarea>
