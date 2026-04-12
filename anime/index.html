@@ -134,6 +134,28 @@
       </div>
     </div>
 
+    <div class="edit-overlay" id="quickEditOverlay" hidden aria-hidden="true">
+      <div class="edit-modal">
+        <h2 class="edit-title" id="quickEditTitleText">Edit</h2>
+        <form id="quickEditForm" class="edit-form">
+          <label class="edit-field">
+            <span>Notes</span>
+            <textarea id="quickEditNotes" rows="5"></textarea>
+          </label>
+          <p class="edit-error" id="quickEditError" role="alert"></p>
+          <div class="edit-actions quick-edit-actions">
+            <button class="tool-button danger-btn" id="quickDeleteBtn" type="button">Delete</button>
+            <div class="quick-edit-right-actions">
+              <button class="tool-button secondary" id="quickCancelBtn" type="button">Cancel</button>
+              <button class="tool-button" id="quickSaveBtn" type="submit">Save</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="animeTooltip" class="anime-tooltip" aria-hidden="true" hidden></div>
+
     <script src="../particles.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
     <script src="app.js"></script>

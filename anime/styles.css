@@ -344,13 +344,10 @@ body.dark-mode .menu-item-circle .moon-icon {
   position: relative;
 }
 
-.tier-thumb[data-notes]::after,
-.unranked-card[data-notes]::after {
-  content: attr(data-notes);
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
+.anime-tooltip {
+  position: fixed;
+  z-index: 2000;
+  pointer-events: none;
   background: rgba(14, 14, 26, 0.97);
   color: var(--text-primary);
   padding: 7px 10px;
@@ -359,19 +356,38 @@ body.dark-mode .menu-item-circle .moon-icon {
   line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
-  max-width: 200px;
+  max-width: 220px;
   width: max-content;
-  z-index: 200;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.15s;
   border: 1px solid rgba(139, 92, 246, 0.35);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
 }
 
-.tier-thumb[data-notes]:hover::after,
-.unranked-card[data-notes]:hover::after {
+.tier-thumb-edit-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 5px;
+  background: rgba(14, 14, 26, 0.88);
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  z-index: 10;
+}
+
+.tier-thumb:hover .tier-thumb-edit-btn {
   opacity: 1;
+}
+
+.tier-thumb-edit-btn:hover {
+  background: rgba(99, 102, 241, 0.5);
 }
 
 .tier-thumb-media {
@@ -964,6 +980,28 @@ body.modal-open {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.quick-edit-actions {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.quick-edit-right-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.tool-button.danger-btn {
+  background: rgba(220, 38, 38, 0.2);
+  border: 1px solid rgba(220, 38, 38, 0.45);
+  color: #fca5a5;
+  box-shadow: none;
+}
+
+.tool-button.danger-btn:hover {
+  background: rgba(220, 38, 38, 0.38);
+  transform: translateY(-1px);
 }
 
 .title-suggestions {
