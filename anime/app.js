@@ -36,6 +36,7 @@ const state = {
   records: [],
   query: "",
   canManage: false,
+  editMode: false,
   activeEditId: null,
   activeQuickEditId: null,
   coverCache: loadCoverCache(),
@@ -62,6 +63,7 @@ const elements = {
   editCancelBtn: document.querySelector("#editCancelBtn"),
   editSaveBtn: document.querySelector("#editSaveBtn"),
   exportBtn: document.querySelector("#exportBtn"),
+  editModeBtn: document.querySelector("#editModeBtn"),
   tooltip: document.querySelector("#animeTooltip"),
   quickEditOverlay: document.querySelector("#quickEditOverlay"),
   quickEditTitleText: document.querySelector("#quickEditTitleText"),
@@ -170,6 +172,9 @@ function getLoginHref() {
 function updateAuthUi() {
   if (elements.add) {
     elements.add.hidden = !state.canManage;
+  }
+  if (elements.editModeBtn) {
+    elements.editModeBtn.hidden = !state.canManage;
   }
 
   if (!elements.loginLink) {
@@ -853,7 +858,7 @@ function renderList() {
         <div class="tier-thumb-media" data-cover-slot="${escapeHtml(record.id)}">
           ${renderCardCover(record)}
         </div>
-        ${state.canManage ? `<button class="tier-thumb-edit-btn" type="button" data-action="quick-edit" data-id="${escapeHtml(record.id)}" draggable="false" aria-label="Edit ${escapeHtml(record.title)}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : ""}
+        ${state.canManage ? `<div class="card-edit-overlay"><button class="card-edit-overlay-btn" type="button" data-action="quick-edit" data-id="${escapeHtml(record.id)}">Edit</button><button class="card-edit-overlay-btn delete" type="button" data-action="quick-delete" data-id="${escapeHtml(record.id)}">Delete</button></div>` : ""}
       </div>
     `).join("");
     html += `
@@ -871,16 +876,13 @@ function renderList() {
   if (unranked.length > 0) {
     html += '<div class="unranked-items">';
     for (const record of unranked) {
-      const editBtn = state.canManage
-        ? `<button class="card-action-btn" type="button" data-action="edit" data-id="${escapeHtml(record.id)}">Edit</button>`
-        : "";
       html += `
         <div class="unranked-card" data-record-id="${escapeHtml(record.id)}" title="${escapeHtml(record.title)}"${record.notes ? ` data-notes="${escapeHtml(record.notes)}"` : ""}>
           <div class="unranked-cover" data-cover-slot="${escapeHtml(record.id)}">
             ${renderCardCover(record)}
           </div>
           <p class="unranked-title">${escapeHtml(record.title)}</p>
-          ${editBtn}
+          ${state.canManage ? `<div class="card-edit-overlay"><button class="card-edit-overlay-btn" type="button" data-action="quick-edit" data-id="${escapeHtml(record.id)}">Edit</button><button class="card-edit-overlay-btn delete" type="button" data-action="quick-delete" data-id="${escapeHtml(record.id)}">Delete</button></div>` : ""}
         </div>
       `;
     }
@@ -892,6 +894,7 @@ function renderList() {
 
   if (elements.list) {
     elements.list.innerHTML = html;
+    elements.list.classList.toggle("edit-mode", state.editMode);
   }
 
   if (state.query) {
@@ -903,8 +906,10 @@ function renderList() {
   coverRenderJob += 1;
   void enrichVisibleCovers(filtered, coverRenderJob);
 
-  attachTooltipListeners();
-  addDragAndDrop();
+  if (!state.editMode) {
+    attachTooltipListeners();
+    addDragAndDrop();
+  }
 }
 
 function showTooltip(el, text) {
@@ -996,21 +1001,42 @@ async function saveQuickEditor(event) {
   }
 }
 
-async function deleteQuickRecord() {
-  if (!state.canManage || !databases || !state.activeQuickEditId) return;
-  const id = state.activeQuickEditId;
-  setQuickEditLoading(true);
+async function deleteRecord(id) {
+  if (!state.canManage || !databases || !id) return;
   try {
     await databases.deleteDocument(APPWRITE_DATABASE_ID, ANIME_COLLECTION_ID, id);
     state.records = state.records.filter((r) => r.id !== id);
-    closeQuickEditor();
     renderList();
     setStatus("Anime entry deleted.");
   } catch (error) {
     const msg = error?.message || "";
     const isPermissionError = msg.includes("Missing") && msg.includes("permission");
-    setQuickEditError(isPermissionError ? "You don't have permission to delete this entry." : (msg || "Could not delete entry."));
-    setQuickEditLoading(false);
+    setStatus(isPermissionError ? "You don't have permission to delete this entry." : (msg || "Could not delete entry."));
+  }
+}
+
+async function deleteQuickRecord() {
+  if (!state.canManage || !databases || !state.activeQuickEditId) return;
+  const id = state.activeQuickEditId;
+  closeQuickEditor();
+  await deleteRecord(id);
+}
+
+function toggleEditMode() {
+  state.editMode = !state.editMode;
+  if (elements.editModeBtn) {
+    elements.editModeBtn.textContent = state.editMode ? "Done" : "Edit";
+    elements.editModeBtn.classList.toggle("active", state.editMode);
+  }
+  if (elements.list) {
+    elements.list.classList.toggle("edit-mode", state.editMode);
+  }
+  if (state.editMode) {
+    hideTooltip();
+    elements.list && elements.list.querySelectorAll("[draggable]").forEach((el) => el.removeAttribute("draggable"));
+  } else {
+    attachTooltipListeners();
+    addDragAndDrop();
   }
 }
 
@@ -1372,17 +1398,6 @@ function handleListClick(event) {
     return;
   }
 
-  const editButton = target.closest('[data-action="edit"]');
-  if (editButton) {
-    if (!state.canManage) return;
-    const recordId = editButton.getAttribute("data-id") || "";
-    if (!recordId) return;
-    const record = state.records.find((entry) => entry.id === recordId);
-    if (!record) { setStatus("Could not find that anime entry. Refresh and try again."); return; }
-    openEditor(record);
-    return;
-  }
-
   const quickEditButton = target.closest('[data-action="quick-edit"]');
   if (quickEditButton) {
     if (!state.canManage) return;
@@ -1391,6 +1406,15 @@ function handleListClick(event) {
     const record = state.records.find((entry) => entry.id === recordId);
     if (!record) { setStatus("Could not find that anime entry. Refresh and try again."); return; }
     openQuickEditor(record);
+    return;
+  }
+
+  const deleteButton = target.closest('[data-action="quick-delete"]');
+  if (deleteButton) {
+    if (!state.canManage) return;
+    const recordId = deleteButton.getAttribute("data-id") || "";
+    if (!recordId) return;
+    void deleteRecord(recordId);
   }
 }
 
@@ -1454,6 +1478,12 @@ function initEvents() {
   if (elements.exportBtn) {
     elements.exportBtn.addEventListener("click", () => {
       exportToJson();
+    });
+  }
+
+  if (elements.editModeBtn) {
+    elements.editModeBtn.addEventListener("click", () => {
+      toggleEditMode();
     });
   }
 
