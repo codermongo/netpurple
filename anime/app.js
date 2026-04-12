@@ -840,7 +840,7 @@ function renderList() {
     const items = groups[tier];
     const slug = TIER_SLUG[tier];
     const thumbnails = items.map((record) => `
-      <div class="tier-thumb" title="${escapeHtml(record.title)}" data-record-id="${escapeHtml(record.id)}">
+      <div class="tier-thumb" title="${escapeHtml(record.title)}" data-record-id="${escapeHtml(record.id)}"${record.notes ? ` data-notes="${escapeHtml(record.notes)}"` : ""}>
         <div class="tier-thumb-media" data-cover-slot="${escapeHtml(record.id)}">
           ${renderCardCover(record)}
         </div>
@@ -865,7 +865,7 @@ function renderList() {
         ? `<button class="card-action-btn" type="button" data-action="edit" data-id="${escapeHtml(record.id)}">Edit</button>`
         : "";
       html += `
-        <div class="unranked-card" data-record-id="${escapeHtml(record.id)}" title="${escapeHtml(record.title)}">
+        <div class="unranked-card" data-record-id="${escapeHtml(record.id)}" title="${escapeHtml(record.title)}"${record.notes ? ` data-notes="${escapeHtml(record.notes)}"` : ""}>
           <div class="unranked-cover" data-cover-slot="${escapeHtml(record.id)}">
             ${renderCardCover(record)}
           </div>
@@ -1241,7 +1241,9 @@ async function saveEditor(event) {
     await loadAnimeList();
     setStatus(successText);
   } catch (error) {
-    setEditError(error?.message || "Could not save anime entry.");
+    const msg = error?.message || "";
+    const isPermissionError = msg.includes("Missing") && msg.includes("permission");
+    setEditError(isPermissionError ? "You don't have permission to add anime entries." : (msg || "Could not save anime entry."));
     setEditLoading(false);
   }
 }

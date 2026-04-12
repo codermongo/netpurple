@@ -341,6 +341,37 @@ body.dark-mode .menu-item-circle .moon-icon {
 .tier-thumb {
   width: 96px;
   flex: 0 0 96px;
+  position: relative;
+}
+
+.tier-thumb[data-notes]::after,
+.unranked-card[data-notes]::after {
+  content: attr(data-notes);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(14, 14, 26, 0.97);
+  color: var(--text-primary);
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 200px;
+  width: max-content;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.tier-thumb[data-notes]:hover::after,
+.unranked-card[data-notes]:hover::after {
+  opacity: 1;
 }
 
 .tier-thumb-media {
@@ -561,6 +592,7 @@ body.dark-mode .menu-item-circle .moon-icon {
   align-items: center;
   gap: 7px;
   width: 120px;
+  position: relative;
 }
 
 .unranked-card[draggable="true"] {
