@@ -37,6 +37,7 @@ const state = {
   query: "",
   canManage: false,
   activeEditId: null,
+  activeQuickEditId: null,
   coverCache: loadCoverCache(),
   pendingCovers: new Set()
 };
@@ -60,7 +61,15 @@ const elements = {
   editError: document.querySelector("#editError"),
   editCancelBtn: document.querySelector("#editCancelBtn"),
   editSaveBtn: document.querySelector("#editSaveBtn"),
-  exportBtn: document.querySelector("#exportBtn")
+  exportBtn: document.querySelector("#exportBtn"),
+  tooltip: document.querySelector("#animeTooltip"),
+  quickEditOverlay: document.querySelector("#quickEditOverlay"),
+  quickEditTitleText: document.querySelector("#quickEditTitleText"),
+  quickEditNotes: document.querySelector("#quickEditNotes"),
+  quickEditError: document.querySelector("#quickEditError"),
+  quickCancelBtn: document.querySelector("#quickCancelBtn"),
+  quickSaveBtn: document.querySelector("#quickSaveBtn"),
+  quickDeleteBtn: document.querySelector("#quickDeleteBtn")
 };
 
 let databases = null;
@@ -844,6 +853,7 @@ function renderList() {
         <div class="tier-thumb-media" data-cover-slot="${escapeHtml(record.id)}">
           ${renderCardCover(record)}
         </div>
+        ${state.canManage ? `<button class="tier-thumb-edit-btn" type="button" data-action="quick-edit" data-id="${escapeHtml(record.id)}" draggable="false" aria-label="Edit ${escapeHtml(record.title)}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : ""}
       </div>
     `).join("");
     html += `
@@ -893,7 +903,115 @@ function renderList() {
   coverRenderJob += 1;
   void enrichVisibleCovers(filtered, coverRenderJob);
 
+  attachTooltipListeners();
   addDragAndDrop();
+}
+
+function showTooltip(el, text) {
+  if (!elements.tooltip || !text) return;
+  elements.tooltip.textContent = text;
+  elements.tooltip.hidden = false;
+  const rect = el.getBoundingClientRect();
+  const showBelow = rect.top < 90;
+  elements.tooltip.style.left = `${rect.left + rect.width / 2}px`;
+  if (showBelow) {
+    elements.tooltip.style.top = `${rect.bottom + 8}px`;
+    elements.tooltip.style.transform = "translateX(-50%)";
+  } else {
+    elements.tooltip.style.top = `${rect.top - 8}px`;
+    elements.tooltip.style.transform = "translateX(-50%) translateY(-100%)";
+  }
+}
+
+function hideTooltip() {
+  if (elements.tooltip) elements.tooltip.hidden = true;
+}
+
+function attachTooltipListeners() {
+  if (!elements.list) return;
+  elements.list.querySelectorAll("[data-notes]").forEach((el) => {
+    el.addEventListener("mouseenter", () => showTooltip(el, el.dataset.notes));
+    el.addEventListener("mouseleave", hideTooltip);
+  });
+}
+
+function setQuickEditError(message) {
+  if (elements.quickEditError) {
+    elements.quickEditError.textContent = message || "";
+  }
+}
+
+function setQuickEditLoading(isLoading) {
+  if (!elements.quickSaveBtn) return;
+  if (!elements.quickSaveBtn.dataset.label) {
+    elements.quickSaveBtn.dataset.label = elements.quickSaveBtn.textContent;
+  }
+  elements.quickSaveBtn.disabled = isLoading;
+  elements.quickSaveBtn.textContent = isLoading ? "Saving..." : elements.quickSaveBtn.dataset.label;
+  if (elements.quickCancelBtn) elements.quickCancelBtn.disabled = isLoading;
+  if (elements.quickDeleteBtn) elements.quickDeleteBtn.disabled = isLoading;
+}
+
+function openQuickEditor(record) {
+  if (!state.canManage || !elements.quickEditOverlay) return;
+  state.activeQuickEditId = record.id;
+  if (elements.quickEditTitleText) elements.quickEditTitleText.textContent = record.title;
+  if (elements.quickEditNotes) elements.quickEditNotes.value = record.notes || "";
+  setQuickEditError("");
+  setQuickEditLoading(false);
+  elements.quickEditOverlay.hidden = false;
+  elements.quickEditOverlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  if (elements.quickEditNotes) elements.quickEditNotes.focus();
+}
+
+function closeQuickEditor() {
+  if (!elements.quickEditOverlay) return;
+  state.activeQuickEditId = null;
+  setQuickEditError("");
+  setQuickEditLoading(false);
+  elements.quickEditOverlay.hidden = true;
+  elements.quickEditOverlay.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+}
+
+async function saveQuickEditor(event) {
+  event.preventDefault();
+  if (!state.canManage || !databases || !state.activeQuickEditId) return;
+  const notes = elements.quickEditNotes ? elements.quickEditNotes.value.trim() : "";
+  setQuickEditError("");
+  setQuickEditLoading(true);
+  try {
+    await databases.updateDocument(APPWRITE_DATABASE_ID, ANIME_COLLECTION_ID, state.activeQuickEditId, { notes });
+    const record = state.records.find((r) => r.id === state.activeQuickEditId);
+    if (record) record.notes = notes;
+    closeQuickEditor();
+    renderList();
+    setStatus("Notes updated.");
+  } catch (error) {
+    const msg = error?.message || "";
+    const isPermissionError = msg.includes("Missing") && msg.includes("permission");
+    setQuickEditError(isPermissionError ? "You don't have permission to edit this entry." : (msg || "Could not save notes."));
+    setQuickEditLoading(false);
+  }
+}
+
+async function deleteQuickRecord() {
+  if (!state.canManage || !databases || !state.activeQuickEditId) return;
+  const id = state.activeQuickEditId;
+  setQuickEditLoading(true);
+  try {
+    await databases.deleteDocument(APPWRITE_DATABASE_ID, ANIME_COLLECTION_ID, id);
+    state.records = state.records.filter((r) => r.id !== id);
+    closeQuickEditor();
+    renderList();
+    setStatus("Anime entry deleted.");
+  } catch (error) {
+    const msg = error?.message || "";
+    const isPermissionError = msg.includes("Missing") && msg.includes("permission");
+    setQuickEditError(isPermissionError ? "You don't have permission to delete this entry." : (msg || "Could not delete entry."));
+    setQuickEditLoading(false);
+  }
 }
 
 function addDragAndDrop() {
@@ -1255,26 +1373,25 @@ function handleListClick(event) {
   }
 
   const editButton = target.closest('[data-action="edit"]');
-  if (!editButton) {
+  if (editButton) {
+    if (!state.canManage) return;
+    const recordId = editButton.getAttribute("data-id") || "";
+    if (!recordId) return;
+    const record = state.records.find((entry) => entry.id === recordId);
+    if (!record) { setStatus("Could not find that anime entry. Refresh and try again."); return; }
+    openEditor(record);
     return;
   }
 
-  if (!state.canManage) {
-    return;
+  const quickEditButton = target.closest('[data-action="quick-edit"]');
+  if (quickEditButton) {
+    if (!state.canManage) return;
+    const recordId = quickEditButton.getAttribute("data-id") || "";
+    if (!recordId) return;
+    const record = state.records.find((entry) => entry.id === recordId);
+    if (!record) { setStatus("Could not find that anime entry. Refresh and try again."); return; }
+    openQuickEditor(record);
   }
-
-  const recordId = editButton.getAttribute("data-id") || "";
-  if (!recordId) {
-    return;
-  }
-
-  const record = state.records.find((entry) => entry.id === recordId);
-  if (!record) {
-    setStatus("Could not find that anime entry. Refresh and try again.");
-    return;
-  }
-
-  openEditor(record);
 }
 
 function handleGlobalKeydown(event) {
@@ -1284,6 +1401,11 @@ function handleGlobalKeydown(event) {
 
   if (elements.titleSuggestions && !elements.titleSuggestions.hidden) {
     clearTitleSuggestions();
+    return;
+  }
+
+  if (elements.quickEditOverlay && !elements.quickEditOverlay.hidden) {
+    closeQuickEditor();
     return;
   }
 
@@ -1387,6 +1509,26 @@ function initEvents() {
     });
   }
 
+  if (elements.quickEditForm) {
+    elements.quickEditForm.addEventListener("submit", (event) => {
+      void saveQuickEditor(event);
+    });
+  }
+
+  if (elements.quickCancelBtn) {
+    elements.quickCancelBtn.addEventListener("click", () => closeQuickEditor());
+  }
+
+  if (elements.quickDeleteBtn) {
+    elements.quickDeleteBtn.addEventListener("click", () => { void deleteQuickRecord(); });
+  }
+
+  if (elements.quickEditOverlay) {
+    elements.quickEditOverlay.addEventListener("click", (event) => {
+      if (event.target === elements.quickEditOverlay) closeQuickEditor();
+    });
+  }
+
   document.addEventListener("keydown", handleGlobalKeydown);
 }
 
@@ -1431,6 +1573,11 @@ async function init() {
   if (elements.editOverlay) {
     elements.editOverlay.hidden = true;
     elements.editOverlay.setAttribute("aria-hidden", "true");
+  }
+
+  if (elements.quickEditOverlay) {
+    elements.quickEditOverlay.hidden = true;
+    elements.quickEditOverlay.setAttribute("aria-hidden", "true");
   }
 
   initThemeToggle();
