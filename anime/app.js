@@ -674,13 +674,11 @@ function normalizeAnimeDocument(document) {
     }
   }
 
-  let rank = null;
-  if (document?.rank !== null && document?.rank !== undefined && String(document.rank).trim() !== "") {
-    rank = Number(document.rank);
-    if (!Number.isFinite(rank)) {
-      errors.push("rank must be a number when provided.");
-    } else if (rank < 0 || rank > 2000) {
-      errors.push("rank must be between 0 and 2000.");
+  let tier_position = null;
+  if (document?.tier_position !== null && document?.tier_position !== undefined && String(document.tier_position).trim() !== "") {
+    tier_position = parseFloat(document.tier_position);
+    if (!Number.isFinite(tier_position)) {
+      errors.push("tier_position must be a number when provided.");
     }
   }
 
@@ -700,7 +698,7 @@ function normalizeAnimeDocument(document) {
       title,
       tier,
       notes,
-      rank,
+      tier_position,
       cover_url: coverUrl
     }
   };
@@ -799,9 +797,7 @@ function getFilteredRecords() {
     const haystack = [
       record.title,
       normalizeTierForDisplay(record.tier) || record.tier || "",
-      record.notes || "",
-      record.score,
-      record.rank
+      record.notes || ""
     ]
       .join(" ")
       .toLowerCase();
@@ -841,10 +837,10 @@ function renderList() {
 
   for (const tier of TIER_NAMES) {
     groups[tier].sort((a, b) => {
-      if (a.rank === null && b.rank === null) return 0;
-      if (a.rank === null) return 1;
-      if (b.rank === null) return -1;
-      return a.rank - b.rank;
+      if (a.tier_position === null && b.tier_position === null) return 0;
+      if (a.tier_position === null) return 1;
+      if (b.tier_position === null) return -1;
+      return a.tier_position - b.tier_position;
     });
   }
 
@@ -854,7 +850,7 @@ function renderList() {
     const items = groups[tier];
     const slug = TIER_SLUG[tier];
     const thumbnails = items.map((record) => `
-      <div class="tier-thumb" title="${escapeHtml(record.title)}" data-record-id="${escapeHtml(record.id)}"${record.notes ? ` data-notes="${escapeHtml(record.notes)}"` : ""}>
+      <div class="tier-thumb" title="${escapeHtml(record.title)}" data-id="${escapeHtml(record.id)}" data-position="${record.tier_position ?? ""}"${record.notes ? ` data-notes="${escapeHtml(record.notes)}"` : ""}>
         <div class="tier-thumb-media" data-cover-slot="${escapeHtml(record.id)}">
           ${renderCardCover(record)}
         </div>
@@ -877,7 +873,7 @@ function renderList() {
     html += '<div class="unranked-items">';
     for (const record of unranked) {
       html += `
-        <div class="unranked-card" data-record-id="${escapeHtml(record.id)}" title="${escapeHtml(record.title)}"${record.notes ? ` data-notes="${escapeHtml(record.notes)}"` : ""}>
+        <div class="unranked-card" data-id="${escapeHtml(record.id)}" data-position="${record.tier_position ?? ""}" title="${escapeHtml(record.title)}"${record.notes ? ` data-notes="${escapeHtml(record.notes)}"` : ""}>
           <div class="unranked-cover" data-cover-slot="${escapeHtml(record.id)}">
             ${renderCardCover(record)}
           </div>
@@ -1061,7 +1057,7 @@ function addDragAndDrop() {
   function makeDraggable(el) {
     el.setAttribute("draggable", "true");
     el.addEventListener("dragstart", (e) => {
-      currentDragId = el.dataset.recordId;
+      currentDragId = el.dataset.id;
       e.dataTransfer.setData("text/plain", currentDragId);
       e.dataTransfer.effectAllowed = "move";
       el.classList.add("dragging");
@@ -1076,65 +1072,97 @@ function addDragAndDrop() {
     });
   }
 
-  elements.list.querySelectorAll(".tier-thumb[data-record-id], .unranked-card[data-record-id]").forEach(makeDraggable);
+  elements.list.querySelectorAll(".tier-thumb[data-id], .unranked-card[data-id]").forEach(makeDraggable);
 
-  async function handleTierDrop(e, newTier) {
+  function neighborPos(el, dir, draggedId) {
+    let cursor = dir === "prev" ? el.previousElementSibling : el.nextElementSibling;
+    while (cursor) {
+      if (cursor.dataset.id !== draggedId) {
+        const pos = parseFloat(cursor.dataset.position);
+        return Number.isFinite(pos) ? pos : null;
+      }
+      cursor = dir === "prev" ? cursor.previousElementSibling : cursor.nextElementSibling;
+    }
+    return null;
+  }
+
+  function calcPosition(prevPos, nextPos) {
+    if (prevPos === null && nextPos === null) return 1000;
+    if (prevPos === null) return nextPos / 2;
+    if (nextPos === null) return prevPos + 1000;
+    return (prevPos + nextPos) / 2;
+  }
+
+  async function handleDrop(draggedId, targetThumbEl, insertBefore) {
+    if (!draggedId || draggedId === targetThumbEl.dataset.id || !databases) return;
+    const dragged = state.records.find((r) => r.id === draggedId);
+    if (!dragged) return;
+    const target = state.records.find((r) => r.id === targetThumbEl.dataset.id);
+    if (!target) return;
+
+    const newTier = normalizeTierForDisplay(target.tier) || target.tier;
+
+    let prevPos, nextPos;
+    if (insertBefore) {
+      prevPos = neighborPos(targetThumbEl, "prev", draggedId);
+      const p = parseFloat(targetThumbEl.dataset.position);
+      nextPos = Number.isFinite(p) ? p : null;
+    } else {
+      const p = parseFloat(targetThumbEl.dataset.position);
+      prevPos = Number.isFinite(p) ? p : null;
+      nextPos = neighborPos(targetThumbEl, "next", draggedId);
+    }
+
+    const newPosition = calcPosition(prevPos, nextPos);
+    dragged.tier = newTier;
+    dragged.tier_position = newPosition;
+    renderList();
+
+    try {
+      await databases.updateDocument(APPWRITE_DATABASE_ID, ANIME_COLLECTION_ID, draggedId, {
+        tier: newTier,
+        tier_position: newPosition
+      });
+      setStatus(`Moved "${dragged.title}" to ${newTier}.`);
+    } catch (error) {
+      setStatus(`Failed to update: ${error?.message || "Unknown error"}`);
+    }
+  }
+
+  async function handleTierDrop(e, newTier, itemsContainerEl) {
     e.preventDefault();
     const recordId = currentDragId || e.dataTransfer.getData("text/plain");
     if (!recordId || !databases) return;
     const record = state.records.find((r) => r.id === recordId);
     if (!record) return;
     if (normalizeTierForDisplay(record.tier) === newTier) return;
+
+    let newPosition = 1000;
+    if (itemsContainerEl) {
+      const lastChild = itemsContainerEl.lastElementChild;
+      if (lastChild && lastChild.dataset.id !== recordId) {
+        const lastPos = parseFloat(lastChild.dataset.position);
+        if (Number.isFinite(lastPos)) newPosition = lastPos + 1000;
+      }
+    }
+
+    record.tier = newTier;
+    record.tier_position = newPosition;
+    renderList();
+
     try {
-      await databases.updateDocument(APPWRITE_DATABASE_ID, ANIME_COLLECTION_ID, recordId, { tier: newTier });
-      record.tier = newTier;
-      renderList();
+      await databases.updateDocument(APPWRITE_DATABASE_ID, ANIME_COLLECTION_ID, recordId, {
+        tier: newTier,
+        tier_position: newPosition
+      });
       setStatus(`Moved "${record.title}" to ${newTier !== null ? newTier : "Unranked"}.`);
     } catch (error) {
       setStatus(`Failed to update tier: ${error?.message || "Unknown error"}`);
     }
   }
 
-  async function handleReorder(draggedId, targetId, insertBefore) {
-    if (draggedId === targetId) return;
-    const dragged = state.records.find((r) => r.id === draggedId);
-    const target = state.records.find((r) => r.id === targetId);
-    if (!dragged || !target) return;
-
-    const tier = normalizeTierForDisplay(target.tier);
-    const tierRecords = state.records
-      .filter((r) => normalizeTierForDisplay(r.tier) === tier)
-      .sort((a, b) => {
-        if (a.rank === null && b.rank === null) return 0;
-        if (a.rank === null) return 1;
-        if (b.rank === null) return -1;
-        return a.rank - b.rank;
-      });
-
-    const reordered = tierRecords.filter((r) => r.id !== draggedId);
-    const targetIndex = reordered.findIndex((r) => r.id === targetId);
-    reordered.splice(insertBefore ? targetIndex : targetIndex + 1, 0, dragged);
-
-    const updates = [];
-    reordered.forEach((record, i) => {
-      if (record.rank !== i) {
-        record.rank = i;
-        updates.push(databases.updateDocument(APPWRITE_DATABASE_ID, ANIME_COLLECTION_ID, record.id, { rank: i }));
-      }
-    });
-
-    if (!updates.length) return;
-    renderList();
-    try {
-      await Promise.all(updates);
-      setStatus(`Reordered in ${tier}.`);
-    } catch (error) {
-      setStatus(`Failed to reorder: ${error?.message || "Unknown error"}`);
-    }
-  }
-
-  // Per-thumb drop for reordering within tier
-  elements.list.querySelectorAll(".tier-thumb[data-record-id]").forEach((thumb) => {
+  // Per-thumb drop — handles both same-tier reorder and cross-tier insert
+  elements.list.querySelectorAll(".tier-thumb[data-id]").forEach((thumb) => {
     thumb.addEventListener("dragover", (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -1149,19 +1177,9 @@ function addDragAndDrop() {
       e.stopPropagation();
       clearInsertIndicators();
       const draggedId = currentDragId || e.dataTransfer.getData("text/plain");
-      const targetId = thumb.dataset.recordId;
       if (!draggedId || !databases) return;
-      const dragged = state.records.find((r) => r.id === draggedId);
-      const target = state.records.find((r) => r.id === targetId);
-      if (!dragged || !target) return;
-      const draggedTier = normalizeTierForDisplay(dragged.tier);
-      const targetTier = normalizeTierForDisplay(target.tier);
-      if (draggedTier === targetTier) {
-        const rect = thumb.getBoundingClientRect();
-        await handleReorder(draggedId, targetId, e.clientX < rect.left + rect.width / 2);
-      } else {
-        await handleTierDrop(e, targetTier);
-      }
+      const rect = thumb.getBoundingClientRect();
+      await handleDrop(draggedId, thumb, e.clientX < rect.left + rect.width / 2);
     });
   });
 
@@ -1174,7 +1192,7 @@ function addDragAndDrop() {
       row.classList.remove("drag-over");
       const slug = row.dataset.tier;
       const newTier = TIER_NAMES.find((t) => TIER_SLUG[t] === slug);
-      if (newTier) await handleTierDrop(e, newTier);
+      if (newTier) await handleTierDrop(e, newTier, row.querySelector(".tier-row-items"));
     });
   });
 
@@ -1186,11 +1204,7 @@ function addDragAndDrop() {
     unrankedPool.addEventListener("dragleave", (e) => { if (!unrankedPool.contains(e.relatedTarget)) unrankedPool.classList.remove("drag-over"); });
     unrankedPool.addEventListener("drop", async (e) => {
       unrankedPool.classList.remove("drag-over");
-      const recordId = currentDragId || e.dataTransfer.getData("text/plain");
-      if (!recordId || !databases) return;
-      const record = state.records.find((r) => r.id === recordId);
-      if (!record) return;
-      await handleTierDrop(e, null);
+      await handleTierDrop(e, null, unrankedPool.querySelector(".unranked-items"));
     });
   }
 }
