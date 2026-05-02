@@ -219,6 +219,14 @@ body.dark-mode .menu-item-circle .moon-icon {
   gap: 8px;
 }
 
+.toolbar-note {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  max-width: 460px;
+  line-height: 1.5;
+  text-align: right;
+}
+
 .search-field {
   flex: 1;
 }

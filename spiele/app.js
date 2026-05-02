@@ -1265,7 +1265,7 @@ function openEditor(record) {
   state.activeEditId = record?.id || null;
 
   if (elements.editTitleText) {
-    elements.editTitleText.textContent = state.activeEditId ? "Edit Anime" : "Add Anime";
+    elements.editTitleText.textContent = state.activeEditId ? "Edit Game" : "Add Game";
   }
 
   if (elements.editTitle) {
