@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="darkreader-lock" />
+    <title>Tierlists | NetPurple</title>
+    <meta name="description" content="Browse all tierlists on NetPurple: Anime, Series, and Games rankings." />
+    <meta name="keywords" content="tierlist, anime ranking, series ranking, games ranking, NetPurple">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="author" content="NetPurple" />
+    <link rel="canonical" href="https://www.netpurple.com/tier/" />
+    <meta name="theme-color" content="#121224" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <meta property="og:title" content="Tierlists | NetPurple" />
+    <meta property="og:description" content="Browse all tierlists on NetPurple: Anime, Series, and Games rankings." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="NetPurple" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://www.netpurple.com/tier/" />
+    <meta property="og:image" content="https://www.netpurple.com/logo.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Tierlists | NetPurple" />
+    <meta name="twitter:description" content="Browse all tierlists on NetPurple: Anime, Series, and Games rankings." />
+    <meta name="twitter:image" content="https://www.netpurple.com/logo.png" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <style>
+      .tier-hub-section {
+        position: relative;
+        z-index: 1;
+        padding: 40px 20px 80px;
+      }
+
+      .tier-hub-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 24px;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      .tier-hub-card {
+        background: var(--card-glass-bg);
+        backdrop-filter: blur(12px) saturate(120%);
+        -webkit-backdrop-filter: blur(12px) saturate(120%);
+        border: 1px solid var(--card-glass-stroke);
+        border-radius: 16px;
+        padding: 32px 28px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        text-align: center;
+        box-shadow: var(--shadow-soft);
+        transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        cursor: pointer;
+      }
+
+      .tier-hub-card:hover {
+        transform: translateY(-4px);
+        background: var(--card-glass-hover);
+        box-shadow: var(--shadow-strong);
+      }
+
+      .tier-hub-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        color: #fff;
+      }
+
+      .tier-hub-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .tier-hub-desc {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="theme-toggle-container">
+      <button class="menu-item-circle" id="themeToggleItem" aria-label="Toggle dark mode">
+        <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2" />
+          <path
+            d="M12 1v4m0 14v4M1 12h4m14 0h4M4.22 4.22l2.83 2.83m10.9 10.9l2.83 2.83M4.22 19.78l2.83-2.83m10.9-10.9l2.83-2.83"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      </button>
+      <a class="menu-item-circle back-link" href="/" aria-label="Back to home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M15 6l-6 6 6 6M9 12h12"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </a>
+    </div>
+
+    <a class="menu-item-circle login-link" href="/login" aria-label="Login">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M20 21a8 8 0 10-16 0M12 11a4 4 0 100-8 4 4 0 000 8z"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </a>
+
+    <canvas id="bg-particles" aria-hidden="true"></canvas>
+
+    <main>
+      <section class="hero">
+        <div class="hero-content">
+          <div class="hero-logo"><div class="logo-geometric"></div></div>
+          <h1 class="hero-title">Tierlists</h1>
+        </div>
+      </section>
+
+      <section class="tier-hub-section">
+        <div class="tier-hub-grid">
+          <div class="tier-hub-card" onclick="window.location.href='/tier/anime'">
+            <div class="tier-hub-icon"><i class="fa-solid fa-tv" aria-hidden="true"></i></div>
+            <h2 class="tier-hub-title">Anime</h2>
+            <p class="tier-hub-desc">Browse and rank our anime collection.</p>
+            <button class="tool-button" type="button">View Anime List</button>
+          </div>
+
+          <div class="tier-hub-card" onclick="window.location.href='/tier/series'">
+            <div class="tier-hub-icon"><i class="fa-solid fa-film" aria-hidden="true"></i></div>
+            <h2 class="tier-hub-title">Series</h2>
+            <p class="tier-hub-desc">Browse and rank our series collection.</p>
+            <button class="tool-button" type="button">View Series List</button>
+          </div>
+
+          <div class="tier-hub-card" onclick="window.location.href='/tier/games'">
+            <div class="tier-hub-icon"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></div>
+            <h2 class="tier-hub-title">Games</h2>
+            <p class="tier-hub-desc">Browse and rank our games collection.</p>
+            <button class="tool-button" type="button">View Games List</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="../particles.js"></script>
+    <script>
+      const THEME_KEY = "darkMode";
+      const saved = localStorage.getItem(THEME_KEY);
+      if (saved === "true") document.body.classList.add("dark-mode");
+      const toggle = document.getElementById("themeToggleItem");
+      if (toggle) {
+        toggle.addEventListener("click", () => {
+          document.body.classList.toggle("dark-mode");
+          localStorage.setItem(THEME_KEY, document.body.classList.contains("dark-mode"));
+        });
+      }
+    </script>
+  </body>
+</html>
