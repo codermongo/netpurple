@@ -32,65 +32,129 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <style>
-      .tier-hub-section {
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      .services {
+        padding: 20px 0 60px 0;
+        background: transparent;
+        min-height: 45vh;
+        display: flex;
+        align-items: center;
         position: relative;
         z-index: 1;
-        padding: 40px 20px 80px;
       }
 
-      .tier-hub-grid {
+      .tools-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 24px;
-        max-width: 900px;
-        margin: 0 auto;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(1, 1fr);
+        gap: 1.5rem;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+        width: 100%;
       }
 
-      .tier-hub-card {
+      .tool-card {
         background: var(--card-glass-bg);
-        backdrop-filter: blur(12px) saturate(120%);
-        -webkit-backdrop-filter: blur(12px) saturate(120%);
+        backdrop-filter: blur(8px) saturate(120%);
+        -webkit-backdrop-filter: blur(8px) saturate(120%);
         border: 1px solid var(--card-glass-stroke);
-        border-radius: 16px;
-        padding: 32px 28px;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        text-align: center;
-        box-shadow: var(--shadow-soft);
-        transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-        cursor: pointer;
+        justify-content: space-between;
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.08);
       }
 
-      .tier-hub-card:hover {
-        transform: translateY(-4px);
+      .tool-card::before,
+      .tool-card:hover::before,
+      .tool-card:active::before,
+      .tool-card:focus-visible::before {
+        content: none;
+      }
+
+      .tool-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(99, 102, 241, 0.35);
         background: var(--card-glass-hover);
-        box-shadow: var(--shadow-strong);
+        box-shadow: 0 14px 36px rgba(99, 102, 241, 0.18);
       }
 
-      .tier-hub-icon {
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        background: var(--primary-gradient);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 26px;
-        color: #fff;
+      .tool-card:active {
+        transform: none;
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.08);
       }
 
-      .tier-hub-title {
-        font-size: 1.3rem;
-        font-weight: 700;
+      .tool-icon {
+        font-size: 2rem;
+        margin-bottom: 0.8rem;
+        color: var(--button-purple);
+        transition: transform 0.3s ease;
+      }
+
+      .tool-card:hover .tool-icon { transform: scale(1.1); }
+
+      .tool-card h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0.8rem;
         color: var(--text-primary);
+        font-weight: 600;
+        line-height: 1.3;
       }
 
-      .tier-hub-desc {
-        font-size: 0.9rem;
+      .tool-card p {
         color: var(--text-secondary);
-        flex: 1;
+        margin-bottom: 1rem;
+        line-height: 1.4;
+        font-size: 0.8rem;
+        flex-grow: 1;
+      }
+
+      .tool-button {
+        background: var(--button-purple);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: auto;
+      }
+
+      .tool-button:hover {
+        background: #5855eb;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3);
+      }
+
+      @media (max-width: 1024px) {
+        .tools-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1rem;
+        }
+        .services { min-height: 55vh; padding-bottom: 50px; }
+      }
+
+      @media (max-width: 768px) {
+        .services { min-height: auto; padding: 20px 0 40px 0; }
+        .tools-grid {
+          grid-template-columns: 1fr;
+          gap: 0.8rem;
+        }
+        .tool-card { padding: 1.2rem; }
       }
     </style>
   </head>
@@ -137,39 +201,42 @@
 
     <canvas id="bg-particles" aria-hidden="true"></canvas>
 
-    <main>
-      <section class="hero">
-        <div class="hero-content">
-          <div class="hero-logo"><div class="logo-geometric"></div></div>
-          <h1 class="hero-title">Tierlists</h1>
+    <section class="hero">
+      <div class="hero-content">
+        <div class="hero-logo">
+          <div class="logo-geometric"></div>
         </div>
-      </section>
+        <h1 class="hero-title">Tierlists</h1>
+        <div class="hero-buttons"></div>
+      </div>
+    </section>
 
-      <section class="tier-hub-section">
-        <div class="tier-hub-grid">
-          <div class="tier-hub-card" onclick="window.location.href='/tier/anime'">
-            <div class="tier-hub-icon"><i class="fa-solid fa-tv" aria-hidden="true"></i></div>
-            <h2 class="tier-hub-title">Anime</h2>
-            <p class="tier-hub-desc">Browse and rank our anime collection.</p>
-            <button class="tool-button" type="button">View Anime List</button>
+    <section class="services">
+      <div class="container">
+        <div class="tools-grid">
+          <div class="tool-card">
+            <div class="tool-icon"><i class="fa-solid fa-tv" aria-hidden="true"></i></div>
+            <h3>Anime</h3>
+            <p>Browse and rank our anime collection.</p>
+            <button class="tool-button" onclick="window.location.href='/tier/anime'">View Anime List</button>
           </div>
 
-          <div class="tier-hub-card" onclick="window.location.href='/tier/series'">
-            <div class="tier-hub-icon"><i class="fa-solid fa-film" aria-hidden="true"></i></div>
-            <h2 class="tier-hub-title">Series</h2>
-            <p class="tier-hub-desc">Browse and rank our series collection.</p>
-            <button class="tool-button" type="button">View Series List</button>
+          <div class="tool-card">
+            <div class="tool-icon"><i class="fa-solid fa-film" aria-hidden="true"></i></div>
+            <h3>Series</h3>
+            <p>Browse and rank our series collection.</p>
+            <button class="tool-button" onclick="window.location.href='/tier/series'">View Series List</button>
           </div>
 
-          <div class="tier-hub-card" onclick="window.location.href='/tier/games'">
-            <div class="tier-hub-icon"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></div>
-            <h2 class="tier-hub-title">Games</h2>
-            <p class="tier-hub-desc">Browse and rank our games collection.</p>
-            <button class="tool-button" type="button">View Games List</button>
+          <div class="tool-card">
+            <div class="tool-icon"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></div>
+            <h3>Games</h3>
+            <p>Browse and rank our games collection.</p>
+            <button class="tool-button" onclick="window.location.href='/tier/games'">View Games List</button>
           </div>
         </div>
-      </section>
-    </main>
+      </div>
+    </section>
 
     <script src="../particles.js"></script>
     <script>
