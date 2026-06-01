@@ -384,6 +384,17 @@ body.dark-mode .menu-item-circle .moon-icon {
 }
 
 /* Glassy, semi-transparent cards (no shimmer stripe) */
+a.tool-card {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.tool-card--disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .tool-card {
   background: var(--card-glass-bg);
   backdrop-filter: blur(8px) saturate(120%);
