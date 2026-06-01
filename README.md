@@ -6,30 +6,30 @@
 
 ## Features
 
-### 🎮 Games — `/games`
+### Games — `/games`
 Browse and play **145 browser games** from the [3kh0-lite](https://github.com/3kh0/3kh0-lite) collection. Includes real-time search, a random game picker, and a favourites system for logged-in users.
 
-### 🔊 Soundboard — `/sound`
+### Soundboard — `/sound`
 Play, search, and queue **208 meme and effect sounds** instantly. Supports play-all, stop, real-time search, and per-sound favourites when logged in.
 
-### 📊 Tier Lists — `/tier`
+### Tier Lists — `/tier`
 Personal rankings for **Anime**, **Series**, and **Games**, grouped into tiers (Best of All Time → -F). Within each tier entries are ranked left to right. Supports flexible export:
 - **Content:** Only Names · Names + Ranking · Names + Notes · Names + Ranking + Notes
 - **Format:** JSON · CSV · TXT
 
-### 🔗 Free Stuff — `/list`
+### Free Stuff — `/list`
 A searchable list of curated free web resources — games, streaming links, and more, organised by category.
 
-### 🛠️ Tools — `/tools`
+### Tools — `/tools`
 A curated collection of utility and productivity tools covering privacy, self-hosting, platform-specific resources, and more.
 
-### 🎬 Hub — `/hub`
+### Hub — `/hub`
 A searchable video collection with filters and sortable metadata.
 
-### 🔐 Auth — `/login`
+### Auth — `/login`
 Account system powered by Appwrite. Login unlocks favourites across Games and Soundboard.
 
-### 📖 Documentation
+### Documentation
 Full documentation at **[docu.netpurple.net](https://docu.netpurple.net)** — built with Docusaurus.
 
 ---
