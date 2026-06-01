@@ -384,7 +384,10 @@ body.dark-mode .menu-item-circle .moon-icon {
 }
 
 /* Glassy, semi-transparent cards (no shimmer stripe) */
-a.tool-card {
+a.tool-card,
+a.tool-card:hover,
+a.tool-card *,
+a.tool-card:hover * {
   text-decoration: none;
   color: inherit;
   cursor: pointer;

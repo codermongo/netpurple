@@ -1144,25 +1144,26 @@ body.modal-open {
 }
 
 body.dark-mode {
-  --dark-bg: #000000;
-  --text-primary: #ffffff;
-  --text-secondary: #b0b0b0;
-  --card-glass-bg: rgba(12, 12, 20, 0.35);
-  --card-glass-hover: rgba(12, 12, 20, 0.42);
-  --card-glass-stroke: rgba(139, 92, 246, 0.18);
-  background: #000000;
+  --dark-bg: #ffffff;
+  --text-primary: #000000;
+  --text-secondary: #4a4a4a;
+  --card-glass-bg: rgba(255, 255, 255, 0.85);
+  --card-glass-hover: rgba(255, 255, 255, 0.95);
+  --card-glass-stroke: rgba(139, 92, 246, 0.15);
+  background: #ffffff;
 }
 
 body.dark-mode #bg-particles {
-  opacity: 0.6;
+  opacity: 0.3;
 }
 
 body.dark-mode .search-field input {
-  background: rgba(12, 12, 20, 0.6);
+  background: rgba(255, 255, 255, 0.9);
+  color: #000000;
 }
 
 body.dark-mode .search-field input::placeholder {
-  color: rgba(176, 176, 176, 0.7);
+  color: rgba(74, 74, 74, 0.7);
 }
 
 @media (max-width: 768px) {
