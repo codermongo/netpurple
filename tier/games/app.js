@@ -63,6 +63,9 @@ const elements = {
   editCancelBtn: document.querySelector("#editCancelBtn"),
   editSaveBtn: document.querySelector("#editSaveBtn"),
   exportBtn: document.querySelector("#exportBtn"),
+  exportOverlay: document.querySelector("#exportOverlay"),
+  exportCancelBtn: document.querySelector("#exportCancelBtn"),
+  exportConfirmBtn: document.querySelector("#exportConfirmBtn"),
   editModeBtn: document.querySelector("#editModeBtn"),
   tooltip: document.querySelector("#animeTooltip"),
   quickEditOverlay: document.querySelector("#quickEditOverlay"),
@@ -1437,6 +1440,11 @@ function handleGlobalKeydown(event) {
     return;
   }
 
+  if (elements.exportOverlay && !elements.exportOverlay.hidden) {
+    closeExportModal();
+    return;
+  }
+
   if (elements.titleSuggestions && !elements.titleSuggestions.hidden) {
     clearTitleSuggestions();
     return;
@@ -1454,19 +1462,70 @@ function handleGlobalKeydown(event) {
   closeEditor();
 }
 
-function exportToJson() {
-  const data = state.records.map((record) => ({
-    tier: normalizeTierForDisplay(record.tier) || record.tier || null,
-    name: record.title
-  }));
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
+function openExportModal() {
+  if (elements.exportOverlay) {
+    elements.exportOverlay.hidden = false;
+    elements.exportOverlay.setAttribute("aria-hidden", "false");
+  }
+}
+
+function closeExportModal() {
+  if (elements.exportOverlay) {
+    elements.exportOverlay.hidden = true;
+    elements.exportOverlay.setAttribute("aria-hidden", "true");
+  }
+}
+
+function performExport() {
+  const contentVal = document.querySelector('input[name="exportContent"]:checked')?.value || "names";
+  const formatVal = document.querySelector('input[name="exportFormat"]:checked')?.value || "json";
+
+  const includeRanking = contentVal === "names-ranking" || contentVal === "names-ranking-notes";
+  const includeNotes = contentVal === "names-notes" || contentVal === "names-ranking-notes";
+
+  const data = state.records.map((record) => {
+    const entry = { name: record.title };
+    if (includeRanking) entry.tier = normalizeTierForDisplay(record.tier) || record.tier || null;
+    if (includeNotes) entry.notes = record.notes || "";
+    return entry;
+  });
+
+  let content, mimeType, extension;
+
+  if (formatVal === "json") {
+    content = JSON.stringify(data, null, 2);
+    mimeType = "application/json";
+    extension = "json";
+  } else if (formatVal === "csv") {
+    const headers = ["name"];
+    if (includeRanking) headers.push("tier");
+    if (includeNotes) headers.push("notes");
+    const rows = data.map((entry) =>
+      headers.map((h) => `"${String(entry[h] ?? "").replace(/"/g, '""')}"`).join(",")
+    );
+    content = [headers.join(","), ...rows].join("\n");
+    mimeType = "text/csv";
+    extension = "csv";
+  } else {
+    const lines = data.map((entry) => {
+      const parts = [entry.name];
+      if (includeRanking) parts.push(`[${entry.tier || "Unranked"}]`);
+      if (includeNotes && entry.notes) parts.push(`- ${entry.notes}`);
+      return parts.join(" ");
+    });
+    content = lines.join("\n");
+    mimeType = "text/plain";
+    extension = "txt";
+  }
+
+  const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "anime-ranking.json";
+  a.download = `games-ranking.${extension}`;
   a.click();
   URL.revokeObjectURL(url);
+  closeExportModal();
 }
 
 function initEvents() {
@@ -1491,8 +1550,16 @@ function initEvents() {
 
   if (elements.exportBtn) {
     elements.exportBtn.addEventListener("click", () => {
-      exportToJson();
+      openExportModal();
     });
+  }
+
+  if (elements.exportCancelBtn) {
+    elements.exportCancelBtn.addEventListener("click", closeExportModal);
+  }
+
+  if (elements.exportConfirmBtn) {
+    elements.exportConfirmBtn.addEventListener("click", performExport);
   }
 
   if (elements.editModeBtn) {

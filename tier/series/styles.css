@@ -1096,6 +1096,53 @@ body.modal-open {
   border: 0;
 }
 
+.export-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.export-fieldset {
+  border: 1px solid var(--card-glass-stroke);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.export-fieldset legend {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.export-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.export-radio-label input[type="radio"] {
+  accent-color: var(--button-purple);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .export-options {
+    grid-template-columns: 1fr;
+  }
+}
+
 body.dark-mode {
   --dark-bg: #000000;
   --text-primary: #ffffff;
