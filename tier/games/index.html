@@ -28,7 +28,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="../styles.css" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   </head>
   <body>
@@ -159,8 +159,48 @@
 
     <div id="animeTooltip" class="anime-tooltip" aria-hidden="true" hidden></div>
 
+    <div class="edit-overlay" id="exportOverlay" hidden aria-hidden="true">
+      <div class="edit-modal">
+        <h2 class="edit-title">Export</h2>
+        <div class="export-options">
+          <fieldset class="export-fieldset">
+            <legend>Content</legend>
+            <label class="export-radio-label">
+              <input type="radio" name="exportContent" value="names" checked /> Only Names
+            </label>
+            <label class="export-radio-label">
+              <input type="radio" name="exportContent" value="names-ranking" /> Names + Ranking
+            </label>
+            <label class="export-radio-label">
+              <input type="radio" name="exportContent" value="names-notes" /> Names + Notes
+            </label>
+            <label class="export-radio-label">
+              <input type="radio" name="exportContent" value="names-ranking-notes" /> Names + Ranking + Notes
+            </label>
+          </fieldset>
+          <fieldset class="export-fieldset">
+            <legend>Format</legend>
+            <label class="export-radio-label">
+              <input type="radio" name="exportFormat" value="json" checked /> JSON
+            </label>
+            <label class="export-radio-label">
+              <input type="radio" name="exportFormat" value="csv" /> CSV
+            </label>
+            <label class="export-radio-label">
+              <input type="radio" name="exportFormat" value="txt" /> TXT
+            </label>
+          </fieldset>
+        </div>
+        <div class="edit-actions">
+          <button class="tool-button secondary" id="exportCancelBtn" type="button">Cancel</button>
+          <button class="tool-button" id="exportConfirmBtn" type="button">Export</button>
+        </div>
+      </div>
+    </div>
+
     <script src="../../particles.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
     <script src="app.js"></script>
+    <script src="../app.js"></script>
   </body>
 </html>
