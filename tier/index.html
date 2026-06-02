@@ -250,6 +250,24 @@
           localStorage.setItem(THEME_KEY, document.body.classList.contains("dark-mode"));
         });
       }
+
+      const LP_KEY = "lowPowerMode";
+      if (localStorage.getItem(LP_KEY) === "true") document.body.classList.add("low-power-mode");
+      const lpContainer = document.querySelector(".theme-toggle-container");
+      if (lpContainer) {
+        const lpBtn = document.createElement("button");
+        lpBtn.className = "menu-item-circle";
+        lpBtn.id = "lowPowerToggle";
+        lpBtn.setAttribute("aria-label", "Toggle low performance mode");
+        lpBtn.setAttribute("aria-pressed", String(localStorage.getItem(LP_KEY) === "true"));
+        lpBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z"/></svg>';
+        lpContainer.appendChild(lpBtn);
+        lpBtn.addEventListener("click", () => {
+          const isLow = document.body.classList.toggle("low-power-mode");
+          localStorage.setItem(LP_KEY, String(isLow));
+          lpBtn.setAttribute("aria-pressed", String(isLow));
+        });
+      }
     </script>
   </body>
 </html>

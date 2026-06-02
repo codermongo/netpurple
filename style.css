@@ -921,6 +921,10 @@ a.tool-card:hover * {
   50% { transform: translateY(-10px) rotate(180deg); }
 }
 
+#lowPowerToggle[aria-pressed="true"] {
+  color: var(--accent-purple);
+}
+
 /* Low-power performance mode */
 body.low-power-mode #bg-particles {
   display: none;
