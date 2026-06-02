@@ -541,6 +541,11 @@ body.dark-mode .menu-item-circle .moon-icon {
   cursor: grab;
 }
 
+.tier-thumb[data-yt-url] .tier-thumb-media,
+.unranked-card[data-yt-url] .unranked-cover {
+  cursor: pointer;
+}
+
 .tier-thumb.dragging {
   opacity: 0.35;
   cursor: grabbing;

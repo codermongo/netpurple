@@ -757,6 +757,7 @@ function normalizeDocument(document) {
 
   const coverUrl = typeof document?.cover_url === "string" ? document.cover_url.trim() : "";
   const artist = typeof document?.artist === "string" ? document.artist.trim() : "";
+  const ytUrl = typeof document?.youtube_url === "string" ? document.youtube_url.trim() : "";
 
   return {
     ok: true,
@@ -767,7 +768,8 @@ function normalizeDocument(document) {
       notes,
       tier_position,
       cover_url: coverUrl,
-      artist
+      artist,
+      yt_url: ytUrl
     }
   };
 }
@@ -918,7 +920,7 @@ function renderList() {
     const items = groups[tier];
     const slug = TIER_SLUG[tier];
     const thumbnails = items.map((record) => `
-      <div class="tier-thumb" title="${escapeHtml(record.title)}" data-id="${escapeHtml(record.id)}" data-position="${record.tier_position ?? ""}"${record.notes ? ` data-notes="${escapeHtml(record.notes)}"` : ""}>
+      <div class="tier-thumb" title="${escapeHtml(record.title)}" data-id="${escapeHtml(record.id)}" data-position="${record.tier_position ?? ""}"${record.notes ? ` data-notes="${escapeHtml(record.notes)}"` : ""}${record.yt_url ? ` data-yt-url="${escapeHtml(record.yt_url)}"` : ""}>
         <div class="tier-thumb-media" data-cover-slot="${escapeHtml(record.id)}">
           ${renderCardCover(record)}
         </div>
@@ -941,7 +943,7 @@ function renderList() {
     html += '<div class="unranked-items">';
     for (const record of unranked) {
       html += `
-        <div class="unranked-card" data-id="${escapeHtml(record.id)}" data-position="${record.tier_position ?? ""}" title="${escapeHtml(record.title)}"${record.notes ? ` data-notes="${escapeHtml(record.notes)}"` : ""}>
+        <div class="unranked-card" data-id="${escapeHtml(record.id)}" data-position="${record.tier_position ?? ""}" title="${escapeHtml(record.title)}"${record.notes ? ` data-notes="${escapeHtml(record.notes)}"` : ""}${record.yt_url ? ` data-yt-url="${escapeHtml(record.yt_url)}"` : ""}>
           <div class="unranked-cover" data-cover-slot="${escapeHtml(record.id)}">
             ${renderCardCover(record)}
           </div>
@@ -1477,6 +1479,15 @@ async function saveEditor(event) {
 function handleListClick(event) {
   const target = event.target;
   if (!(target instanceof Element)) {
+    return;
+  }
+
+  const coverEl = target.closest(".tier-thumb-media, .unranked-cover");
+  if (coverEl && !state.editMode) {
+    const card = coverEl.closest("[data-yt-url]");
+    if (card?.dataset.ytUrl) {
+      window.open(card.dataset.ytUrl, "_blank", "noopener,noreferrer");
+    }
     return;
   }
 
