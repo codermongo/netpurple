@@ -5,6 +5,8 @@ const COVER_CACHE_KEY = _cfg.coverCacheKey || "tier_cover_cache_v1";
 const ITEM_LABEL = _cfg.itemLabel || "Item";
 const ITEM_LABEL_LC = ITEM_LABEL.toLowerCase();
 const EXPORT_FILENAME = _cfg.exportFilename || "tier-ranking";
+const COVER_API_TYPE = _cfg.coverApiType || "anime";
+const SQUARE_COVERS = !!_cfg.squareCovers;
 
 const APPWRITE_ENDPOINT = "https://api.netpurple.net/v1";
 const APPWRITE_PROJECT_ID = "699f23920000d9667d3e";
@@ -365,7 +367,37 @@ async function waitForCoverRequestSlot() {
   nextCoverFetchAt = Date.now() + COVER_FETCH_MIN_INTERVAL_MS;
 }
 
-async function fetchCover(title) {
+async function fetchCoverFromItunes(title, artist) {
+  const term = [title, artist].filter(Boolean).join(" ");
+  const cleanTerm = sanitizeTitle(term);
+  const queries = [...new Set([term, cleanTerm, title].filter(Boolean))];
+
+  for (const query of queries) {
+    try {
+      const response = await fetch(
+        `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&entity=song&limit=5`
+      );
+      if (!response.ok) continue;
+      const data = await response.json();
+      const results = Array.isArray(data?.results) ? data.results : [];
+      if (!results.length) continue;
+      const raw = results[0]?.artworkUrl100 || "";
+      if (raw) {
+        return raw.replace("100x100bb", "600x600bb");
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return "";
+}
+
+async function fetchCover(title, artist) {
+  if (COVER_API_TYPE === "music") {
+    return fetchCoverFromItunes(title, artist || "");
+  }
+
   const cleanTitle = sanitizeTitle(title);
   const queries = [...new Set([title, cleanTitle].filter(Boolean))];
 
@@ -658,7 +690,7 @@ async function enrichVisibleCovers(records, jobId) {
       if (!key || Object.prototype.hasOwnProperty.call(state.coverCache, key) || state.pendingCovers.has(key)) return;
 
       state.pendingCovers.add(key);
-      const cover = await fetchCover(record.title || "");
+      const cover = await fetchCover(record.title || "", record.artist || "");
       state.pendingCovers.delete(key);
 
       state.coverCache[key] = cover || "";
@@ -724,6 +756,7 @@ function normalizeDocument(document) {
   }
 
   const coverUrl = typeof document?.cover_url === "string" ? document.cover_url.trim() : "";
+  const artist = typeof document?.artist === "string" ? document.artist.trim() : "";
 
   return {
     ok: true,
@@ -733,7 +766,8 @@ function normalizeDocument(document) {
       tier,
       notes,
       tier_position,
-      cover_url: coverUrl
+      cover_url: coverUrl,
+      artist
     }
   };
 }
@@ -1720,6 +1754,10 @@ async function init() {
   if (elements.quickEditOverlay) {
     elements.quickEditOverlay.hidden = true;
     elements.quickEditOverlay.setAttribute("aria-hidden", "true");
+  }
+
+  if (SQUARE_COVERS && elements.list) {
+    elements.list.classList.add("square-covers");
   }
 
   initThemeToggle();

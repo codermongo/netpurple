@@ -1279,3 +1279,37 @@ body.dark-mode .search-field input::placeholder {
     min-height: 200px;
   }
 }
+
+/* Square covers for music tier list */
+.anime-list.square-covers .tier-thumb-media {
+  height: 96px;
+  border-radius: 8px;
+}
+
+.anime-list.square-covers .unranked-cover {
+  height: 120px;
+  flex: 0 0 120px;
+  border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .anime-list.square-covers .tier-thumb-media {
+    height: 70px;
+  }
+
+  .anime-list.square-covers .unranked-cover {
+    height: 96px;
+    flex: 0 0 96px;
+  }
+}
+
+@media (max-width: 520px) {
+  .anime-list.square-covers .tier-thumb-media {
+    height: 56px;
+  }
+
+  .anime-list.square-covers .unranked-cover {
+    height: 96px;
+    flex: 0 0 96px;
+  }
+}
