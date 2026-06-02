@@ -9,7 +9,8 @@
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const reducedData = window.matchMedia('(prefers-reduced-data: reduce)').matches;
     const saveData = Boolean(navigator.connection && navigator.connection.saveData);
-    return reducedMotion || reducedData || saveData || (narrowViewport && coarsePointer);
+    const manualLow = localStorage.getItem('lowPowerMode') === 'true';
+    return manualLow || reducedMotion || reducedData || saveData || (narrowViewport && coarsePointer);
   }
 
   if (isLowPowerMode()) {
