@@ -252,8 +252,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             let toolsData = [];
             let activeCategory = 'all';
-            const WORKER_BASE = 'https://anime.kampfflugzeuge.workers.dev';
-            const TOOLS_API_URL = `${WORKER_BASE}/appwrite/tools`;
+            const APPWRITE_ENDPOINT = 'https://api.netpurple.net/v1';
+            const APPWRITE_PROJECT_ID = '699f23920000d9667d3e';
+            const APPWRITE_DATABASE_ID = '699f251000346ad6c5e7';
 
             const container = document.getElementById('list-container');
             const searchInput = document.getElementById('searchInput');
@@ -274,16 +275,13 @@
                 'IOS': 'fa-brands fa-apple'
             };
 
-            fetch(TOOLS_API_URL)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(payload => {
-                    const docs = Array.isArray(payload?.documents) ? payload.documents : [];
-                    toolsData = docs;
+            const { Client, Databases } = Appwrite;
+            const _client = new Client().setEndpoint(APPWRITE_ENDPOINT).setProject(APPWRITE_PROJECT_ID);
+            const _databases = new Databases(_client);
+
+            _databases.listDocuments(APPWRITE_DATABASE_ID, 'tools', [Appwrite.Query.limit(500)])
+                .then(result => {
+                    toolsData = result.documents;
                     renderCategories();
                     renderList();
                 })

@@ -13,9 +13,7 @@ const APPWRITE_PROJECT_ID = "699f23920000d9667d3e";
 const APPWRITE_DATABASE_ID = "699f251000346ad6c5e7";
 const PAGE_SIZE = 100;
 const THEME_KEY = "darkMode";
-const ANIME_WORKER_BASE = "https://anime.kampfflugzeuge.workers.dev";
-const JIKAN_PROXY_BASE = `${ANIME_WORKER_BASE}/jikan`;
-const APPWRITE_PROXY_URL = `${ANIME_WORKER_BASE}/appwrite/${_cfg.proxyPath || "anime"}`;
+const JIKAN_BASE = "https://api.jikan.moe/v4/anime";
 const TITLE_SUGGESTION_LIMIT = 5;
 const TITLE_SUGGESTION_MIN_LENGTH = 3;
 const TITLE_SUGGESTION_DEBOUNCE_MS = 220;
@@ -404,7 +402,7 @@ async function fetchCover(title, artist) {
   for (const query of queries) {
     try {
       const response = await fetch(
-        `${JIKAN_PROXY_BASE}?q=${encodeURIComponent(query)}`
+        `${JIKAN_BASE}?q=${encodeURIComponent(query)}`
       );
 
       if (!response.ok) {
@@ -568,7 +566,7 @@ async function loadTitleSuggestions(rawQuery) {
 
   try {
     const response = await fetch(
-      `${JIKAN_PROXY_BASE}?q=${encodeURIComponent(query)}`,
+      `${JIKAN_BASE}?q=${encodeURIComponent(query)}`,
       { signal: controller.signal }
     );
 
@@ -822,39 +820,7 @@ async function fetchRankingDirect() {
 }
 
 async function fetchRanking() {
-  const invalid = [];
-
-  try {
-    const response = await fetch(APPWRITE_PROXY_URL);
-    if (!response.ok) {
-      throw new Error(`Worker responded with status ${response.status}.`);
-    }
-
-    const payload = await response.json();
-    const documents = Array.isArray(payload?.documents) ? payload.documents : [];
-    const records = [];
-
-    for (const document of documents) {
-      const normalized = normalizeDocument(document);
-      if (normalized.ok) {
-        records.push(normalized.value);
-      } else {
-        invalid.push(normalized.error);
-      }
-    }
-
-    const total = Number(payload?.total);
-    if (Number.isFinite(total) && total > documents.length) {
-      return await fetchRankingDirect();
-    }
-
-    return {
-      records,
-      invalid
-    };
-  } catch {
-    return await fetchRankingDirect();
-  }
+  return fetchRankingDirect();
 }
 
 function getFilteredRecords() {
