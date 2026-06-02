@@ -31,8 +31,26 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.netpurple.com/anime/</loc>
-    <lastmod>2026-02-21</lastmod>
+    <loc>https://www.netpurple.com/tier/</loc>
+    <lastmod>2026-06-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.netpurple.com/tier/anime/</loc>
+    <lastmod>2026-06-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.netpurple.com/tier/games/</loc>
+    <lastmod>2026-06-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.netpurple.com/tier/series/</loc>
+    <lastmod>2026-06-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
