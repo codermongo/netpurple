@@ -13,7 +13,6 @@ const APPWRITE_PROJECT_ID = "699f23920000d9667d3e";
 const APPWRITE_DATABASE_ID = "699f251000346ad6c5e7";
 const PAGE_SIZE = 100;
 const THEME_KEY = "darkMode";
-const JIKAN_BASE = "https://api.jikan.moe/v4/anime";
 const TITLE_SUGGESTION_LIMIT = 5;
 const TITLE_SUGGESTION_MIN_LENGTH = 3;
 const TITLE_SUGGESTION_DEBOUNCE_MS = 220;
@@ -54,7 +53,6 @@ const elements = {
   status: document.querySelector("#statusText"),
   search: document.querySelector("#searchInput"),
   refresh: document.querySelector("#refreshBtn"),
-  add: document.querySelector("#addBtn"),
   loginLink: document.querySelector(".login-link"),
   themeToggle: document.querySelector("#themeToggleItem"),
   editOverlay: document.querySelector("#editOverlay"),
@@ -179,9 +177,6 @@ function getLoginHref() {
 }
 
 function updateAuthUi() {
-  if (elements.add) {
-    elements.add.hidden = !state.canManage;
-  }
   if (elements.editModeBtn) {
     elements.editModeBtn.hidden = !state.canManage;
   }
@@ -395,34 +390,6 @@ async function fetchCover(title, artist) {
   if (COVER_API_TYPE === "music") {
     return fetchCoverFromItunes(title, artist || "");
   }
-
-  const cleanTitle = sanitizeTitle(title);
-  const queries = [...new Set([title, cleanTitle].filter(Boolean))];
-
-  for (const query of queries) {
-    try {
-      const response = await fetch(
-        `${JIKAN_BASE}?q=${encodeURIComponent(query)}`
-      );
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          return "";
-        }
-        continue;
-      }
-
-      const data = await response.json();
-      const best = pickBestMatch(data?.data || [], title);
-      const imageUrl = getCoverUrlFromItem(best);
-      if (imageUrl) {
-        return imageUrl;
-      }
-    } catch {
-      continue;
-    }
-  }
-
   return "";
 }
 
@@ -552,70 +519,8 @@ function abortPendingTitleSuggestionRequest() {
   }
 }
 
-async function loadTitleSuggestions(rawQuery) {
-  const query = String(rawQuery || "").trim();
-  if (!isLikelySearchQuery(query)) {
-    clearTitleSuggestions();
-    return;
-  }
-
-  abortPendingTitleSuggestionRequest();
-  const controller = new AbortController();
-  titleSuggestionAbortController = controller;
-  const requestId = ++titleSuggestionRequestId;
-
-  try {
-    const response = await fetch(
-      `${JIKAN_BASE}?q=${encodeURIComponent(query)}`,
-      { signal: controller.signal }
-    );
-
-    if (!response.ok) {
-      clearTitleSuggestions();
-      return;
-    }
-
-    const payload = await response.json();
-    if (requestId !== titleSuggestionRequestId) {
-      return;
-    }
-
-    const seen = new Set();
-    const candidates = [];
-    const data = Array.isArray(payload?.data) ? payload.data : [];
-
-    for (const entry of data) {
-      const title = getEnglishSuggestionTitle(entry);
-      if (!title) {
-        continue;
-      }
-      const key = normalizeSuggestionKey(title);
-      if (!key || seen.has(key)) {
-        continue;
-      }
-      seen.add(key);
-      const relevance = getSuggestionRelevance(query, title);
-      if (relevance < 45) {
-        continue;
-      }
-      candidates.push({
-        title,
-        image: getCoverUrlFromItem(entry),
-        relevance
-      });
-    }
-
-    candidates.sort((left, right) => right.relevance - left.relevance || left.title.localeCompare(right.title));
-    renderTitleSuggestions(candidates.slice(0, TITLE_SUGGESTION_LIMIT));
-  } catch (error) {
-    if (error?.name !== "AbortError") {
-      clearTitleSuggestions();
-    }
-  } finally {
-    if (titleSuggestionAbortController === controller) {
-      titleSuggestionAbortController = null;
-    }
-  }
+async function loadTitleSuggestions() {
+  clearTitleSuggestions();
 }
 
 function queueTitleSuggestions() {
@@ -1410,19 +1315,6 @@ async function saveEditor(event) {
         parsed.payload
       );
     } else {
-      try {
-        const jikanResp = await fetch(
-          `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(parsed.payload.title)}&limit=5&sfw=true`
-        );
-        if (jikanResp.ok) {
-          const jikanData = await jikanResp.json();
-          const best = pickBestMatch(jikanData?.data || [], parsed.payload.title);
-          const coverUrl = getCoverUrlFromItem(best);
-          if (coverUrl) parsed.payload.cover_url = coverUrl;
-        }
-      } catch {
-        // proceed without cover
-      }
       await databases.createDocument(
         APPWRITE_DATABASE_ID,
         COLLECTION_ID,
@@ -1584,11 +1476,7 @@ function initEvents() {
     });
   }
 
-  if (elements.add) {
-    elements.add.addEventListener("click", () => {
-      openEditor(null);
-    });
-  }
+
 
   if (elements.exportBtn) {
     elements.exportBtn.addEventListener("click", () => {
@@ -1720,9 +1608,6 @@ async function refreshAuthState() {
 }
 
 async function init() {
-  if (elements.add) {
-    elements.add.hidden = true;
-  }
   if (elements.editOverlay) {
     elements.editOverlay.hidden = true;
     elements.editOverlay.setAttribute("aria-hidden", "true");
