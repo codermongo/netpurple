@@ -809,7 +809,7 @@ function renderList() {
 
   // Unranked pool below the chart
   html += '<div class="unranked-pool">';
-  html += '<h3 class="unranked-heading">Unranked</h3>';
+  html += '<h3 class="unranked-heading">Unranked / To Finish</h3>';
   if (unranked.length > 0) {
     html += '<div class="unranked-items">';
     for (const record of unranked) {
@@ -1096,7 +1096,7 @@ function addDragAndDrop() {
         tier: newTier,
         tier_position: newPosition
       });
-      setStatus(`Moved "${record.title}" to ${newTier !== null ? newTier : "Unranked"}.`);
+      setStatus(`Moved "${record.title}" to ${newTier !== null ? newTier : "Unranked / To Finish"}.`);
     } catch (error) {
       setStatus(`Failed to update tier: ${error?.message || "Unknown error"}`);
     }
@@ -1443,7 +1443,7 @@ function performExport() {
   } else {
     const lines = data.map((entry) => {
       const parts = [entry.name];
-      if (includeRanking) parts.push(`[${entry.tier || "Unranked"}]`);
+      if (includeRanking) parts.push(`[${entry.tier || "Unranked / To Finish"}]`);
       if (includeNotes && entry.notes) parts.push(`- ${entry.notes}`);
       return parts.join(" ");
     });
