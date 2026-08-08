@@ -64,6 +64,7 @@ const elements = {
   titleSuggestions: document.querySelector("#titleSuggestions"),
   editTier: document.querySelector("#editTier"),
   editScore: document.querySelector("#editScore"),
+  editPlayTime: document.querySelector("#editPlayTime"),
   editNotes: document.querySelector("#editNotes"),
   editError: document.querySelector("#editError"),
   editCancelBtn: document.querySelector("#editCancelBtn"),
@@ -80,7 +81,8 @@ const elements = {
   quickEditError: document.querySelector("#quickEditError"),
   quickCancelBtn: document.querySelector("#quickCancelBtn"),
   quickSaveBtn: document.querySelector("#quickSaveBtn"),
-  quickDeleteBtn: document.querySelector("#quickDeleteBtn")
+  quickDeleteBtn: document.querySelector("#quickDeleteBtn"),
+  playTimeInfo: document.querySelector("#playTimeInfo")
 };
 
 let databases = null;
@@ -836,6 +838,14 @@ function normalizeDocument(document) {
     }
   }
 
+  let play_time = null;
+  if (document?.play_time !== null && document?.play_time !== undefined && String(document.play_time).trim() !== "") {
+    play_time = parseFloat(document.play_time);
+    if (!Number.isFinite(play_time) || play_time < 0) {
+      errors.push("play_time must be a non-negative number when provided.");
+    }
+  }
+
   if (errors.length > 0) {
     return {
       ok: false,
@@ -857,7 +867,8 @@ function normalizeDocument(document) {
       tier_position,
       cover_url: coverUrl,
       artist,
-      yt_url: ytUrl
+      yt_url: ytUrl,
+      play_time
     }
   };
 }
@@ -932,8 +943,32 @@ function getFilteredRecords() {
   });
 }
 
+function formatPlayTime(totalMinutes) {
+  const safeMinutes = Number.isFinite(totalMinutes) ? Math.max(0, totalMinutes) : 0;
+  const days = Math.floor(safeMinutes / 1440);
+  const hours = Math.floor((safeMinutes % 1440) / 60);
+  const totalHours = Math.round(safeMinutes / 60);
+  return `${days} days ${hours} hrs. (${totalHours.toLocaleString()} hrs. total)`;
+}
+
+function updatePlayTimeSummary() {
+  if (!elements.playTimeInfo) {
+    return;
+  }
+
+  const totalMinutes = state.records.reduce((sum, record) => {
+    const isRanked = !!normalizeTierForDisplay(record.tier);
+    return isRanked && Number.isFinite(record.play_time) ? sum + record.play_time : sum;
+  }, 0);
+
+  elements.playTimeInfo.textContent = totalMinutes > 0
+    ? `Total Play Time: ${formatPlayTime(totalMinutes)}`
+    : "Total Play Time: —";
+}
+
 function renderList() {
   const filtered = getFilteredRecords();
+  updatePlayTimeSummary();
 
   if (!filtered.length) {
     renderEmpty(`No ${ITEM_LABEL_LC} found for the current search.`);
@@ -1401,6 +1436,9 @@ function openEditor(record) {
   if (elements.editTier) {
     elements.editTier.value = record?.tier ? formatTierLabel(record.tier) : "";
   }
+  if (elements.editPlayTime) {
+    elements.editPlayTime.value = Number.isFinite(record?.play_time) ? record.play_time : "";
+  }
   if (elements.editNotes) {
     elements.editNotes.value = record?.notes || "";
   }
@@ -1458,13 +1496,28 @@ function getEditorPayload() {
     return { ok: false, error: "Notes must be 1000 characters or fewer." };
   }
 
+  const payload = {
+    title,
+    tier: tierRaw || null,
+    notes
+  };
+
+  if (elements.editPlayTime) {
+    const rawPlayTime = elements.editPlayTime.value.trim();
+    if (rawPlayTime !== "") {
+      const playTime = parseScoreInput(rawPlayTime);
+      if (!Number.isFinite(playTime) || playTime < 0) {
+        return { ok: false, error: "Play Time must be a non-negative number." };
+      }
+      payload.play_time = playTime;
+    } else {
+      payload.play_time = null;
+    }
+  }
+
   return {
     ok: true,
-    payload: {
-      title,
-      tier: tierRaw || null,
-      notes
-    }
+    payload
   };
 }
 

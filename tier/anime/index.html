@@ -90,7 +90,10 @@
               <button class="tool-button" id="exportBtn" type="button">Export</button>
               <a href="https://docu.netpurple.net/docs/Netpurple/tier" style="font-size:0.78rem;color:var(--text-secondary);text-decoration:none;line-height:1.5;" target="_blank" rel="noopener noreferrer">Have Any Questions?</a>
             </div>
-            <p class="toolbar-note">The Animes are Ranked on my Personal Opinion. The Animes are also Ranked in their Respective Tier from left to right, the first Entry in the Tier is the best one.</p>
+            <div class="toolbar-side">
+              <p class="toolbar-info" id="playTimeInfo">Total Play Time: —</p>
+              <p class="toolbar-note">The Animes are Ranked on my Personal Opinion. The Animes are also Ranked in their Respective Tier from left to right, the first Entry in the Tier is the best one.</p>
+            </div>
           </div>
 
           <p class="status" id="statusText">Loading anime list...</p>
@@ -122,6 +125,10 @@
               <option value="F"></option>
               <option value="-F"></option>
             </datalist>
+          </label>
+          <label class="edit-field">
+            <span>Play Time (minutes)</span>
+            <input id="editPlayTime" type="number" min="0" step="1" inputmode="decimal" />
           </label>
           <label class="edit-field">
             <span>Notes</span>
