@@ -45,7 +45,8 @@ const state = {
   activeEditId: null,
   activeQuickEditId: null,
   coverCache: loadCoverCache(),
-  pendingCovers: new Set()
+  pendingCovers: new Set(),
+  pendingCoverUrl: ""
 };
 
 const elements = {
@@ -53,6 +54,7 @@ const elements = {
   status: document.querySelector("#statusText"),
   search: document.querySelector("#searchInput"),
   refresh: document.querySelector("#refreshBtn"),
+  add: document.querySelector("#addBtn"),
   loginLink: document.querySelector(".login-link"),
   themeToggle: document.querySelector("#themeToggleItem"),
   editOverlay: document.querySelector("#editOverlay"),
@@ -177,6 +179,9 @@ function getLoginHref() {
 }
 
 function updateAuthUi() {
+  if (elements.add) {
+    elements.add.hidden = !state.canManage;
+  }
   if (elements.editModeBtn) {
     elements.editModeBtn.hidden = !state.canManage;
   }
@@ -278,11 +283,16 @@ function normalizeForMatch(value) {
     .trim();
 }
 
-function pickBestMatch(items, title) {
+function defaultTitleVariants(item) {
+  return [item?.title, item?.title_english, item?.title_japanese].filter(Boolean);
+}
+
+function pickBestMatch(items, title, getVariants) {
   if (!Array.isArray(items) || !items.length) {
     return null;
   }
 
+  const variantsOf = typeof getVariants === "function" ? getVariants : defaultTitleVariants;
   const needle = normalizeForMatch(title);
   if (!needle) {
     return items[0];
@@ -292,7 +302,7 @@ function pickBestMatch(items, title) {
   let bestScore = -1;
 
   for (const item of items) {
-    const variants = [item?.title, item?.title_english, item?.title_japanese].filter(Boolean);
+    const variants = variantsOf(item);
     let localScore = 0;
 
     for (const variant of variants) {
@@ -332,6 +342,103 @@ function getCoverUrlFromItem(item) {
     || item?.images?.webp?.image_url
     || item?.images?.jpg?.image_url
     || "";
+}
+
+// Per-category search providers. Each page sets COVER_API_TYPE via TIER_PAGE_CONFIG
+// so anime/series/games route to the source that actually knows that content type.
+const PROVIDERS = {
+  anime: {
+    throttled: true,
+    async search(query, signal) {
+      const response = await fetch(
+        `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=8&sfw=true`,
+        { signal }
+      );
+      if (response.status === 429) {
+        setCoverRateLimit(COVER_FETCH_COOLDOWN_MS);
+        return [];
+      }
+      if (!response.ok) {
+        return [];
+      }
+      const data = await response.json();
+      return Array.isArray(data?.data) ? data.data : [];
+    },
+    titleVariants: defaultTitleVariants,
+    displayTitle: getEnglishSuggestionTitle,
+    cover: getCoverUrlFromItem
+  },
+  series: {
+    throttled: false,
+    async search(query, signal) {
+      const response = await fetch(
+        `https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`,
+        { signal }
+      );
+      if (!response.ok) {
+        return [];
+      }
+      const data = await response.json();
+      const list = Array.isArray(data) ? data : [];
+      return list.map((entry) => entry?.show).filter(Boolean);
+    },
+    titleVariants: (item) => [item?.name].filter(Boolean),
+    displayTitle: (item) => String(item?.name || "").trim(),
+    cover: (item) => item?.image?.original || item?.image?.medium || ""
+  },
+  games: {
+    throttled: false,
+    async search(query, signal) {
+      const response = await fetch(
+        `https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(query)}&limit=10`,
+        { signal }
+      );
+      if (!response.ok) {
+        return [];
+      }
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    },
+    titleVariants: (item) => [item?.external].filter(Boolean),
+    displayTitle: (item) => String(item?.external || "").trim(),
+    // CheapShark thumbnails are small Steam capsules — good enough for a suggestion
+    // preview, not for the stored cover_url (see fetchCover()).
+    cover: (item) => item?.thumb || ""
+  }
+};
+
+// Definitive cover lookup (used on save + background backfill), tries the raw title
+// first, then a sanitized variant, and returns on the first usable hit.
+async function fetchCoverForType(type, title) {
+  const provider = PROVIDERS[type];
+  if (!provider) {
+    return "";
+  }
+
+  const cleanTitle = sanitizeTitle(title);
+  const queries = [...new Set([title, cleanTitle].filter(Boolean))];
+
+  for (const query of queries) {
+    try {
+      if (provider.throttled) {
+        await waitForCoverRequestSlot();
+      }
+      if (isCoverRateLimited()) {
+        return "";
+      }
+
+      const items = await provider.search(query);
+      const best = pickBestMatch(items, title, provider.titleVariants);
+      const coverUrl = best ? provider.cover(best) || "" : "";
+      if (coverUrl) {
+        return coverUrl;
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return "";
 }
 
 function sleep(ms) {
@@ -390,6 +497,13 @@ async function fetchCover(title, artist) {
   if (COVER_API_TYPE === "music") {
     return fetchCoverFromItunes(title, artist || "");
   }
+  if (COVER_API_TYPE === "anime" || COVER_API_TYPE === "series") {
+    return fetchCoverForType(COVER_API_TYPE, title);
+  }
+  // "games" intentionally has no live cover fetch here — CheapShark thumbnails are
+  // too small to store as cover_url. High-quality Steam grid covers are backfilled
+  // separately (see the SteamGridDB maintenance script) so cover_url stays empty
+  // until that script fills it in.
   return "";
 }
 
@@ -421,11 +535,12 @@ function renderTitleSuggestions(items) {
 
   const markup = items.map((item) => {
     const safeTitle = escapeHtml(item.title);
+    const safeImage = escapeHtml(item.image || "");
     const image = item.image
-      ? `<img class="title-suggestion-cover" src="${escapeHtml(item.image)}" alt="${safeTitle} cover" loading="lazy" referrerpolicy="no-referrer" />`
+      ? `<img class="title-suggestion-cover" src="${safeImage}" alt="${safeTitle} cover" loading="lazy" referrerpolicy="no-referrer" />`
       : `<span class="title-suggestion-cover" aria-hidden="true"></span>`;
     return `
-      <button class="title-suggestion-btn" type="button" data-suggestion-title="${safeTitle}">
+      <button class="title-suggestion-btn" type="button" data-suggestion-title="${safeTitle}" data-suggestion-image="${safeImage}">
         ${image}
         <span class="title-suggestion-name">${safeTitle}</span>
       </button>
@@ -519,14 +634,81 @@ function abortPendingTitleSuggestionRequest() {
   }
 }
 
-async function loadTitleSuggestions() {
-  clearTitleSuggestions();
+async function loadTitleSuggestions(rawQuery) {
+  const query = String(rawQuery || "").trim();
+  if (!isLikelySearchQuery(query)) {
+    clearTitleSuggestions();
+    return;
+  }
+
+  const provider = PROVIDERS[COVER_API_TYPE];
+  if (!provider) {
+    clearTitleSuggestions();
+    return;
+  }
+
+  abortPendingTitleSuggestionRequest();
+  const controller = new AbortController();
+  titleSuggestionAbortController = controller;
+  const requestId = ++titleSuggestionRequestId;
+
+  try {
+    if (provider.throttled) {
+      await waitForCoverRequestSlot();
+    }
+    if (isCoverRateLimited()) {
+      clearTitleSuggestions();
+      return;
+    }
+
+    const items = await provider.search(query, controller.signal);
+    if (requestId !== titleSuggestionRequestId) {
+      return;
+    }
+
+    const seen = new Set();
+    const candidates = [];
+
+    for (const item of items) {
+      const title = provider.displayTitle(item);
+      if (!title) {
+        continue;
+      }
+      const key = normalizeSuggestionKey(title);
+      if (!key || seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      const relevance = getSuggestionRelevance(query, title);
+      if (relevance < 45) {
+        continue;
+      }
+      candidates.push({
+        title,
+        image: provider.cover(item) || "",
+        relevance
+      });
+    }
+
+    candidates.sort((left, right) => right.relevance - left.relevance || left.title.localeCompare(right.title));
+    renderTitleSuggestions(candidates.slice(0, TITLE_SUGGESTION_LIMIT));
+  } catch (error) {
+    if (error?.name !== "AbortError") {
+      clearTitleSuggestions();
+    }
+  } finally {
+    if (titleSuggestionAbortController === controller) {
+      titleSuggestionAbortController = null;
+    }
+  }
 }
 
 function queueTitleSuggestions() {
   if (titleSuggestionTimer) {
     window.clearTimeout(titleSuggestionTimer);
   }
+
+  state.pendingCoverUrl = "";
 
   const value = elements.editTitle ? elements.editTitle.value : "";
   const query = String(value || "").trim();
@@ -543,11 +725,14 @@ function queueTitleSuggestions() {
   }, TITLE_SUGGESTION_DEBOUNCE_MS);
 }
 
-function applySuggestedTitle(title) {
+function applySuggestedTitle(title, image) {
   if (!elements.editTitle) {
     return;
   }
   elements.editTitle.value = String(title || "").trim();
+  // "games" never persists a cover_url from the live suggestion source (CheapShark
+  // thumbnails are too small) — see fetchCover() for why.
+  state.pendingCoverUrl = COVER_API_TYPE !== "games" ? String(image || "").trim() : "";
   clearTitleSuggestions();
   elements.editTitle.focus();
 }
@@ -1204,6 +1389,7 @@ function openEditor(record) {
   }
 
   state.activeEditId = record?.id || null;
+  state.pendingCoverUrl = "";
 
   if (elements.editTitleText) {
     elements.editTitleText.textContent = state.activeEditId ? `Edit ${ITEM_LABEL}` : `Add ${ITEM_LABEL}`;
@@ -1238,6 +1424,7 @@ function closeEditor() {
   }
 
   state.activeEditId = null;
+  state.pendingCoverUrl = "";
   if (titleSuggestionTimer) {
     window.clearTimeout(titleSuggestionTimer);
     titleSuggestionTimer = null;
@@ -1305,6 +1492,16 @@ async function saveEditor(event) {
 
   const editId = state.activeEditId;
   const successText = editId ? `${ITEM_LABEL} entry updated.` : `${ITEM_LABEL} entry created.`;
+
+  if (!editId) {
+    let coverUrl = state.pendingCoverUrl || "";
+    if (!coverUrl && (COVER_API_TYPE === "anime" || COVER_API_TYPE === "series")) {
+      coverUrl = await fetchCoverForType(COVER_API_TYPE, parsed.payload.title);
+    }
+    if (coverUrl) {
+      parsed.payload.cover_url = coverUrl;
+    }
+  }
 
   try {
     if (editId) {
@@ -1476,7 +1673,11 @@ function initEvents() {
     });
   }
 
-
+  if (elements.add) {
+    elements.add.addEventListener("click", () => {
+      openEditor(null);
+    });
+  }
 
   if (elements.exportBtn) {
     elements.exportBtn.addEventListener("click", () => {
@@ -1532,7 +1733,8 @@ function initEvents() {
       }
       event.preventDefault();
       const title = button.getAttribute("data-suggestion-title") || "";
-      applySuggestedTitle(title);
+      const image = button.getAttribute("data-suggestion-image") || "";
+      applySuggestedTitle(title, image);
     });
   }
 
@@ -1608,6 +1810,9 @@ async function refreshAuthState() {
 }
 
 async function init() {
+  if (elements.add) {
+    elements.add.hidden = true;
+  }
   if (elements.editOverlay) {
     elements.editOverlay.hidden = true;
     elements.editOverlay.setAttribute("aria-hidden", "true");
