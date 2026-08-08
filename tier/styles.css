@@ -208,7 +208,7 @@ body.dark-mode .menu-item-circle .moon-icon {
 .toolbar {
   display: flex;
   gap: 12px;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 12px;
 }
@@ -217,6 +217,20 @@ body.dark-mode .menu-item-circle .moon-icon {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.toolbar-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.toolbar-info {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
 }
 
 .toolbar-note {
@@ -1229,6 +1243,15 @@ body.dark-mode .search-field input::placeholder {
   .toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .toolbar-side {
+    align-items: flex-start;
+  }
+
+  .toolbar-info,
+  .toolbar-note {
+    text-align: left;
   }
 
   .toolbar-actions {
