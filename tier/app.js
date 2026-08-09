@@ -65,6 +65,8 @@ const elements = {
   editTier: document.querySelector("#editTier"),
   editScore: document.querySelector("#editScore"),
   editPlayTime: document.querySelector("#editPlayTime"),
+  editStoryLength: document.querySelector("#editStoryLength"),
+  editPrice: document.querySelector("#editPrice"),
   editNotes: document.querySelector("#editNotes"),
   editError: document.querySelector("#editError"),
   editCancelBtn: document.querySelector("#editCancelBtn"),
@@ -82,7 +84,8 @@ const elements = {
   quickCancelBtn: document.querySelector("#quickCancelBtn"),
   quickSaveBtn: document.querySelector("#quickSaveBtn"),
   quickDeleteBtn: document.querySelector("#quickDeleteBtn"),
-  playTimeInfo: document.querySelector("#playTimeInfo")
+  playTimeInfo: document.querySelector("#playTimeInfo"),
+  gameInfo: document.querySelector("#gameInfo")
 };
 
 let databases = null;
@@ -846,6 +849,22 @@ function normalizeDocument(document) {
     }
   }
 
+  let story_length = null;
+  if (document?.story_length !== null && document?.story_length !== undefined && String(document.story_length).trim() !== "") {
+    story_length = parseFloat(document.story_length);
+    if (!Number.isFinite(story_length) || story_length < 0) {
+      errors.push("story_length must be a non-negative number when provided.");
+    }
+  }
+
+  let price = null;
+  if (document?.price !== null && document?.price !== undefined && String(document.price).trim() !== "") {
+    price = parseFloat(document.price);
+    if (!Number.isFinite(price) || price < 0) {
+      errors.push("price must be a non-negative number when provided.");
+    }
+  }
+
   if (errors.length > 0) {
     return {
       ok: false,
@@ -868,7 +887,9 @@ function normalizeDocument(document) {
       cover_url: coverUrl,
       artist,
       yt_url: ytUrl,
-      play_time
+      play_time,
+      story_length,
+      price
     }
   };
 }
@@ -966,9 +987,34 @@ function updatePlayTimeSummary() {
     : "Total Play Time: —";
 }
 
+function updateGameInfoSummary() {
+  if (!elements.gameInfo) {
+    return;
+  }
+
+  const ranked = state.records.filter((record) => !!normalizeTierForDisplay(record.tier));
+  const storyValues = ranked.map((record) => record.story_length).filter((value) => Number.isFinite(value));
+  const priceValues = ranked.map((record) => record.price).filter((value) => Number.isFinite(value));
+
+  const avgStory = storyValues.length
+    ? storyValues.reduce((sum, value) => sum + value, 0) / storyValues.length
+    : null;
+  const totalPrice = priceValues.length
+    ? priceValues.reduce((sum, value) => sum + value, 0)
+    : null;
+
+  const storyText = avgStory !== null ? `Ø ${avgStory.toFixed(1)} hrs. story` : "Ø story: —";
+  const priceText = totalPrice !== null
+    ? `${totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € total`
+    : "Total price: —";
+
+  elements.gameInfo.textContent = `${storyText} · ${priceText}`;
+}
+
 function renderList() {
   const filtered = getFilteredRecords();
   updatePlayTimeSummary();
+  updateGameInfoSummary();
 
   if (!filtered.length) {
     renderEmpty(`No ${ITEM_LABEL_LC} found for the current search.`);
@@ -1439,6 +1485,12 @@ function openEditor(record) {
   if (elements.editPlayTime) {
     elements.editPlayTime.value = Number.isFinite(record?.play_time) ? record.play_time : "";
   }
+  if (elements.editStoryLength) {
+    elements.editStoryLength.value = Number.isFinite(record?.story_length) ? record.story_length : "";
+  }
+  if (elements.editPrice) {
+    elements.editPrice.value = Number.isFinite(record?.price) ? record.price : "";
+  }
   if (elements.editNotes) {
     elements.editNotes.value = record?.notes || "";
   }
@@ -1512,6 +1564,32 @@ function getEditorPayload() {
       payload.play_time = playTime;
     } else {
       payload.play_time = null;
+    }
+  }
+
+  if (elements.editStoryLength) {
+    const rawStoryLength = elements.editStoryLength.value.trim();
+    if (rawStoryLength !== "") {
+      const storyLength = parseScoreInput(rawStoryLength);
+      if (!Number.isFinite(storyLength) || storyLength < 0) {
+        return { ok: false, error: "Story Length must be a non-negative number." };
+      }
+      payload.story_length = storyLength;
+    } else {
+      payload.story_length = null;
+    }
+  }
+
+  if (elements.editPrice) {
+    const rawPrice = elements.editPrice.value.trim();
+    if (rawPrice !== "") {
+      const price = parseScoreInput(rawPrice);
+      if (!Number.isFinite(price) || price < 0) {
+        return { ok: false, error: "Price must be a non-negative number." };
+      }
+      payload.price = price;
+    } else {
+      payload.price = null;
     }
   }
 

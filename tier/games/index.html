@@ -90,7 +90,10 @@
               <button class="tool-button" id="exportBtn" type="button">Export</button>
               <a href="https://docu.netpurple.net/docs/Netpurple/tier" style="font-size:0.78rem;color:var(--text-secondary);text-decoration:none;line-height:1.5;" target="_blank" rel="noopener noreferrer">Have Any Questions?</a>
             </div>
-            <p class="toolbar-note">The Games are Ranked on my Personal Opinion in Single and Multi Player. The Games are also Ranked in their Respective Tier from left to right, the first Entry in the Tier is the best one.</p>
+            <div class="toolbar-side">
+              <p class="toolbar-info" id="gameInfo">Ø story: — · Total price: —</p>
+              <p class="toolbar-note">The Games are Ranked on my Personal Opinion in Single and Multi Player. The Games are also Ranked in their Respective Tier from left to right, the first Entry in the Tier is the best one.</p>
+            </div>
           </div>
 
           <p class="status" id="statusText">Loading games list...</p>
@@ -122,6 +125,14 @@
               <option value="F"></option>
               <option value="-F"></option>
             </datalist>
+          </label>
+          <label class="edit-field">
+            <span>Story Length (hours)</span>
+            <input id="editStoryLength" type="number" min="0" step="0.5" inputmode="decimal" />
+          </label>
+          <label class="edit-field">
+            <span>Price (€)</span>
+            <input id="editPrice" type="number" min="0" step="0.01" inputmode="decimal" />
           </label>
           <label class="edit-field">
             <span>Notes</span>
