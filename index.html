@@ -134,11 +134,15 @@
                     <span class="tool-button">Visit Hub</span>
                 </a>
 
-                <div class="tool-card tool-card--disabled">
-                    <div class="tool-icon"><i class="fa-solid fa-circle-question"></i></div>
-                    <h3>Coming Soon</h3>
-                    <p>This is a placeholder for something new.</p>
-                    <span class="tool-button" style="opacity:0.5;">Coming Soon</span>
+                <div class="tool-card tool-card--info">
+                    <div class="tool-icon"><i class="fa-solid fa-chart-simple"></i></div>
+                    <h3>Infos</h3>
+                    <ul class="infos-stats">
+                        <li><span class="infos-value" data-stat="loc">&ndash;</span><span class="infos-label">Code-Zeilen</span></li>
+                        <li><span class="infos-value" data-stat="files">&ndash;</span><span class="infos-label">Dateien</span></li>
+                        <li><span class="infos-value" data-stat="commits">&ndash;</span><span class="infos-label">Commits</span></li>
+                        <li><span class="infos-value" data-stat="entries">&ndash;</span><span class="infos-label">DB-Eintr&auml;ge</span></li>
+                    </ul>
                 </div>
 
             </div>
@@ -149,6 +153,7 @@
     <script src="menu.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
     <script src="auth.js"></script>
+    <script src="stats.js"></script>
 </body>
 </html>
 

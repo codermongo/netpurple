@@ -401,6 +401,39 @@ a.tool-card:hover * {
   cursor: default;
 }
 
+.tool-card--info {
+  cursor: default;
+}
+
+.infos-stats {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem 0.6rem;
+  margin: 0;
+}
+
+.infos-stats li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.infos-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.infos-label {
+  font-size: 0.66rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 2px;
+}
+
 .tool-card {
   background: var(--card-glass-bg);
   backdrop-filter: blur(8px) saturate(120%);

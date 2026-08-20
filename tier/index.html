@@ -50,9 +50,9 @@
 
       .tools-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 1.5rem;
-        max-width: 1200px;
+        max-width: 900px;
         margin-left: auto;
         margin-right: auto;
         width: 100%;
@@ -137,14 +137,6 @@
         background: #5855eb;
         transform: translateY(-2px);
         box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3);
-      }
-
-      @media (max-width: 1200px) {
-        .tools-grid {
-          grid-template-columns: repeat(2, 1fr);
-          gap: 1rem;
-        }
-        .services { min-height: 55vh; padding-bottom: 50px; }
       }
 
       @media (max-width: 768px) {
