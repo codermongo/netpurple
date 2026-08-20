@@ -1,0 +1,68 @@
+name: Update repo stats
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-stats
+  cancel-in-progress: false
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip stats]')"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute stats
+        run: |
+          set -euo pipefail
+
+          commits=$(git rev-list --count HEAD)
+          file_count=0
+          total_lines=0
+
+          while IFS= read -r f; do
+            [ -f "$f" ] || continue
+            file_count=$((file_count + 1))
+            mime=$(file -b --mime-type -- "$f")
+            case "$mime" in
+              text/*|application/json|application/xml|application/javascript|application/x-empty)
+                lines=$(wc -l < "$f")
+                total_lines=$((total_lines + lines))
+                ;;
+            esac
+          done < <(git ls-files)
+
+          generated_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          cat > stats.json <<EOF
+          {
+            "generated_at": "${generated_at}",
+            "commits": ${commits},
+            "files": ${file_count},
+            "lines_of_code": ${total_lines}
+          }
+          EOF
+
+      - name: Commit stats.json
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- stats.json; then
+            echo "No changes to stats.json"
+            exit 0
+          fi
+
+          git add stats.json
+          git commit -m "Update repo stats [skip stats]"
+          git push
