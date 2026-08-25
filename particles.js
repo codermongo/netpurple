@@ -38,7 +38,7 @@
     canvas.style.height = h + 'px';
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
-    // Dichte: ca. 1 Punkt pro 9.5k px², gedeckelt
+    // Density: approx. 1 dot per 9.5k px², capped
     const targetCount = Math.min(260, Math.floor((w * h) / 9500));
     if (particles.length < targetCount) {
       for (let i = particles.length; i < targetCount; i++) particles.push(makeParticle(true));
@@ -48,11 +48,11 @@
   }
 
   function makeParticle(randomY = false) {
-    const size = rand(0.6, 1.8);            // leicht unterschiedliche Größen
-    const speed = rand(12, 38);             // px pro Sekunde (vertikal)
-    const drift = rand(-8, 8);              // horizontale Drift
-    const phase = rand(0, Math.PI * 2);     // Startphase fürs Flimmern
-    const twinkle = rand(1.0, 2.2);         // Flimmergeschwindigkeit
+    const size = rand(0.6, 1.8);            // slightly varying sizes
+    const speed = rand(12, 38);             // px per second (vertical)
+    const drift = rand(-8, 8);              // horizontal drift
+    const phase = rand(0, Math.PI * 2);     // starting phase for twinkling
+    const twinkle = rand(1.0, 2.2);         // twinkle speed
     return {
       x: rand(0, w),
       y: randomY ? rand(0, h) : rand(-h * 0.1, -10),
@@ -66,19 +66,19 @@
   }
 
   function step(ts) {
-    const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0; // Sek.
+    const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0; // sec.
     lastTs = ts;
 
     ctx.clearRect(0, 0, w, h);
 
     for (let p of particles) {
-      // Position updaten
+      // Update position
       p.y += p.vy * dt;
       p.x += p.vx * dt;
 
-      // Kantenbehandlung
+      // Edge handling
       if (p.y - p.r > h) {
-        // oben neu spawnen für gleichmäßigen Strom
+        // Respawn at the top for a steady stream
         const np = makeParticle(false);
         p.x = np.x;
         p.y = np.y;
@@ -92,17 +92,17 @@
       if (p.x < -10) p.x = w + 10;
       if (p.x > w + 10) p.x = -10;
 
-      // Flimmern
+      // Twinkling
       const a = 0.25 + 0.55 * (0.5 + 0.5 * Math.sin(p.phase + ts / 1000 * p.twinkle));
 
-      // Zeichnen (weiche Punkte)
+      // Draw (soft dots)
       ctx.globalAlpha = a;
       ctx.fillStyle = p.c;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
       ctx.fill();
 
-      // leichter Glow
+      // Subtle glow
       ctx.globalAlpha = a * 0.25;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r * 2.2, 0, Math.PI * 2);

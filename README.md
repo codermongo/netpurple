@@ -23,9 +23,6 @@ A searchable list of curated free web resources — games, streaming links, and 
 ### Tools — `/tools`
 A curated collection of utility and productivity tools covering privacy, self-hosting, platform-specific resources, and more.
 
-### Hub — `/hub`
-A searchable video collection with filters and sortable metadata.
-
 ### Auth — `/login`
 Account system powered by Appwrite. Login unlocks favourites across Games and Soundboard.
 
@@ -55,6 +52,7 @@ No frameworks, no build step for the main site — just static files served dire
 ```
 netpurple/
 ├── index.html        # Homepage
+├── 404.html          # Not-found page
 ├── style.css         # Global styles
 ├── particles.js      # Background particle effect
 ├── auth.js           # Appwrite auth helper
@@ -64,7 +62,6 @@ netpurple/
 ├── tier/             # Tier lists (anime / series / games)
 ├── list/             # Free stuff directory
 ├── tools/            # Curated tools
-├── hub/              # Video collection
 ├── login/            # Login page
 └── user/             # User profile
 ```
