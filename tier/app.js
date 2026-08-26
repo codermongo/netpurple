@@ -11,6 +11,7 @@ const SQUARE_COVERS = !!_cfg.squareCovers;
 const APPWRITE_ENDPOINT = "https://api.netpurple.net/v1";
 const APPWRITE_PROJECT_ID = "699f23920000d9667d3e";
 const APPWRITE_DATABASE_ID = "699f251000346ad6c5e7";
+const SHARE_COLLECTION_ID = "shared_tierlists";
 const PAGE_SIZE = 100;
 const THEME_KEY = "darkMode";
 const TITLE_SUGGESTION_LIMIT = 5;
@@ -42,6 +43,7 @@ const state = {
   query: "",
   canManage: false,
   editMode: false,
+  shareMode: false,
   activeEditId: null,
   activeQuickEditId: null,
   coverCache: loadCoverCache(),
@@ -75,6 +77,16 @@ const elements = {
   exportOverlay: document.querySelector("#exportOverlay"),
   exportCancelBtn: document.querySelector("#exportCancelBtn"),
   exportConfirmBtn: document.querySelector("#exportConfirmBtn"),
+  shareBtn: document.querySelector("#shareBtn"),
+  shareBanner: document.querySelector("#shareBanner"),
+  shareBannerLiveLink: document.querySelector("#shareBannerLiveLink"),
+  shareOverlay: document.querySelector("#shareOverlay"),
+  shareResultField: document.querySelector("#shareResultField"),
+  shareLinkInput: document.querySelector("#shareLinkInput"),
+  shareError: document.querySelector("#shareError"),
+  shareCancelBtn: document.querySelector("#shareCancelBtn"),
+  shareCopyBtn: document.querySelector("#shareCopyBtn"),
+  shareConfirmBtn: document.querySelector("#shareConfirmBtn"),
   editModeBtn: document.querySelector("#editModeBtn"),
   tooltip: document.querySelector("#animeTooltip"),
   quickEditOverlay: document.querySelector("#quickEditOverlay"),
@@ -1111,7 +1123,9 @@ function renderList() {
 
   if (!state.editMode) {
     attachTooltipListeners();
-    addDragAndDrop();
+    if (!state.shareMode) {
+      addDragAndDrop();
+    }
   }
 }
 
@@ -1707,6 +1721,11 @@ function handleGlobalKeydown(event) {
     return;
   }
 
+  if (elements.shareOverlay && !elements.shareOverlay.hidden) {
+    closeShareModal();
+    return;
+  }
+
   if (elements.titleSuggestions && !elements.titleSuggestions.hidden) {
     clearTitleSuggestions();
     return;
@@ -1790,6 +1809,173 @@ function performExport() {
   closeExportModal();
 }
 
+function getShareIdFromUrl() {
+  return new URLSearchParams(window.location.search).get("share") || "";
+}
+
+function setShareError(message) {
+  if (elements.shareError) {
+    elements.shareError.textContent = message || "";
+  }
+}
+
+function resetShareModal() {
+  setShareError("");
+  if (elements.shareResultField) elements.shareResultField.hidden = true;
+  if (elements.shareLinkInput) elements.shareLinkInput.value = "";
+  if (elements.shareCopyBtn) elements.shareCopyBtn.hidden = true;
+  if (elements.shareConfirmBtn) {
+    elements.shareConfirmBtn.hidden = false;
+    elements.shareConfirmBtn.disabled = false;
+    elements.shareConfirmBtn.textContent = "Create link";
+  }
+}
+
+function openShareModal() {
+  if (!elements.shareOverlay) return;
+  resetShareModal();
+  elements.shareOverlay.hidden = false;
+  elements.shareOverlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+}
+
+function closeShareModal() {
+  if (!elements.shareOverlay) return;
+  elements.shareOverlay.hidden = true;
+  elements.shareOverlay.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+}
+
+async function createShare() {
+  if (!databases || !AppwriteID) return;
+  if (!state.records.length) {
+    setShareError(`No ${ITEM_LABEL_LC} to share yet.`);
+    return;
+  }
+
+  setShareError("");
+  if (elements.shareConfirmBtn) {
+    elements.shareConfirmBtn.disabled = true;
+    elements.shareConfirmBtn.textContent = "Creating...";
+  }
+
+  try {
+    const payloadItems = state.records.map((r) => ({
+      id: r.id,
+      title: r.title,
+      tier: r.tier,
+      tier_position: r.tier_position,
+      notes: r.notes,
+      cover_url: r.cover_url,
+      play_time: r.play_time,
+      story_length: r.story_length,
+      price: r.price,
+      yt_url: r.yt_url
+    }));
+
+    const doc = await databases.createDocument(
+      APPWRITE_DATABASE_ID,
+      SHARE_COLLECTION_ID,
+      AppwriteID.unique(),
+      {
+        category: COVER_API_TYPE,
+        title: `${ITEM_LABEL} Tierlist`,
+        payload: JSON.stringify(payloadItems)
+      }
+    );
+
+    const url = new URL(window.location.href);
+    url.search = "";
+    url.searchParams.set("share", doc.$id);
+
+    if (elements.shareLinkInput) elements.shareLinkInput.value = url.toString();
+    if (elements.shareResultField) elements.shareResultField.hidden = false;
+    if (elements.shareConfirmBtn) elements.shareConfirmBtn.hidden = true;
+    if (elements.shareCopyBtn) elements.shareCopyBtn.hidden = false;
+  } catch (error) {
+    setShareError(error?.message || "Could not create share link.");
+    if (elements.shareConfirmBtn) {
+      elements.shareConfirmBtn.disabled = false;
+      elements.shareConfirmBtn.textContent = "Create link";
+    }
+  }
+}
+
+async function copyShareLink() {
+  if (!elements.shareLinkInput || !elements.shareLinkInput.value) return;
+  try {
+    await navigator.clipboard.writeText(elements.shareLinkInput.value);
+    if (elements.shareCopyBtn) {
+      const original = elements.shareCopyBtn.dataset.label || elements.shareCopyBtn.textContent;
+      elements.shareCopyBtn.dataset.label = original;
+      elements.shareCopyBtn.textContent = "Copied!";
+      window.setTimeout(() => {
+        if (elements.shareCopyBtn) elements.shareCopyBtn.textContent = elements.shareCopyBtn.dataset.label;
+      }, 1500);
+    }
+  } catch {
+    elements.shareLinkInput.select();
+  }
+}
+
+function normalizeSharedItem(raw) {
+  return {
+    id: String(raw?.id || ""),
+    title: String(raw?.title || ""),
+    tier: raw?.tier ?? null,
+    notes: String(raw?.notes || ""),
+    tier_position: Number.isFinite(raw?.tier_position) ? raw.tier_position : null,
+    cover_url: String(raw?.cover_url || ""),
+    artist: "",
+    yt_url: String(raw?.yt_url || ""),
+    play_time: Number.isFinite(raw?.play_time) ? raw.play_time : null,
+    story_length: Number.isFinite(raw?.story_length) ? raw.story_length : null,
+    price: Number.isFinite(raw?.price) ? raw.price : null
+  };
+}
+
+function applyShareModeUi() {
+  if (elements.add) elements.add.hidden = true;
+  if (elements.editModeBtn) elements.editModeBtn.hidden = true;
+  if (elements.shareBtn) elements.shareBtn.hidden = true;
+  if (elements.refresh) elements.refresh.hidden = true;
+
+  if (elements.shareBanner) {
+    elements.shareBanner.hidden = false;
+    if (elements.shareBannerLiveLink) {
+      elements.shareBannerLiveLink.href = window.location.pathname;
+    }
+  }
+}
+
+async function loadSharedList(shareId) {
+  setStatus(`Loading shared ${ITEM_LABEL_LC} list...`);
+  try {
+    const doc = await databases.getDocument(APPWRITE_DATABASE_ID, SHARE_COLLECTION_ID, shareId);
+
+    if (doc.category && doc.category !== COVER_API_TYPE) {
+      renderEmpty("This share link belongs to a different tierlist category.");
+      setStatus("Wrong category for this share link.");
+      return;
+    }
+
+    let items = [];
+    try {
+      const parsed = JSON.parse(doc.payload || "[]");
+      items = Array.isArray(parsed) ? parsed.map(normalizeSharedItem) : [];
+    } catch {
+      items = [];
+    }
+
+    state.records = items;
+    renderList();
+    setStatus(`Viewing a shared, read-only ${ITEM_LABEL_LC} snapshot.`);
+  } catch (error) {
+    renderEmpty("This share link is invalid or no longer available.");
+    setStatus("Failed to load the shared list.");
+  }
+}
+
 function initEvents() {
   if (elements.search) {
     elements.search.addEventListener("input", (event) => {
@@ -1822,6 +2008,36 @@ function initEvents() {
 
   if (elements.exportConfirmBtn) {
     elements.exportConfirmBtn.addEventListener("click", performExport);
+  }
+
+  if (elements.shareBtn) {
+    elements.shareBtn.addEventListener("click", () => {
+      openShareModal();
+    });
+  }
+
+  if (elements.shareCancelBtn) {
+    elements.shareCancelBtn.addEventListener("click", closeShareModal);
+  }
+
+  if (elements.shareConfirmBtn) {
+    elements.shareConfirmBtn.addEventListener("click", () => {
+      void createShare();
+    });
+  }
+
+  if (elements.shareCopyBtn) {
+    elements.shareCopyBtn.addEventListener("click", () => {
+      void copyShareLink();
+    });
+  }
+
+  if (elements.shareOverlay) {
+    elements.shareOverlay.addEventListener("click", (event) => {
+      if (event.target === elements.shareOverlay) {
+        closeShareModal();
+      }
+    });
   }
 
   if (elements.editModeBtn) {
@@ -1967,6 +2183,16 @@ async function init() {
   } catch (error) {
     renderEmpty(error?.message || "Appwrite initialization failed.");
     setStatus("Failed to initialize Appwrite.");
+    return;
+  }
+
+  const shareId = getShareIdFromUrl();
+  if (shareId) {
+    state.shareMode = true;
+    state.canManage = false;
+    updateAuthUi();
+    applyShareModeUi();
+    await loadSharedList(shareId);
     return;
   }
 
