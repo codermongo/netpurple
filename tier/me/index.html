@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="darkreader-lock" />
+    <title>My Tierlists | NetPurple</title>
+    <meta name="description" content="Your own tierlists on NetPurple." />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="author" content="NetPurple" />
+    <meta name="theme-color" content="#121224" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <div class="theme-toggle-container">
+      <button class="menu-item-circle" id="themeToggleItem" aria-label="Toggle dark mode">
+        <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2" />
+          <path
+            d="M12 1v4m0 14v4M1 12h4m14 0h4M4.22 4.22l2.83 2.83m10.9 10.9l2.83 2.83M4.22 19.78l2.83-2.83m10.9-10.9l2.83-2.83"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      </button>
+      <a class="menu-item-circle back-link" href="/tier" aria-label="Back to tierlists">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M15 6l-6 6 6 6M9 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </a>
+    </div>
+
+    <a class="menu-item-circle login-link" href="/login" aria-label="Login">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M20 21a8 8 0 10-16 0M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </a>
+
+    <canvas id="bg-particles" aria-hidden="true"></canvas>
+
+    <main>
+      <section class="hero">
+        <div class="hero-content">
+          <div class="hero-logo"><div class="logo-geometric"></div></div>
+          <h1 class="hero-title">My Tierlists</h1>
+          <p class="hero-subtitle">Your own rankings — up to 3.</p>
+        </div>
+      </section>
+
+      <section class="services">
+        <div class="container">
+          <div class="my-lists-head">
+            <button type="button" class="tool-button" id="newListBtn" data-tierlist-create>+ New tierlist</button>
+            <span class="my-lists-count" id="listCount"></span>
+          </div>
+          <p class="status" id="statusText">Loading…</p>
+          <div class="my-lists" id="myLists"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="../../particles.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
+    <script src="../create.js"></script>
+    <script>
+      (function () {
+        "use strict";
+        var ENDPOINT = "https://api.netpurple.net/v1";
+        var PROJECT = "699f23920000d9667d3e";
+        var DB = "699f251000346ad6c5e7";
+        var LISTS = "user_tierlists";
+        var ITEMS = "user_tierlist_items";
+        var MAX_LISTS = 3;
+
+        // Theme + low-power (same behaviour as other tier pages)
+        var THEME_KEY = "darkMode";
+        if (localStorage.getItem(THEME_KEY) === "true") document.body.classList.add("dark-mode");
+        var tt = document.getElementById("themeToggleItem");
+        if (tt) tt.addEventListener("click", function () {
+          document.body.classList.toggle("dark-mode");
+          localStorage.setItem(THEME_KEY, document.body.classList.contains("dark-mode"));
+        });
+        var LP_KEY = "lowPowerMode";
+        if (localStorage.getItem(LP_KEY) === "true") document.body.classList.add("low-power-mode");
+
+        var statusEl = document.getElementById("statusText");
+        var listEl = document.getElementById("myLists");
+        var countEl = document.getElementById("listCount");
+        var newBtn = document.getElementById("newListBtn");
+
+        function esc(s) {
+          return String(s).replace(/[&<>"']/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+          });
+        }
+
+        if (typeof Appwrite === "undefined") {
+          statusEl.textContent = "Appwrite SDK failed to load.";
+          return;
+        }
+        var client = new Appwrite.Client().setEndpoint(ENDPOINT).setProject(PROJECT);
+        var account = new Appwrite.Account(client);
+        var databases = new Appwrite.Databases(client);
+        var Query = Appwrite.Query;
+
+        var CAT_LABEL = { anime: "Anime", games: "Games", series: "Series" };
+
+        function render(lists) {
+          countEl.textContent = lists.length + " / " + MAX_LISTS;
+          if (newBtn) newBtn.disabled = lists.length >= MAX_LISTS;
+
+          if (!lists.length) {
+            listEl.innerHTML = '<p class="my-lists-empty">No tierlists yet. Hit “+ New tierlist”.</p>';
+            statusEl.textContent = "";
+            return;
+          }
+
+          listEl.innerHTML = lists.map(function (l) {
+            var tiers = "";
+            try { tiers = JSON.parse(l.tiers || "[]").join(" · "); } catch (e) {}
+            return (
+              '<div class="my-list-card" data-id="' + esc(l.$id) + '">' +
+              '  <div class="my-list-card__main">' +
+              '    <a class="my-list-card__name" href="/tier/custom/?id=' + encodeURIComponent(l.$id) + '">' + esc(l.name || "Untitled") + "</a>" +
+              '    <div class="my-list-card__meta">' +
+              '      <span class="pill">' + esc(CAT_LABEL[l.category] || l.category) + "</span>" +
+              '      <span class="pill">' + (l.visibility === "public" ? "Public" : "Private") + "</span>" +
+              '      <span class="my-list-card__tiers">' + esc(tiers) + "</span>" +
+              "    </div>" +
+              "  </div>" +
+              '  <div class="my-list-card__actions">' +
+              '    <button type="button" class="tool-button secondary" data-act="rename">Rename</button>' +
+              '    <button type="button" class="tool-button danger-btn" data-act="delete">Delete</button>' +
+              "  </div>" +
+              "</div>"
+            );
+          }).join("");
+
+          listEl.querySelectorAll(".my-list-card").forEach(function (card) {
+            var id = card.dataset.id;
+            var l = lists.filter(function (x) { return x.$id === id; })[0];
+            card.querySelector('[data-act="rename"]').addEventListener("click", function () { renameList(l); });
+            card.querySelector('[data-act="delete"]').addEventListener("click", function () { deleteList(l, card); });
+          });
+          statusEl.textContent = "";
+        }
+
+        async function load() {
+          try {
+            await account.get();
+          } catch (e) {
+            window.location.href = "/login?return=" + encodeURIComponent("/tier/me");
+            return;
+          }
+          try {
+            var user = await account.get();
+            var res = await databases.listDocuments(DB, LISTS, [
+              Query.equal("owner", user.$id),
+              Query.orderDesc("$createdAt"),
+              Query.limit(50)
+            ]);
+            render(res.documents || []);
+          } catch (e) {
+            statusEl.textContent = (e && e.message) || "Could not load your tierlists.";
+          }
+        }
+
+        async function renameList(l) {
+          var next = window.prompt("Rename this tierlist:", l.name || "");
+          if (next === null) return;
+          var t = next.trim();
+          if (!t || t === l.name) return;
+          if (t.length > 120) { statusEl.textContent = "Name too long (max 120)."; return; }
+          try {
+            await databases.updateDocument(DB, LISTS, l.$id, { name: t });
+            load();
+          } catch (e) {
+            statusEl.textContent = (e && e.message) || "Rename failed.";
+          }
+        }
+
+        async function deleteList(l, card) {
+          if (!window.confirm('Delete "' + (l.name || "this list") + '" and all its entries? This cannot be undone.')) return;
+          card.style.opacity = "0.5";
+          try {
+            // remove items first, then the list row
+            var after = null;
+            while (true) {
+              var q = [Query.equal("list_id", l.$id), Query.limit(100)];
+              if (after) q.push(Query.cursorAfter(after));
+              var page = await databases.listDocuments(DB, ITEMS, q);
+              var docs = page.documents || [];
+              for (var i = 0; i < docs.length; i++) {
+                await databases.deleteDocument(DB, ITEMS, docs[i].$id);
+              }
+              if (docs.length < 100) break;
+              after = docs[docs.length - 1].$id;
+            }
+            await databases.deleteDocument(DB, LISTS, l.$id);
+            load();
+          } catch (e) {
+            card.style.opacity = "1";
+            statusEl.textContent = (e && e.message) || "Delete failed.";
+          }
+        }
+
+        load();
+      })();
+    </script>
+  </body>
+</html>

@@ -225,11 +225,21 @@
             <p>Browse and rank our games collection.</p>
             <button class="tool-button" onclick="window.location.href='/tier/games'">View Games List</button>
           </div>
+
+          <button type="button" class="tool-card create-card" data-tierlist-create aria-label="Eigene Tierlist erstellen">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            <span class="create-card__text">
+              <strong>Eigene Tierlist erstellen</strong>
+              <small>Anime, Games oder Serien &mdash; dein Ranking, deine Tiers.</small>
+            </span>
+          </button>
         </div>
       </div>
     </section>
 
     <script src="../particles.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
+    <script src="create.js"></script>
     <script>
       const THEME_KEY = "darkMode";
       const saved = localStorage.getItem(THEME_KEY);
