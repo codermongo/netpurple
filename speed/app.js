@@ -166,9 +166,10 @@
       test.setParameter("url_ul", "backend/empty.php");
       test.setParameter("url_ping", "backend/empty.php");
       test.setParameter("url_getIp", "backend/getIP.php");
-      test.setParameter("xhr_dlMultistream", 8);
-      test.setParameter("xhr_ulMultistream", 5);
-      test.setParameter("garbagePhp_chunkSize", 100);
+      test.setParameter("xhr_dlMultistream", 6);
+      test.setParameter("xhr_ulMultistream", 3);
+      test.setParameter("garbagePhp_chunkSize", 20);
+      test.setParameter("xhr_ul_blob_megabytes", 20);
       test.setParameter("time_dl_max", 15);
       test.setParameter("time_ul_max", 15);
       test.setParameter("count_ping", 12);
