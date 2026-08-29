@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="darkreader-lock" />
+    <title>Speed Test | NetPurple</title>
+    <meta name="description" content="Interner Speedtest von NetPurple." />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="googlebot" content="noindex, nofollow" />
+    <meta name="author" content="NetPurple" />
+    <meta name="theme-color" content="#121224" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <div class="theme-toggle-container">
+      <button class="menu-item-circle" id="themeToggleItem" aria-label="Theme umschalten">
+        <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2" />
+          <path
+            d="M12 1v4m0 14v4M1 12h4m14 0h4M4.22 4.22l2.83 2.83m10.9 10.9l2.83 2.83M4.22 19.78l2.83-2.83m10.9-10.9l2.83-2.83"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      </button>
+      <a class="menu-item-circle back-link" href="/" aria-label="Zurück zur Startseite">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M15 6l-6 6 6 6M9 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </a>
+    </div>
+
+    <canvas id="bg-particles" aria-hidden="true"></canvas>
+
+    <!-- Auth-Gate: bleibt sichtbar bis account.get() geklärt ist -->
+    <div id="authGate" class="auth-gate">
+      <div class="auth-gate__box">
+        <div class="logo-geometric"></div>
+        <p id="authGateText">Anmeldung wird geprüft …</p>
+      </div>
+    </div>
+
+    <main id="app" hidden>
+      <section class="hero">
+        <div class="hero-content">
+          <div class="hero-logo"><div class="logo-geometric"></div></div>
+          <h1 class="hero-title">Speed Test</h1>
+          <p class="hero-subtitle">Intern · nur für angemeldete NetPurple-Nutzer</p>
+        </div>
+      </section>
+
+      <section class="speed-wrap">
+        <div class="gauge" id="gauge">
+          <svg viewBox="0 0 240 240" class="gauge__svg" aria-hidden="true">
+            <circle class="gauge__track" cx="120" cy="120" r="100" />
+            <circle class="gauge__fill" id="gaugeFill" cx="120" cy="120" r="100" />
+          </svg>
+          <div class="gauge__center">
+            <span class="gauge__phase" id="gaugePhase">Bereit</span>
+            <span class="gauge__value" id="gaugeValue">–</span>
+            <span class="gauge__unit" id="gaugeUnit">Mbit/s</span>
+          </div>
+        </div>
+
+        <button type="button" class="tool-button speed-start" id="startBtn">Test starten</button>
+
+        <div class="results" id="results">
+          <div class="result-card" data-k="dl">
+            <span class="result-card__label"><i class="arw down"></i> Download</span>
+            <span class="result-card__value" id="rDl">–</span>
+            <span class="result-card__unit">Mbit/s</span>
+          </div>
+          <div class="result-card" data-k="ul">
+            <span class="result-card__label"><i class="arw up"></i> Upload</span>
+            <span class="result-card__value" id="rUl">–</span>
+            <span class="result-card__unit">Mbit/s</span>
+          </div>
+          <div class="result-card" data-k="ping">
+            <span class="result-card__label">Ping</span>
+            <span class="result-card__value" id="rPing">–</span>
+            <span class="result-card__unit">ms</span>
+          </div>
+          <div class="result-card" data-k="jit">
+            <span class="result-card__label">Jitter</span>
+            <span class="result-card__value" id="rJit">–</span>
+            <span class="result-card__unit">ms</span>
+          </div>
+        </div>
+
+        <p class="speed-meta" id="speedMeta">&nbsp;</p>
+        <p class="speed-note">Backend: LibreSpeed-Container auf dem NetPurple-VPS (Frankfurt) · Ergebnis wird nirgends gespeichert.</p>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
+    <script src="/particles.js"></script>
+    <script src="speedtest.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

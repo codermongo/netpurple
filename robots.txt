@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /login/
+Disallow: /speed/
 
 Sitemap: https://www.netpurple.com/sitemap.xml
