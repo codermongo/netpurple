@@ -243,17 +243,17 @@ body.dark-mode .menu-item-circle .moon-icon {
 }
 
 .gauge__track {
-  stroke: rgba(139, 92, 246, 0.16);
+  stroke: rgba(99, 102, 241, 0.16);
 }
 
 .gauge__fill {
-  stroke: #8b5cf6;
+  stroke: var(--button-purple);
   stroke-dashoffset: 471.2;
   transition: stroke-dashoffset 0.28s ease, stroke 0.28s ease;
 }
 
 .gauge.is-dl .gauge__fill {
-  stroke: #8b5cf6;
+  stroke: var(--button-purple);
 }
 
 .gauge.is-ul .gauge__fill {
@@ -430,5 +430,5 @@ body.dark-mode .auth-gate {
 }
 
 body.dark-mode .gauge__track {
-  stroke: rgba(139, 92, 246, 0.22);
+  stroke: rgba(99, 102, 241, 0.22);
 }
