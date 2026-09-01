@@ -27,11 +27,34 @@
   var client = new Appwrite.Client().setEndpoint(ENDPOINT).setProject(PROJECT);
   var account = new Appwrite.Account(client);
 
+  /* Tauscht die aktuelle Appwrite-Session (via kurzlebigem JWT) gegen ein
+     signiertes Gate-Cookie, das nginx per auth_request vor dem Backend prüft.
+     Muss vor jedem Testlauf frisch geholt werden (JWT/Cookie ~15 min gültig). */
+  function ensureGate() {
+    return account.createJWT().then(function (r) {
+      return fetch("/speed/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jwt: r.jwt })
+      });
+    }).then(function (res) {
+      if (!res.ok) throw new Error("gate " + res.status);
+      return true;
+    });
+  }
+
   account.get().then(
     function () {
-      gate.hidden = true;
-      app.hidden = false;
-      initSpeed();
+      ensureGate().then(
+        function () {
+          gate.hidden = true;
+          app.hidden = false;
+          initSpeed();
+        },
+        function () {
+          gateText.textContent = "Speedtest-Freigabe fehlgeschlagen – bitte Seite neu laden.";
+        }
+      );
     },
     function () {
       gateText.textContent = "Nicht angemeldet – Weiterleitung zum Login …";
@@ -157,9 +180,21 @@
       startBtn.classList.add("is-running");
       rDl.textContent = rUl.textContent = rPing.textContent = rJit.textContent = "–";
       setArc(0);
-      phaseEl.textContent = "Start …";
+      phaseEl.textContent = "Freigabe …";
       valueEl.textContent = "0";
 
+      // Gate-Cookie vor jedem Lauf auffrischen, dann erst den Test starten.
+      ensureGate().then(runEngine, function () {
+        running = false;
+        startBtn.textContent = "Test starten";
+        startBtn.classList.remove("is-running");
+        phaseEl.textContent = "Freigabe abgelaufen – neu laden";
+        valueEl.textContent = "–";
+      });
+    }
+
+    function runEngine() {
+      phaseEl.textContent = "Start …";
       test = new Speedtest();
       test.setParameter("test_order", "I_P_D_U");
       test.setParameter("url_dl", "backend/garbage.php");
