@@ -42,9 +42,9 @@
     ".np-cfg-panel[hidden]{display:none}",
     ".np-cfg-title{font-weight:700;margin-bottom:6px}",
     ".np-cfg-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}",
-    ".np-cfg-row.sub{padding-left:16px;color:var(--text-secondary,#9aa0b4)}",
+    ".np-cfg-row.sub{padding-left:16px;font-size:.84rem;color:var(--text-secondary,#9aa0b4)}",
     ".np-cfg-row.sub.dim{opacity:.4;pointer-events:none}",
-    ".np-cfg-status{margin-top:10px;padding-top:10px;border-top:1px solid var(--card-glass-stroke,rgba(139,92,246,0.25));color:var(--text-secondary,#9aa0b4);font-size:.9rem;line-height:1.9}",
+    ".np-cfg-status{margin-top:10px;padding-top:10px;border-top:1px solid var(--card-glass-stroke,rgba(139,92,246,0.25));color:var(--text-secondary,#9aa0b4);font-size:.8rem;line-height:1.8}",
     ".np-switch{--sw-w:40px;--sw-h:22px;position:relative;width:var(--sw-w);height:var(--sw-h);flex-shrink:0}",
     ".np-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}",
     ".np-switch>span{position:absolute;inset:0;border-radius:999px;background:rgba(120,120,140,.4);transition:background .25s ease}",
@@ -188,7 +188,7 @@
       '<div class="np-cfg-title">Einstellungen</div>'
       + row("dark", "Dark Mode", false)
       + row("lp", "Performance Mode", false)
-      + row("lpmobile", "nur auf Mobilgeräten", true)
+      + row("lpmobile", "Nur auf Mobilgeräten", true)
       + '<div class="np-cfg-status" id="np-cfg-status"></div>';
 
     document.body.appendChild(gear);
@@ -233,16 +233,16 @@
 
     var perf;
     if (!cfg.lp) {
-      perf = "aus";
+      perf = "Aus";
     } else if (cfg.lpMobile) {
-      perf = isMobile() ? "an (aktiv – mobile Ansicht)" : "an (inaktiv – Desktop)";
+      perf = isMobile() ? "An (aktiv – mobile Ansicht)" : "An (inaktiv – Desktop)";
     } else {
-      perf = "an";
+      perf = "An";
     }
     els.status.innerHTML =
-      "Dark Mode: " + (cfg.dark ? "an" : "aus") + "<br>"
+      "Dark Mode: " + (cfg.dark ? "An" : "Aus") + "<br>"
       + "Performance: " + perf + "<br>"
-      + "Nur auf Mobil: " + (cfg.lpMobile ? "an" : "aus");
+      + "Nur auf Mobil: " + (cfg.lpMobile ? "An" : "Aus");
   }
 
   /* ---------- init ---------- */
