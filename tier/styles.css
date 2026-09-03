@@ -201,6 +201,10 @@ body.dark-mode .menu-item-circle .moon-icon {
   color: var(--text-secondary);
 }
 
+.hero-buttons {
+  margin-top: 1.25rem;
+}
+
 .content {
   padding-bottom: 32px;
 }

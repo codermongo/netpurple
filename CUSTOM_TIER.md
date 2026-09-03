@@ -22,18 +22,18 @@ Aktuelle Wege dorthin:
 4. Login-Redirect: nicht eingeloggt + Erstell-Flow angestossen →
    `/login?return=/tier/me` → nach Login auf `/tier/me`.
 
-**Lücke:** Auf `/tier/`, der Startseite und in jeder Nav fehlt ein
-„Meine Listen"-Einstieg. Ein wiederkehrender User mit bestehenden Listen hat
-keinen offensichtlichen Weg zurück zur Verwaltung ausser dem Editor-Zurück-Pfeil.
+**Erledigt 2026-09-03:**
+- `/tier/` Hero: Button „Meine Listen" (`.tool-button.secondary`) im vorher leeren
+  `.hero-buttons`.
+- `/tier/`, `/tier/anime|games|series/`: Kreis-Button (Listen-Icon) in der
+  `.theme-toggle-container` neben dem Zurück-Pfeil → `/tier/me`.
+- Immer sichtbar (nicht auth-gated); `/tier/me` gated selbst und leitet ggf. auf
+  `/login?return=/tier/me`.
 
-**Mögliche Fixes (noch nicht entschieden):**
-- „Meine Listen"-Kreis-Button in der `.theme-toggle-container` auf `/tier/`
-  (nur sichtbar, wenn eingeloggt) → `/tier/me`.
-- Oder die 4. Karte auf `/tier/` teilen: „Eigene Tierlist erstellen" + darunter
-  kleiner Link „Meine Listen".
-- Oder nach dem Erstellen auf `/tier/me` statt direkt in den Editor leiten.
-- Homepage-Karte „Tierlist" könnte für Eingeloggte einen Sekundär-Link „Meine
-  Listen" bekommen.
+Noch offen (bewusst nicht gemacht):
+- Nach dem Erstellen landet man weiter direkt im Editor (`/tier/custom?id=`), nicht
+  auf `/tier/me` — so gewollt laut Plan (F3).
+- Homepage-Karte „Tierlist" hat keinen Sekundär-Link zu „Meine Listen".
 
 ---
 
