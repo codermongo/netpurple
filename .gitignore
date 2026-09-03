@@ -2,3 +2,6 @@
 /game/projects/
 /games/projects/
 /sound/sounds/
+
+# Build-tool deps (OG image generator)
+/tools/og-gen/node_modules/
