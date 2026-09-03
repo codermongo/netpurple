@@ -1,0 +1,13 @@
+{
+  "name": "netpurple-og-gen",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Generates static OG preview images for the curated tierlists.",
+  "scripts": { "build": "node generate.js" },
+  "dependencies": {
+    "satori": "^0.12.1",
+    "@resvg/resvg-js": "^2.6.2",
+    "@fontsource/inter": "^5.1.0"
+  }
+}
