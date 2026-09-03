@@ -1,17 +1,7 @@
 (function () {
   "use strict";
 
-  /* ── Theme + Low-Power (gleiches Verhalten wie der Rest der Seite) ── */
-  var THEME_KEY = "darkMode";
-  if (localStorage.getItem(THEME_KEY) === "true") document.body.classList.add("dark-mode");
-  var tt = document.getElementById("themeToggleItem");
-  if (tt) {
-    tt.addEventListener("click", function () {
-      document.body.classList.toggle("dark-mode");
-      localStorage.setItem(THEME_KEY, document.body.classList.contains("dark-mode"));
-    });
-  }
-  if (localStorage.getItem("lowPowerMode") === "true") document.body.classList.add("low-power-mode");
+  /* Dark Mode + Performance werden global von /config.js verwaltet. */
 
   /* ── Auth-Gate: nur eingeloggte NetPurple-Nutzer ── */
   var ENDPOINT = "https://api.netpurple.net/v1";
