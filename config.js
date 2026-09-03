@@ -33,6 +33,35 @@
 
   var cfg = { dark: readLS(LS.dark), lp: readLS(LS.lp), lpMobile: readLS(LS.lpMobile) };
 
+  /* ---------- styles (injected so every page gets them) ---------- */
+  var CSS = [
+    ".np-cfg-gear{position:fixed;top:calc(1.5rem + 56px + 12px);right:1.5rem;z-index:1001}",
+    ".np-cfg-panel{position:fixed;top:calc(1.5rem + 134px);right:1.5rem;z-index:1002;width:264px;max-width:calc(100vw - 3rem);padding:16px 18px;border-radius:16px;",
+    "background:var(--card-glass-bg,rgba(12,12,20,0.85));backdrop-filter:blur(14px) saturate(120%);-webkit-backdrop-filter:blur(14px) saturate(120%);",
+    "border:1px solid var(--card-glass-stroke,rgba(139,92,246,0.25));box-shadow:0 16px 40px rgba(99,102,241,0.25);color:var(--text-primary,#fff);font-size:.9rem}",
+    ".np-cfg-panel[hidden]{display:none}",
+    ".np-cfg-title{font-weight:700;margin-bottom:6px}",
+    ".np-cfg-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}",
+    ".np-cfg-row.sub{padding-left:16px;font-size:.84rem;color:var(--text-secondary,#9aa0b4)}",
+    ".np-cfg-row.sub.dim{opacity:.4;pointer-events:none}",
+    ".np-cfg-status{margin-top:10px;padding-top:10px;border-top:1px solid var(--card-glass-stroke,rgba(139,92,246,0.25));color:var(--text-secondary,#9aa0b4);font-size:.8rem;line-height:1.8}",
+    ".np-switch{--sw-w:40px;--sw-h:22px;position:relative;width:var(--sw-w);height:var(--sw-h);flex-shrink:0}",
+    ".np-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}",
+    ".np-switch>span{position:absolute;inset:0;border-radius:999px;background:rgba(120,120,140,.4);transition:background .25s ease}",
+    ".np-switch>span::before{content:'';position:absolute;top:2px;left:2px;width:calc(var(--sw-h) - 4px);height:calc(var(--sw-h) - 4px);border-radius:50%;background:#fff;transition:transform .25s ease}",
+    ".np-switch input:checked + span{background:var(--button-purple,#6366f1)}",
+    ".np-switch input:checked + span::before{transform:translateX(calc(var(--sw-w) - var(--sw-h)))}",
+    ".np-switch input:focus-visible + span{outline:2px solid var(--button-purple,#6366f1);outline-offset:2px}"
+  ].join("");
+
+  (function injectCSS() {
+    if (document.getElementById("np-cfg-css")) return;
+    var s = document.createElement("style");
+    s.id = "np-cfg-css";
+    s.textContent = CSS;
+    (document.head || document.documentElement).appendChild(s);
+  })();
+
   var userId = null;
   var databases = null;
   var account = null;
@@ -92,7 +121,13 @@
 
   /* ---------- server sync on load ---------- */
   function syncFromServer() {
-    if (typeof Appwrite === "undefined") return; // localStorage-only fallback
+    if (typeof Appwrite === "undefined") {
+      // SDK tag may sit after this file; retry once the page is fully loaded.
+      if (document.readyState !== "complete") {
+        window.addEventListener("load", syncFromServer, { once: true });
+      }
+      return; // otherwise: localStorage-only fallback
+    }
     try {
       var client = new Appwrite.Client().setEndpoint(ENDPOINT).setProject(PROJECT);
       account = new Appwrite.Account(client);

@@ -198,16 +198,27 @@ akzeptierten Flash lassen — siehe Entscheidung E3.)
 - [ ] **Offen (braucht echte Sessions):** Cross-User-Isolation im Browser (User A
   liest/schreibt `user_config` von User B nicht) → in Phase 5.
 
-### Phase 2 — `config.js` + Panel (nur `index.html` verdrahtet)
-- Panel-UI + CSS, localStorage-Pfad, `account.get()` + `user_config`-Sync.
-- Anti-Flash-Snippet.
-- An **einer** Seite testbar.
+### Phase 2 — `config.js` + Panel — ✅ ERLEDIGT 2026-09-03
+- [x] `config.js`: Zahnrad-Panel, 3 Toggles + Status, localStorage + `user_config`-Sync,
+  `matchMedia`-Listener, `np:configchange`-Event. Panel-CSS **in `config.js` injiziert**
+  (nicht in `style.css`), damit es auf jeder Seite unabhängig vom Stylesheet greift.
+- [x] Anti-Flash-Snippet als erstes `<body>`-Kind.
+- [x] `index.html` verdrahtet, lokal getestet (Toggles, Persistenz, Reload ohne Flash,
+  Mobil-only, Partikel live).
 
-### Phase 3 — Ausrollen auf alle 16 Seiten
-- `#themeToggleItem` raus, `config.js` rein, `menu.js` weg, Inline-Blöcke weg.
-- `tier/*`, `speed/` app.js entkernen.
+### Phase 3 — Ausrollen auf alle 16 Seiten — ✅ ERLEDIGT 2026-09-03
+- [x] Codemod über die restlichen 15 Seiten: Anti-Flash-Snippet, `#themeToggleItem`
+  raus, `config.js` verdrahtet (`/config.js`).
+- [x] `menu.js` gelöscht (keine Referenzen mehr).
+- [x] Inline-Toggle-Blöcke aus `tier/index.html` + `tier/me/index.html` raus.
+- [x] `tier/app.js`, `tier/custom/app.js`: `initThemeToggle`/`initLowPowerMode` +
+  Aufrufe entfernt. `speed/app.js`: die 2 Prefs-Reads raus.
+- [x] Lokal geprüft: `index`, `games`, `tier/anime`, `tier/me`, `login` — Panel da,
+  Toggles wirken, Dark-Mode-Inversion ok, keine Konsolenfehler.
 
-### Phase 4 — `particles.js` an das Event hängen (falls E4 = live).
+### Phase 4 — `particles.js` an das Event hängen — ✅ ERLEDIGT (Teil von Phase 2)
+- [x] `particles.js`: `start()`/`stop()` statt einmaligem `return`; hört auf
+  `np:configchange`, schaltet Partikel live an/aus.
 
 ### Phase 5 — QA
 - Anon: Toggle → Reload → hält. Kein Flash.
