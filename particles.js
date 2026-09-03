@@ -3,26 +3,23 @@
   const canvas = document.getElementById('bg-particles');
   if (!canvas) return;
 
-  function isLowPowerMode() {
-    const narrowViewport = window.matchMedia('(max-width: 768px)').matches;
-    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const reducedData = window.matchMedia('(prefers-reduced-data: reduce)').matches;
-    const saveData = Boolean(navigator.connection && navigator.connection.saveData);
-    const manualLow = localStorage.getItem('lowPowerMode') === 'true';
-    return manualLow || reducedMotion || reducedData || saveData || (narrowViewport && coarsePointer);
+  // Contexts where we never run the animation, independent of the manual
+  // Performance toggle (config.js owns body.low-power-mode).
+  function heavyContextBlocked() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      || window.matchMedia('(prefers-reduced-data: reduce)').matches
+      || Boolean(navigator.connection && navigator.connection.saveData);
   }
-
-  if (isLowPowerMode()) {
-    document.body.classList.add('low-power-mode');
-    canvas.style.display = 'none';
-    return;
+  function particlesEnabled() {
+    return !document.body.classList.contains('low-power-mode') && !heavyContextBlocked();
   }
 
   const ctx = canvas.getContext('2d', { alpha: true });
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
   let w = 0, h = 0, particles = [];
   let lastTs = 0;
+  let rafId = 0;
+  let running = false;
 
   const ORANGE = ['#8B5CF6', '#3B82F6', '#8B5CF6'];
 
@@ -110,11 +107,36 @@
     }
 
     ctx.globalAlpha = 1;
-    requestAnimationFrame(step);
+    rafId = requestAnimationFrame(step);
   }
 
-  // Init
-  window.addEventListener('resize', resize);
-  resize();
-  requestAnimationFrame(step);
+  function start() {
+    if (running) return;
+    running = true;
+    canvas.style.display = '';
+    lastTs = 0;
+    resize();
+    rafId = requestAnimationFrame(step);
+  }
+
+  function stop() {
+    if (!running && canvas.style.display === 'none') return;
+    running = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = 0;
+    particles.length = 0;
+    ctx && ctx.clearRect(0, 0, w, h);
+    canvas.style.display = 'none';
+  }
+
+  function refresh() {
+    if (particlesEnabled()) start();
+    else stop();
+  }
+
+  window.addEventListener('resize', () => { if (running) resize(); });
+  // React live to the Performance toggle (config.js).
+  document.addEventListener('np:configchange', refresh);
+
+  refresh();
 })();
