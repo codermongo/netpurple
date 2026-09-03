@@ -48,15 +48,13 @@ gerendertes Bild der Liste (Cover nach Tiers, NetPurple-Dark, 1200×630).
   Änderungen — manuell, kein Cron.
 - Meta in den 3 `index.html`: `og:image`/`twitter:image` → die PNGs,
   `og:image:width/height/alt` ergänzt.
-- **Nebenbei gefixt:** `canonical` + `og:url` dieser 3 Seiten von der toten Domain
-  `www.netpurple.com` auf `netpurple.net` (siehe nächster Punkt).
-
-### Offen: tote SEO-Domain `www.netpurple.com` sitewide
-`www.netpurple.com` / `netpurple.com` lösen **nicht auf** (nur `netpurple.net`
-lebt). Trotzdem zeigen `index.html`, `sitemap.xml`, `robots.txt` und diverse
-Sektionen noch auf `https://www.netpurple.com/…` — d. h. Canonicals und OG-Bilder
-der restlichen Seiten sind kaputt. Eigener Aufräum-Task, nicht Teil des
-Tierlist-Themas.
+### Erledigt 2026-09-03: tote SEO-Domain sitewide auf `netpurple.net`
+`www.netpurple.com` / `netpurple.com` lösten **nicht auf** (nur `netpurple.net`
+lebt). Alle `https://www.netpurple.com/…` in `index.html`, `sitemap.xml`,
+`robots.txt`, `games/`, `list/`, `login/`, `sound/`, `tier/`, `tools/` und den
+JSON-LD-Blöcken auf `https://netpurple.net/…` umgestellt (ohne `www`, da
+`www.netpurple.net` per 301 auf die Apex zeigt). `logo.png` liegt im Repo-Root,
+die generischen `og:image=…/logo.png` funktionieren damit jetzt.
 
 ### Offen: User-Listen (`/tier/custom/?id=…`)
 Für die kann man keine PNGs vorbacken (unbegrenzt, pro User). Wenn die teilbar
