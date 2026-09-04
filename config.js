@@ -245,10 +245,55 @@
       + "Nur auf Mobil: " + (cfg.lpMobile ? "An" : "Aus");
   }
 
+  /* ---------- global "back to home" ---------- */
+  function wireHome() {
+    if (/^\/(index\.html)?$/.test(location.pathname)) return; // already home
+
+    function makeHome(el) {
+      el.style.cursor = "pointer";
+      el.setAttribute("role", "link");
+      el.setAttribute("tabindex", "0");
+      el.setAttribute("aria-label", "Zur Startseite");
+      el.title = "Zur Startseite";
+      var go = function () { location.href = "/"; };
+      el.addEventListener("click", go);
+      el.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+      });
+    }
+
+    // 1. Where the floating logo exists, it becomes the global home control.
+    var logo = document.querySelector(".hero-logo") || document.querySelector(".logo-geometric");
+    if (logo) {
+      makeHome(logo.closest(".hero-logo") || logo);
+      return;
+    }
+
+    // 2. Logo-less pages: add a home circle only if nothing already links home.
+    var hasHome = [].some.call(document.querySelectorAll("a[href]"), function (x) {
+      try {
+        return new URL(x.href, location.href).pathname.replace(/index\.html$/, "") === "/";
+      } catch (e) { return false; }
+    });
+    if (hasHome) return;
+    var cluster = document.querySelector(".theme-toggle-container");
+    if (!cluster) return;
+    var a = document.createElement("a");
+    a.className = "menu-item-circle";
+    a.href = "/";
+    a.setAttribute("aria-label", "Zur Startseite");
+    a.title = "Zur Startseite";
+    a.innerHTML =
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+      + '<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>';
+    cluster.insertBefore(a, cluster.firstChild);
+  }
+
   /* ---------- init ---------- */
   function init() {
     buildUI();
     apply();
+    wireHome();
     if (MOBILE_MQ.addEventListener) MOBILE_MQ.addEventListener("change", apply);
     else if (MOBILE_MQ.addListener) MOBILE_MQ.addListener(apply); // older Safari
     syncFromServer();
