@@ -417,6 +417,35 @@ a {
   color: var(--text-secondary);
 }
 
+.sound-player {
+  display: block;
+  width: min(420px, 100%);
+  margin: 0 auto 1.6rem;
+}
+
+.sound-info {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+  color: var(--text-secondary);
+}
+
+.sound-info h2 {
+  color: var(--text-primary);
+  font-size: 1.3rem;
+  margin: 2rem 0 0.8rem;
+}
+
+.sound-info h3 {
+  color: var(--text-primary);
+  font-size: 1rem;
+  margin: 1.2rem 0 0.3rem;
+}
+
+.sound-info a {
+  color: var(--accent-purple);
+}
+
 .footer {
   padding: 40px 20px 30px;
   text-align: center;

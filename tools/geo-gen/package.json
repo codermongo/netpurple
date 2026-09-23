@@ -1,0 +1,8 @@
+{
+  "name": "netpurple-geo-gen",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Generates crawlable static HTML (lists, per-item pages, JSON-LD, sitemap) for AI and search crawlers.",
+  "scripts": { "build": "node generate.js" }
+}
