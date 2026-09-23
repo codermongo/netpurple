@@ -348,12 +348,16 @@ async function loadGames() {
     games = Array.isArray(data) ? data : [];
     visibleGames = games.slice();
 
-    await loadFavorites();
-
+    // Render right away; favorites (Appwrite round-trip) re-sort afterwards.
     renderGames(visibleGames);
     updateCount(games.length, visibleGames.length);
     gamesLoader.hidden = true;
     randomGame.disabled = games.length === 0;
+
+    await loadFavorites();
+    if (favoriteRecords.size > 0) {
+      applyFilter();
+    }
   } catch (error) {
     gamesLoader.hidden = true;
     gamesEmpty.hidden = false;
