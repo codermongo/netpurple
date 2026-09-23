@@ -3,7 +3,10 @@
  * so search engines and AI crawlers (which mostly don't run JS) can read it.
  *
  *   node generate.js            # everything
- *   node generate.js sounds     # just one target (sounds | games)
+ *   node generate.js sounds     # just one target (sounds | games | assets)
+ *
+ * "assets" always runs last: it appends ?v=<content hash> to every local
+ * .css/.js reference in every HTML page, so Cloudflare serves changed files at once.
  *
  * Output (committed to the repo):
  *   sound/index.html, games/index.html  – content between <!-- geo:… --> markers
@@ -23,6 +26,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 
@@ -577,11 +581,66 @@ ${faq.map(({ q, a }) => `        <h3>${esc(q)}</h3>\n        <p>${esc(a)}</p>`).
   console.log(`games: ${total} listed, ${pages.length} pages written, ${removed} stale removed`);
 }
 
+/* ---------- assets: cache-busting ?v=<hash> ---------- */
+
+// Cloudflare caches CSS/JS for hours. Every local .css/.js reference in every HTML
+// page gets ?v=<content hash>, so a changed file gets a new URL on the next deploy.
+const SKIP_DIRS = new Set([".git", ".github", "node_modules", "plan", "projects", "sounds"]);
+
+function findHtml(dir, out = []) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      if (!SKIP_DIRS.has(entry.name)) findHtml(join(dir, entry.name), out);
+    } else if (entry.name.endsWith(".html")) {
+      out.push(join(dir, entry.name));
+    }
+  }
+  return out;
+}
+
+function buildAssets() {
+  const hashes = new Map();
+  const hashOf = (file) => {
+    if (!hashes.has(file)) {
+      const text = readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+      hashes.set(file, createHash("sha1").update(text).digest("hex").slice(0, 8));
+    }
+    return hashes.get(file);
+  };
+
+  let pages = 0;
+  const missing = new Set();
+  for (const page of findHtml(REPO)) {
+    const source = readFileSync(page, "utf8");
+    const updated = source.replace(
+      /\b(href|src)="([^"?#]+\.(?:css|js))(?:\?v=[0-9a-f]*)?"/g,
+      (match, attr, ref) => {
+        if (/^(?:[a-z]+:)?\/\//i.test(ref)) return match; // external (CDN)
+        const file = ref.startsWith("/") ? join(REPO, ref) : join(dirname(page), ref);
+        if (!existsSync(file)) {
+          missing.add(ref);
+          return match;
+        }
+        return `${attr}="${ref}?v=${hashOf(file)}"`;
+      }
+    );
+    if (updated !== source) {
+      writeFileSync(page, updated);
+      pages += 1;
+    }
+  }
+  if (missing.size) console.warn(`assets: not found, left unversioned: ${[...missing].join(", ")}`);
+  console.log(`assets: ${hashes.size} files versioned, ${pages} pages updated`);
+}
+
 /* ---------- main ---------- */
 
-const TARGETS = { sounds: buildSounds, games: buildGames };
+const TARGETS = { sounds: buildSounds, games: buildGames, assets: buildAssets };
 const requested = process.argv.slice(2);
-const run = requested.length ? requested : Object.keys(TARGETS);
+// Freshly generated pages need versioned asset links too, so assets always runs last.
+const run = (requested.length ? requested : Object.keys(TARGETS))
+  .filter((name) => name !== "assets")
+  .concat("assets");
 
 for (const name of run) {
   if (!TARGETS[name]) {

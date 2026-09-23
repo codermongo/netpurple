@@ -375,6 +375,44 @@ body.dark-mode .menu-item-circle .moon-icon {
   z-index: 1;
 }
 
+/* Homepage "About" text (also what search/AI crawlers read) */
+.home-about {
+  position: relative;
+  z-index: 1;
+  padding: 0 0 70px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.home-about .container {
+  max-width: 800px;
+}
+
+.home-about h2 {
+  color: var(--text-primary);
+  font-size: 1.3rem;
+  margin: 2rem 0 0.8rem;
+}
+
+.home-about h3 {
+  color: var(--text-primary);
+  font-size: 1rem;
+  margin: 1.2rem 0 0.3rem;
+}
+
+.home-about ul {
+  padding-left: 1.2rem;
+  margin: 0.8rem 0;
+}
+
+.home-about li {
+  margin-bottom: 0.4rem;
+}
+
+.home-about a {
+  color: var(--button-purple);
+}
+
 .tools-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

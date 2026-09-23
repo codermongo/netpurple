@@ -17,7 +17,8 @@ Keine npm-Dependencies. Output **wird committet**, danach normal deployen
 
 ## Wann neu erzeugen
 
-Nach jeder Änderung an `sound/sounds.json` oder `games/config/games.json`. Kein Cron, bewusst manuell, wie `og-gen`.
+Nach jeder Änderung an `sound/sounds.json`, `games/config/games.json` oder an
+einer eigenen CSS-/JS-Datei. Kein Cron, bewusst manuell, wie `og-gen`.
 
 ## Was geschrieben wird
 
@@ -25,6 +26,18 @@ Nach jeder Änderung an `sound/sounds.json` oder `games/config/games.json`. Kein
 |---|---|
 | `sounds` | `sound/index.html` (zwischen `<!-- geo:jsonld -->`, `<!-- geo:list -->`, `<!-- geo:about -->`), `sound/<slug>/index.html` je Sound, `sitemap.xml` (zwischen `<!-- geo:sound -->`) |
 | `games` | `games/index.html` (dieselben Marker), `games/<slug>/index.html` **nur für Spiele mit `description`** in `games/config/games.json`, `sitemap.xml` (zwischen `<!-- geo:games -->`) |
+
+| `assets` | **alle** HTML-Seiten im Repo: hängt an jede lokale `.css`/`.js`-Einbindung `?v=<hash>` (Hash des Dateiinhalts). Läuft bei jedem Aufruf automatisch als letztes Ziel mit. |
+
+## Cache-Busting (Cloudflare)
+
+Cloudflare cached CSS/JS 4 Stunden. Ohne neue URL sehen Besucher nach einem
+Deploy noch die alte Datei. Deshalb: **nach jeder Änderung an CSS/JS
+`node generate.js` laufen lassen**, dann bekommt die Datei eine neue
+`?v=`-Nummer und wird sofort neu geladen. Der Hash wird mit LF-Zeilenenden
+berechnet, ist also auf Windows und Linux gleich.
+
+## Beschreibungen
 
 Beschreibungen stammen aus den `<meta description>` der Spiele auf dem Server
 (`games/projects/*/index.html`). Neue Beschreibung = Feld `description` in

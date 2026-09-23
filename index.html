@@ -4,42 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="darkreader-lock">
-    <title>NetPurple | Games, Soundboard, Tools and Free Web Resources</title>
-    <meta name="description" content="NetPurple is a free web hub with browser games, a soundboard, useful tools, anime ranking, and curated resource lists.">
-    <meta name="keywords" content="NetPurple, browser games, soundboard, web tools, anime ranking, free resources">
+    <title>NetPurple | Free Browser Games, Soundboard, Tierlists and Tools</title>
+    <meta name="description" content="NetPurple is a free, ad-free web hub: 140+ browser games, a meme soundboard with 200+ sounds, anime, series and games tierlists, curated tools and free resources.">
+    <meta name="keywords" content="NetPurple, browser games, soundboard, meme sounds, tierlist, anime ranking, web tools, free resources">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="author" content="NetPurple">
     <link rel="canonical" href="https://netpurple.net/">
     <meta name="theme-color" content="#121224">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=aa4d401b">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <meta property="og:title" content="NetPurple | Games, Soundboard, Tools and Free Web Resources">
-    <meta property="og:description" content="Explore NetPurple: browser games, soundboard clips, tools, anime ranking, and curated links in one place.">
+    <meta property="og:title" content="NetPurple | Free Browser Games, Soundboard, Tierlists and Tools">
+    <meta property="og:description" content="Free, ad-free web hub: 140+ browser games, 200+ meme sounds, anime, series and games tierlists, curated tools and free resources.">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="NetPurple">
     <meta property="og:locale" content="en_US">
     <meta property="og:url" content="https://netpurple.net/">
     <meta property="og:image" content="https://netpurple.net/logo.png">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="NetPurple | Games, Soundboard, Tools and Free Web Resources">
-    <meta name="twitter:description" content="Explore NetPurple: browser games, soundboard clips, tools, anime ranking, and curated links in one place.">
+    <meta name="twitter:title" content="NetPurple | Free Browser Games, Soundboard, Tierlists and Tools">
+    <meta name="twitter:description" content="Free, ad-free web hub: 140+ browser games, 200+ meme sounds, anime, series and games tierlists, curated tools and free resources.">
     <meta name="twitter:image" content="https://netpurple.net/logo.png">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
-            "@type": "WebSite",
-            "name": "NetPurple",
-            "url": "https://netpurple.net/",
-            "description": "NetPurple is a free web hub with browser games, a soundboard, tools, anime ranking, and curated resource lists.",
-            "publisher": {
-                "@type": "Organization",
-                "name": "NetPurple",
-                "url": "https://netpurple.net/"
-            }
+            "@graph": [
+                {
+                    "@type": "WebSite",
+                    "@id": "https://netpurple.net/#website",
+                    "name": "NetPurple",
+                    "url": "https://netpurple.net/",
+                    "inLanguage": "en",
+                    "description": "NetPurple is a free, ad-free web hub with 140+ browser games, a meme soundboard with 200+ sounds, anime, series and games tierlists, curated tools and free resources.",
+                    "publisher": { "@id": "https://netpurple.net/#organization" },
+                    "hasPart": [
+                        { "@type": "WebPage", "name": "Games", "url": "https://netpurple.net/games/" },
+                        { "@type": "WebPage", "name": "Soundboard", "url": "https://netpurple.net/sound/" },
+                        { "@type": "WebPage", "name": "Tierlists", "url": "https://netpurple.net/tier/" },
+                        { "@type": "WebPage", "name": "Tools", "url": "https://netpurple.net/tools/" },
+                        { "@type": "WebPage", "name": "Free Stuff", "url": "https://netpurple.net/list/" }
+                    ]
+                },
+                {
+                    "@type": "Organization",
+                    "@id": "https://netpurple.net/#organization",
+                    "name": "NetPurple",
+                    "url": "https://netpurple.net/",
+                    "logo": "https://netpurple.net/logo.png",
+                    "description": "Personal, open-source web project.",
+                    "sameAs": [
+                        "https://github.com/codermongo/netpurple",
+                        "https://docu.netpurple.net/"
+                    ]
+                },
+                {
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {
+                            "@type": "Question",
+                            "name": "What is NetPurple?",
+                            "acceptedAnswer": { "@type": "Answer", "text": "NetPurple is a free, ad-free web hub with 140+ browser games, a meme soundboard with 200+ sounds, public anime, series and games tierlists, curated tools and a searchable list of free resources." }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Is NetPurple free?",
+                            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Everything on NetPurple is free and there are no ads. A free account is only needed for favorites and your own tierlists." }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Who is behind NetPurple?",
+                            "acceptedAnswer": { "@type": "Answer", "text": "NetPurple is a personal hobby project. The complete source code is public on GitHub under The Unlicense." }
+                        }
+                    ]
+                }
+            ]
         }
     </script>
 </head>
@@ -139,11 +180,33 @@
         </div>
     </section>
 
-    <script src="particles.js"></script>
+    <section class="home-about" id="about">
+        <div class="container">
+            <h2>About NetPurple</h2>
+            <p>NetPurple is a free, ad-free web hub for browser games, meme sounds and rankings. It is a personal hobby project, and the complete source code is public on <a href="https://github.com/codermongo/netpurple">GitHub</a>.</p>
+            <ul>
+                <li><a href="/games/">Games</a>: 140+ free browser games such as 2048, Cut the Rope, Flappy Bird, Minecraft Classic and Wordle. No download, no signup.</li>
+                <li><a href="/sound/">Soundboard</a>: 200+ meme sounds and sound effects that play instantly, with search and “Play all”.</li>
+                <li><a href="/tier/">Tierlists</a>: public rankings of anime, series and games, plus your own custom tierlists with a free account.</li>
+                <li><a href="/tools/">Tools</a>: a curated collection of utility, privacy and self-hosting tools.</li>
+                <li><a href="/list/">Free stuff</a>: a searchable list of free games, anime, films and other resources.</li>
+                <li><a href="https://docu.netpurple.net/">Documentation</a>: how NetPurple works, built with Docusaurus.</li>
+            </ul>
+            <h2>FAQ</h2>
+            <h3>What is NetPurple?</h3>
+            <p>NetPurple is a free, ad-free web hub with 140+ browser games, a meme soundboard with 200+ sounds, public anime, series and games tierlists, curated tools and a searchable list of free resources.</p>
+            <h3>Is NetPurple free?</h3>
+            <p>Yes. Everything on NetPurple is free and there are no ads. A free account is only needed for favorites and your own tierlists.</p>
+            <h3>Who is behind NetPurple?</h3>
+            <p>NetPurple is a personal hobby project. The complete source code is public on GitHub under The Unlicense.</p>
+        </div>
+    </section>
+
+    <script src="particles.js?v=e0c75f5e"></script>
     <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
-    <script src="config.js"></script>
-    <script src="auth.js"></script>
-    <script src="stats.js"></script>
+    <script src="config.js?v=c20eb612"></script>
+    <script src="auth.js?v=83d31782"></script>
+    <script src="stats.js?v=b02e8d4b"></script>
 </body>
 </html>
 
