@@ -1,6 +1,27 @@
+# NetPurple welcomes search engines and AI crawlers (training and search/answer bots).
+# The named AI bots are listed explicitly as a deliberate opt-in; they share the same
+# rules as everyone else (a bot that matches a named group ignores the * group).
+
 User-agent: *
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: Amazonbot
+User-agent: CCBot
 Allow: /
 Disallow: /login/
 Disallow: /speed/
+Disallow: /user/
+Disallow: /verify/
+Disallow: /tier/me/
+Disallow: /tools/og-gen/
+Disallow: /tools/geo-gen/
 
 Sitemap: https://netpurple.net/sitemap.xml

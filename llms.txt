@@ -1,0 +1,25 @@
+# NetPurple
+
+> NetPurple (netpurple.net) is a free, ad-free web hub with 140+ browser games, a meme soundboard with 200+ sounds, public anime, series and games tierlists, curated tools and a searchable list of free resources. No download and no signup needed; a free account only adds favorites and custom tierlists.
+
+NetPurple is a personal hobby project. The complete source code is public on GitHub (https://github.com/codermongo/netpurple) under The Unlicense. Everything runs in the browser, on desktop, Chromebook and phone (many games need a keyboard).
+
+## Main sections
+
+- [Games](https://netpurple.net/games/): 140+ free browser games such as 2048, Cut the Rope, Flappy Bird, Minecraft Classic and Wordle, with search, a random game button and favorites.
+- [Soundboard](https://netpurple.net/sound/): 200+ meme sounds and sound effects that play instantly, with search, "Play all" queue and favorites. Every sound also has its own page at https://netpurple.net/sound/<name>/.
+- [Tierlists](https://netpurple.net/tier/): public rankings of anime, series and games, grouped into tiers from "Best of All Time" down to -F; logged-in users can build their own custom tierlists.
+- [Tools](https://netpurple.net/tools/): curated utility, privacy, self-hosting and platform-specific tools.
+- [Free stuff](https://netpurple.net/list/): searchable list of free games, anime, films and other web resources.
+
+## Rankings
+
+- [Anime ranking](https://netpurple.net/tier/anime/): personal anime tierlist, ranked within each tier from left to right.
+- [Series ranking](https://netpurple.net/tier/series/): personal TV series tierlist.
+- [Games ranking](https://netpurple.net/tier/games/): personal video game tierlist.
+
+## Optional
+
+- [Documentation](https://docu.netpurple.net/): how NetPurple works, built with Docusaurus.
+- [Source code](https://github.com/codermongo/netpurple): full repository on GitHub.
+- [Sitemap](https://netpurple.net/sitemap.xml): all public pages, including individual game and sound pages.
