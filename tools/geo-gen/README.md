@@ -2,7 +2,7 @@
 
 Suchmaschinen- und KI-Crawler (GPTBot, ClaudeBot, PerplexityBot, …) führen meist
 kein JS aus. Die Seiten rendern ihre Listen aber per JS aus JSON. Dieses Skript
-schreibt denselben Inhalt zusätzlich als statisches HTML ins Repo. Siehe `GEO_PLAN.md`.
+schreibt denselben Inhalt zusätzlich als statisches HTML ins Repo. Siehe `plan/GEO_PLAN.md` (lokal, nicht im Repo).
 
 ## Nutzung
 
