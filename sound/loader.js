@@ -281,6 +281,15 @@ function stopAll(resetQueue = true) {
   }
 }
 
+// Sounds are created with preload="none"; fetch one as soon as the pointer or
+// finger reaches its card (or it's next in the queue), so the click plays instantly.
+function warmSound(name) {
+  const audio = audioElements[name];
+  if (!audio || audio.preload === "auto") return;
+  audio.preload = "auto";
+  audio.load();
+}
+
 function playSound(name, fromQueue = false) {
   stopAll(!fromQueue);
 
@@ -291,6 +300,9 @@ function playSound(name, fromQueue = false) {
   audio.play();
 
   if (fromQueue) {
+    if (queueIndex + 1 < playQueue.length) {
+      warmSound(playQueue[queueIndex + 1]);
+    }
     audio.onended = () => {
       if (!queueActive) return;
       queueIndex += 1;
@@ -334,6 +346,10 @@ function buildCard(sound, index) {
   chip.appendChild(icon);
   card.append(favoriteToggle, chip, title, caption);
 
+  const warm = () => warmSound(sound.name);
+  card.addEventListener("pointerenter", warm);
+  card.addEventListener("pointerdown", warm);
+  card.addEventListener("focus", warm);
   card.addEventListener("click", () => playSound(sound.name));
   return card;
 }
@@ -385,19 +401,23 @@ async function loadSounds() {
     sounds.forEach((sound) => {
       const audio = document.createElement("audio");
       audio.src = sound.mp3;
-      audio.preload = "auto";
+      audio.preload = "none";
       audioElements[sound.name] = audio;
       document.body.appendChild(audio);
     });
 
-    await loadFavorites();
-
+    // Render right away; favorites (Appwrite round-trip) re-sort afterwards.
     filteredSounds = sounds.slice();
     renderSounds(filteredSounds);
     updateCount(sounds.length, filteredSounds.length);
     spinnerElement.setAttribute("hidden", "hidden");
     hasLoaded = true;
     clearButton.disabled = true;
+
+    await loadFavorites();
+    if (favoriteRecords.size > 0) {
+      applyFilter();
+    }
   } catch (error) {
     handleError(`Error loading soundboard: ${error.message}`);
   }
