@@ -17,17 +17,22 @@ Keine npm-Dependencies. Output **wird committet**, danach normal deployen
 
 ## Wann neu erzeugen
 
-Nach jeder Änderung an `sound/sounds.json`. Kein Cron, bewusst manuell, wie `og-gen`.
+Nach jeder Änderung an `sound/sounds.json` oder `games/config/games.json`. Kein Cron, bewusst manuell, wie `og-gen`.
 
 ## Was geschrieben wird
 
 | Ziel | Dateien |
 |---|---|
 | `sounds` | `sound/index.html` (zwischen `<!-- geo:jsonld -->`, `<!-- geo:list -->`, `<!-- geo:about -->`), `sound/<slug>/index.html` je Sound, `sitemap.xml` (zwischen `<!-- geo:sound -->`) |
+| `games` | `games/index.html` (dieselben Marker), `games/<slug>/index.html` **nur für Spiele mit `description`** in `games/config/games.json`, `sitemap.xml` (zwischen `<!-- geo:games -->`) |
+
+Beschreibungen stammen aus den `<meta description>` der Spiele auf dem Server
+(`games/projects/*/index.html`). Neue Beschreibung = Feld `description` in
+`games.json` ergänzen, Skript neu laufen lassen.
 
 - Nur der Inhalt **zwischen** den Markern wird ersetzt, der Rest der Seite bleibt Handarbeit.
 - Das JS der Seite ersetzt die statische Liste beim Laden wie bisher, für Nutzer ändert sich nichts.
 - Einzelseiten tragen `<meta name="generator" content="netpurple-geo-gen">`. Ordner mit
   diesem Marker, deren Sound nicht mehr existiert, werden beim nächsten Lauf gelöscht.
-  Andere Ordner (`css/`, `img/`, `sounds/`) werden nie angefasst.
-- `lastmod` in der Sitemap = Datum des letzten Commits von `sounds.json`.
+  Andere Ordner (`css/`, `img/`, `sounds/`, `config/`, `js/`, `projects/`) werden nie angefasst.
+- `lastmod` in der Sitemap = Datum des letzten Commits der JSON-Datei (heute, wenn sie uncommittete Änderungen hat).

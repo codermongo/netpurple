@@ -12,7 +12,8 @@
   {
     "link": "projects/2048/index.html",
     "imgSrc": "projects/2048/thumb.png",
-    "title": "2048"
+    "title": "2048",
+    "description": "Join the numbers and get to the 2048 tile! Careful: this game is extremely addictive!"
   },
   {
     "link": "projects/9007199254740992/index.html",
@@ -152,17 +153,20 @@
   {
     "link": "projects/ctr/index.html",
     "imgSrc": "projects/ctr/logo.png",
-    "title": "Cut the Rope"
+    "title": "Cut the Rope",
+    "description": "Play Cut the Rope! A mysterious package has arrived, and the little monster inside has only one request… CANDY!"
   },
   {
     "link": "projects/ctr-holiday/index.html",
     "imgSrc": "projects/ctr-holiday/Holiday_Gift.webp",
-    "title": "Cut the Rope Holiday"
+    "title": "Cut the Rope Holiday",
+    "description": "Play Cut the Rope! A mysterious package has arrived, and the little monster inside has only one request… CANDY!"
   },
   {
     "link": "projects/ctr-tr/index.html",
     "imgSrc": "projects/ctr-tr/logo.png",
-    "title": "Cut the Rope Time Travel"
+    "title": "Cut the Rope Time Travel",
+    "description": "Play Cut the Rope: Time Travel! Join Om Nom as he travels back in time to feed his ancestors with candy. Cut the Rope: Time Travel is a completely new adventure filled with time-traveling, candy-crunching, physics-based action!"
   },
   {
     "link": "projects/cubefield/index.html",
@@ -192,12 +196,14 @@
   {
     "link": "projects/doge2048/index.html",
     "imgSrc": "projects/doge2048/meta/apple-touch-icon.png",
-    "title": "Doge 2048"
+    "title": "Doge 2048",
+    "description": "much tiles such fun"
   },
   {
     "link": "projects/DogeMiner/index.html",
     "imgSrc": "projects/DogeMiner/img/dogeminer_300x300.png",
-    "title": "Doge Miner"
+    "title": "Doge Miner",
+    "description": "How to mine dogecoins? Find out in Dogeminer: The Dogecoin Mining Simulator. Very wow. To the moon!"
   },
   {
     "link": "projects/doodle-jump/index.html",
@@ -232,7 +238,8 @@
   {
     "link": "projects/edgenotfound/index.html",
     "imgSrc": "projects/edgenotfound/edge.png",
-    "title": "Edge Not Found"
+    "title": "Edge Not Found",
+    "description": "A Sokoban-style puzzle game set on an infinitely repeating grid. Push the boxes to the targets in 20+ tricky puzzles. By Tom Hermans (@Auroriax) for js13k 2020."
   },
   {
     "link": "projects/elasticman/index.html",
@@ -262,7 +269,8 @@
   {
     "link": "projects/fake-virus/icon.png",
     "imgSrc": "projects/fake-virus/icon.png",
-    "title": "Fake Virus"
+    "title": "Fake Virus",
+    "description": "Fake virus screen demanding money for file decryption. Prank your friends opening this in their machine!"
   },
   {
     "link": "projects/flappy-2048/index.html",
@@ -272,7 +280,8 @@
   {
     "link": "projects/flappy-bird/index.html",
     "imgSrc": "projects/flappy-bird/assets/thumb.png",
-    "title": "Flappy Bird"
+    "title": "Flappy Bird",
+    "description": "play floppy bird. a remake of popular game flappy bird built in html/css/js"
   },
   {
     "link": "projects/flashtetris/index.html",
@@ -337,22 +346,26 @@
   {
     "link": "projects/HexGL/index.html",
     "imgSrc": "projects/HexGL/icon_256.png",
-    "title": "HexGL"
+    "title": "HexGL",
+    "description": "HexGL is a futuristic racing game built by Thibaut Despoulain (BKcore) using HTML5, Javascript and WebGL. Come challenge your friends on this fast-paced 3D game!"
   },
   {
     "link": "projects/hextris/index.html",
     "imgSrc": "projects/hextris/images/hextris-logo.png",
-    "title": "Hextris"
+    "title": "Hextris",
+    "description": "An addictive puzzle game inspired by Tetris."
   },
   {
     "link": "projects/idle-breakout/index.html",
     "imgSrc": "projects/idle-breakout/img/thumbnail.png",
-    "title": "Idle Breakout"
+    "title": "Idle Breakout",
+    "description": "Build the ultimate brick-busting machine to destroy billions of bricks. Idle breakout combines classic brick breaking with an insanely addicting idle loop."
   },
   {
     "link": "projects/idle-shark/index.html",
     "imgSrc": "projects/idle-shark/img/sharkgame.png",
-    "title": "Idle Shark"
+    "title": "Idle Shark",
+    "description": "A web game about resources, discovery and sharks. Lots of sharks"
   },
   {
     "link": "projects/impossiblequiz/index.html",
@@ -387,7 +400,8 @@
   {
     "link": "projects/mario/index.html",
     "imgSrc": "projects/mario/Theme/Mario.gif",
-    "title": "Mario"
+    "title": "Mario",
+    "description": "FullScreenMario is a free HTML5 remake of Nintendo's original Super Mario Bros. Play it here!"
   },
   {
     "link": "projects/matrixrampage/index.html",
@@ -407,7 +421,8 @@
   {
     "link": "projects/minecraft-classic/index.html",
     "imgSrc": "projects/minecraft-classic/pack.png",
-    "title": "Minecraft Classic"
+    "title": "Minecraft Classic",
+    "description": "Play a old version of Minecraft in your browser!"
   },
   {
     "link": "projects/minesweeper/index.html",
@@ -422,7 +437,8 @@
   {
     "link": "projects/missiles/index.html",
     "imgSrc": "projects/missiles/miss.png",
-    "title": "Missiles"
+    "title": "Missiles",
+    "description": "A 3D game using SVG and javascript"
   },
   {
     "link": "projects/motox3m/index.html",
@@ -447,12 +463,14 @@
   {
     "link": "projects/n-gon/index.html",
     "imgSrc": "projects/n-gon/bot.png",
-    "title": "n-gon"
+    "title": "n-gon",
+    "description": "Browser-based side scrolling video game with the matter.js physics engine."
   },
   {
     "link": "projects/ns-shaft/index.html",
     "imgSrc": "projects/ns-shaft/favicon.png",
-    "title": "NS-Shaft"
+    "title": "NS-Shaft",
+    "description": "NS-Shaft is a simple Japanese game made by NAGI-P Soft. The object of the game is that the main character must go down (descend) as many floors (levels) as possible."
   },
   {
     "link": "projects/om-bounce/index.html",
@@ -482,12 +500,14 @@
   {
     "link": "projects/particle-clicker/index.html",
     "imgSrc": "projects/particle-clicker/assets/mobile/original.png",
-    "title": "Particle Clicker"
+    "title": "Particle Clicker",
+    "description": "An addictive incremental game that was made during the CERN Webfest 2014. It takes the player on a historic journey through modern particle physics."
   },
   {
     "link": "projects/polybranch/index.html",
     "imgSrc": "projects/polybranch/img/pic1.png",
-    "title": "PolyBranch"
+    "title": "PolyBranch",
+    "description": "PolyBranch is a minimalist 3D game. Avoid the branches protruding from the walls as you fly through the tunnel. Dodging branches may seem easy at first, but how long can you hold up as you approach terminal velocity? Dive in, stay focused, and enjoy the ride!"
   },
   {
     "link": "projects/portalflash/index.html",
@@ -497,7 +517,8 @@
   {
     "link": "projects/precision-client/index.html",
     "imgSrc": "projects/precision-client/logo.png",
-    "title": "Precision Client (Eaglercraft)"
+    "title": "Precision Client (Eaglercraft)",
+    "description": "Precision Client is an instance of Minecraft 1.5.2 that was ported to the web by LAX1DUDE and forked by EtcherFX. This client has custom resource packs and more."
   },
   {
     "link": "projects/push-the-square/index.html",
@@ -522,12 +543,14 @@
   {
     "link": "projects/rooftop-snipers/index.html",
     "imgSrc": "projects/rooftop-snipers/img/preview.png",
-    "title": "Rooftop Snipers"
+    "title": "Rooftop Snipers",
+    "description": "Rooftop Snipers is a pixel-style shooting game where you have to shoot famous characters off of the roof. You can play in single or two-player mode, against the Joker, Mr. T, and John Wayne. During each duel, you have to jump forwards and backwards to dodge bullets. Look out for the tomahawks and beach balls in Rooftop Snipers."
   },
   {
     "link": "projects/sand-game/index.html",
     "imgSrc": "projects/sand-game/sand.png",
-    "title": "Sand Game"
+    "title": "Sand Game",
+    "description": "Project Sand: A modern version of the classic Hell of Sand Falling Game"
   },
   {
     "link": "projects/slope/index.html",
@@ -542,7 +565,8 @@
   {
     "link": "projects/smashkarts/index.html",
     "imgSrc": "projects/smashkarts/images/icon-512.png",
-    "title": "Smash Carts"
+    "title": "Smash Carts",
+    "description": "Smash Karts is a free io Multiplayer Kart Battle Arena game. Drive fast. Fire rockets. Make big explosions."
   },
   {
     "link": "projects/smokingbarrels/index.html",
@@ -572,7 +596,8 @@
   {
     "link": "projects/soundboard/index.html",
     "imgSrc": "projects/soundboard/img/mlg-favicon.png",
-    "title": "Soundboard"
+    "title": "Soundboard",
+    "description": "A collection of sounds to play out of context. Perfect for school! Just play it when your teacher is talking and I bet they will love it!"
   },
   {
     "link": "projects/stack/index.html",
@@ -582,7 +607,8 @@
   {
     "link": "projects/stack-bump-3d/index.html",
     "imgSrc": "projects/stack-bump-3d/thumbnail.jpg",
-    "title": "Stack Bump 3D"
+    "title": "Stack Bump 3D",
+    "description": "Stack Bump 3D is an awesome time-killing game that you'll definitely enjoy. Shoot up the tower to its last block and move on with the next tower. Keep on going until you finish!"
   },
   {
     "link": "projects/stealingthediamond/index.html",
@@ -607,7 +633,8 @@
   {
     "link": "projects/swerve/index.html",
     "imgSrc": "projects/swerve/img/favicon.jpg",
-    "title": "Swerve"
+    "title": "Swerve",
+    "description": "Get in the driving seat and test your reactions to score big and claim the fastest car on the road!"
   },
   {
     "link": "projects/tacticalassasin2/index.html",
@@ -672,7 +699,8 @@
   {
     "link": "projects/tv-static/index.html",
     "imgSrc": "projects/tv-static/static.png",
-    "title": "TV Static"
+    "title": "TV Static",
+    "description": "You might remember the static TV noise with vibrating random black and white dots from old analog TVs. This screen will bring this effect back on your computer."
   },
   {
     "link": "projects/vex3/index.html",
@@ -697,7 +725,8 @@
   {
     "link": "projects/webretro-local/index.html",
     "imgSrc": "projects/webretro-local/assets/icon204.png",
-    "title": "Web Retro Local"
+    "title": "Web Retro Local",
+    "description": "RetroArch in your browser!"
   },
   {
     "link": "projects/wolf3d/index.html",
@@ -707,7 +736,8 @@
   {
     "link": "projects/wordle/index.html",
     "imgSrc": "projects/wordle/img/logo_512x512.png",
-    "title": "Wordle"
+    "title": "Wordle",
+    "description": "Guess the word in 6 tries. Play daily, hourly and infinite modes."
   },
   {
     "link": "projects/worlds-hardest-game/index.html",

@@ -3,14 +3,15 @@
  * so search engines and AI crawlers (which mostly don't run JS) can read it.
  *
  *   node generate.js            # everything
- *   node generate.js sounds     # just one target
+ *   node generate.js sounds     # just one target (sounds | games)
  *
  * Output (committed to the repo):
- *   sound/index.html      – content between <!-- geo:… --> markers
- *   sound/<slug>/         – one page per sound
- *   sitemap.xml           – entries between <!-- geo:sound --> markers
+ *   sound/index.html, games/index.html  – content between <!-- geo:… --> markers
+ *   sound/<slug>/                       – one page per sound
+ *   games/<slug>/                       – one page per game with a "description"
+ *   sitemap.xml                         – entries between <!-- geo:sound|games --> markers
  *
- * No dependencies. Re-run whenever sounds.json changed.
+ * No dependencies. Re-run whenever sounds.json or games.json changed.
  */
 
 import {
@@ -93,13 +94,15 @@ function updateFile(relPath, fills) {
   writeFileSync(path, source);
 }
 
+/** Date of the last commit touching relPath; today if it has uncommitted changes. */
 function lastCommitDate(relPath) {
+  const git = (...args) =>
+    execFileSync("git", args, { cwd: REPO, encoding: "utf8" }).trim();
   try {
-    const out = execFileSync("git", ["log", "-1", "--format=%cs", "--", relPath], {
-      cwd: REPO,
-      encoding: "utf8",
-    }).trim();
-    if (out) return out;
+    if (!git("status", "--porcelain", "--", relPath)) {
+      const out = git("log", "-1", "--format=%cs", "--", relPath);
+      if (out) return out;
+    }
   } catch {
     /* not a git checkout */
   }
@@ -345,9 +348,238 @@ ${faq.map(({ q, a }) => `            <h3>${esc(q)}</h3>\n            <p>${esc(a)
   console.log(`sounds: ${total} pages written, ${removed} stale removed`);
 }
 
+/* ---------- games ---------- */
+
+// Only games with a description (games.json "description") get their own page;
+// the rest are listed on /games/ and link straight to the game.
+const GAME_EXAMPLES = ["2048", "Cut the Rope", "Flappy Bird", "Minecraft Classic", "Wordle"];
+
+function gameFaq(total) {
+  return [
+    {
+      q: "Are the games on NetPurple free?",
+      a: `Yes. All ${total} games are free to play, you don't need an account, and there are no ads.`,
+    },
+    {
+      q: "Do I need to download or install anything?",
+      a: "No. Every game runs directly in the browser. Open it and start playing.",
+    },
+    {
+      q: "Can I play on a Chromebook or phone?",
+      a: "Yes on Chromebooks and any modern desktop browser. The site also works on phones and tablets, but many games need a keyboard.",
+    },
+    {
+      q: "Can I save favorite games?",
+      a: "Yes. With a free NetPurple account you can mark games with the heart icon; favorites are pinned to the top of the list. The “Random game” button picks something for you.",
+    },
+  ];
+}
+
+function gameCardLink(game, href, caption, indent) {
+  return (
+    `${indent}<a class="game-card" href="${esc(href)}">` +
+    `<img class="game-thumb" src="/games/${esc(encodeURI(game.imgSrc))}" alt="${esc(game.title)} cover" loading="lazy">` +
+    `<div class="game-body"><div class="game-title">${esc(game.title)}</div>` +
+    `<div class="game-meta-row">${caption}</div></div></a>`
+  );
+}
+
+function gamePage(game, slug, related, total) {
+  const url = `${SITE}/games/${slug}/`;
+  const play = `/games/${encodeURI(game.link)}`;
+  const image = `${SITE}/games/${encodeURI(game.imgSrc)}`;
+  const title = `${game.title}: Play Free Online | NetPurple Games`;
+  const description = `${game.description} Play ${game.title} free in your browser. No download, no signup.`;
+  const data = [
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      name: game.title,
+      description: game.description,
+      url,
+      image,
+      gamePlatform: "Web browser",
+      applicationCategory: "Game",
+      operatingSystem: "Any",
+      isAccessibleForFree: true,
+      isPartOf: { "@type": "WebPage", name: "NetPurple Games", url: `${SITE}/games/` },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "NetPurple", item: `${SITE}/` },
+        { "@type": "ListItem", position: 2, name: "Games", item: `${SITE}/games/` },
+        { "@type": "ListItem", position: 3, name: game.title, item: url },
+      ],
+    },
+  ];
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="darkreader-lock">
+    <meta name="generator" content="${GENERATOR}">
+    <title>${esc(title)}</title>
+    <meta name="description" content="${esc(description)}">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <link rel="canonical" href="${url}">
+    <meta name="theme-color" content="#121224">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/games/games.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <meta property="og:title" content="${esc(title)}">
+    <meta property="og:description" content="${esc(description)}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="NetPurple">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:url" content="${url}">
+    <meta property="og:image" content="${esc(image)}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="${esc(title)}">
+    <meta name="twitter:description" content="${esc(description)}">
+    <meta name="twitter:image" content="${esc(image)}">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+${jsonLd(data, "    ")}
+</head>
+<body data-auth="out">
+    ${ANTI_FLASH}
+
+    <canvas id="bg-particles" aria-hidden="true"></canvas>
+
+    <section class="hero hero-games">
+        <div class="hero-content">
+            <div class="hero-logo">
+                <div class="logo-geometric"></div>
+            </div>
+            <h1 class="hero-title">${esc(game.title)}</h1>
+            <img class="game-detail-cover" src="/games/${esc(encodeURI(game.imgSrc))}" alt="${esc(game.title)} cover">
+            <p class="game-detail-text">${esc(game.description)}</p>
+            <div class="hero-buttons">
+                <a class="btn-primary" href="${esc(play)}">Play ${esc(game.title)}</a>
+                <a class="btn-secondary" href="/games/">All games</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="games-section">
+        <div class="container">
+            <div class="games-info">
+                <h2>More games</h2>
+            </div>
+            <div class="games-grid">
+${related.map(({ game: g, slug: sl }) => gameCardLink(g, `/games/${sl}/`, "Details", "                ")).join("\n")}
+            </div>
+        </div>
+    </section>
+
+    <section class="games-info">
+        <h2>About ${esc(game.title)}</h2>
+        <p>${esc(game.title)} is one of ${total} free browser games on <a href="/games/">NetPurple Games</a>. It runs directly in your browser. No download, no signup, no ads.</p>
+    </section>
+
+    <script src="/particles.js"></script>
+    <script src="/config.js"></script>
+</body>
+</html>
+`;
+}
+
+function buildGames() {
+  const games = JSON.parse(readFileSync(join(REPO, "games/config/games.json"), "utf8"));
+  const total = games.length;
+  const described = games.filter((g) => g.description);
+  const slugs = assignSlugs(described, (g) => g.title, ["config", "js", "projects"]);
+  const pages = described.map((game, i) => ({ game, slug: slugs[i] }));
+  const slugOf = new Map(pages.map(({ game, slug }) => [game, slug]));
+  const hrefOf = (game) =>
+    slugOf.has(game) ? `/games/${slugOf.get(game)}/` : `/games/${encodeURI(game.link)}`;
+  const faq = gameFaq(total);
+
+  pages.forEach(({ game, slug }, i) => {
+    const related = [];
+    for (let k = 1; k <= Math.min(RELATED_COUNT, pages.length - 1); k += 1) {
+      related.push(pages[(i + k) % pages.length]);
+    }
+    const dir = join(REPO, "games", slug);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "index.html"), gamePage(game, slug, related, total));
+  });
+  const removed = removeStalePages("games", new Set(slugs));
+
+  const list = games
+    .map((game) =>
+      gameCardLink(game, hrefOf(game), slugOf.has(game) ? "Details" : "Play now", "                ")
+    )
+    .join("\n");
+
+  const titles = new Set(games.map((g) => g.title));
+  const examples = GAME_EXAMPLES.filter((t) => titles.has(t));
+  const about = `    <section class="games-info" id="about">
+        <h2>About NetPurple Games</h2>
+        <p>NetPurple Games is a free collection of ${total} browser games${examples.length ? `, including ${examples.map(esc).join(", ")}` : ""}. Puzzle, racing, platformer, idle and multiplayer games all run directly in the browser. No download, no signup, no ads.</p>
+        <h2>FAQ</h2>
+${faq.map(({ q, a }) => `        <h3>${esc(q)}</h3>\n        <p>${esc(a)}</p>`).join("\n")}
+    </section>`;
+
+  const data = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "NetPurple Games",
+      url: `${SITE}/games/`,
+      description: `Free collection of ${total} browser games. No download, no signup, no ads.`,
+      isPartOf: { "@type": "WebSite", name: "NetPurple", url: `${SITE}/` },
+      mainEntity: {
+        "@type": "ItemList",
+        name: "Games",
+        numberOfItems: total,
+        itemListElement: games.map((game, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: game.title,
+          url: `${SITE}${hrefOf(game)}`,
+        })),
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faq.map(({ q, a }) => ({
+        "@type": "Question",
+        name: q,
+        acceptedAnswer: { "@type": "Answer", text: a },
+      })),
+    },
+  ];
+
+  updateFile("games/index.html", {
+    jsonld: jsonLd(data, "    "),
+    list,
+    about,
+  });
+
+  const lastmod = lastCommitDate("games/config/games.json");
+  updateFile("sitemap.xml", {
+    games: pages
+      .map(
+        ({ slug }) =>
+          `  <url>\n    <loc>${SITE}/games/${slug}/</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>`
+      )
+      .join("\n"),
+  });
+
+  console.log(`games: ${total} listed, ${pages.length} pages written, ${removed} stale removed`);
+}
+
 /* ---------- main ---------- */
 
-const TARGETS = { sounds: buildSounds };
+const TARGETS = { sounds: buildSounds, games: buildGames };
 const requested = process.argv.slice(2);
 const run = requested.length ? requested : Object.keys(TARGETS);
 
