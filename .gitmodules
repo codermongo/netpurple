@@ -1,0 +1,3 @@
+[submodule "plan"]
+	path = plan
+	url = https://github.com/codermongo/netpurple-plans.git
