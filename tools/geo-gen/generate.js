@@ -295,7 +295,7 @@ function buildSounds() {
     .map(({ sound, slug }) => soundCardLink(sound, slug, "                    "))
     .join("\n");
 
-  const about = `        <section class="sound-info" id="about">
+  const about = `        <section class="sound-info sr-only" id="about">
             <h2>About the NetPurple Soundboard</h2>
             <p>The NetPurple Soundboard is a free online soundboard with ${total} meme sounds and sound effects, from viral meme clips to game, TV, and notification sounds. Every sound plays instantly in the browser. No download, no signup, no ads.</p>
             <h2>FAQ</h2>
@@ -524,7 +524,7 @@ function buildGames() {
 
   const titles = new Set(games.map((g) => g.title));
   const examples = GAME_EXAMPLES.filter((t) => titles.has(t));
-  const about = `    <section class="games-info" id="about">
+  const about = `    <section class="games-info sr-only" id="about">
         <h2>About NetPurple Games</h2>
         <p>NetPurple Games is a free collection of ${total} browser games${examples.length ? `, including ${examples.map(esc).join(", ")}` : ""}. Puzzle, racing, platformer, idle and multiplayer games all run directly in the browser. No download, no signup, no ads.</p>
         <h2>FAQ</h2>
