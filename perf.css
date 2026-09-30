@@ -1,0 +1,62 @@
+/* =====================================================================
+   NetPurple — Performance Mode (body.low-power-mode)
+   Wird auf JEDER Seite im <head> geladen. config.js setzt die Klasse:
+   manuell per Toggle oder automatisch auf Mobil / bei "Bewegung reduzieren".
+
+   Regeln gelten bewusst für alle Elemente, damit neue Unterseiten
+   ohne Zusatzarbeit mitgenommen werden.
+   Ausnahme für Dinge, die sich bewegen müssen (Ladekreisel): .np-motion-ok
+   ===================================================================== */
+
+/* Hintergrund-Effekte aus */
+body.low-power-mode #bg-particles,
+body.low-power-mode .hero-background {
+  display: none !important;
+}
+
+/* Glas-Unschärfe ist der teuerste Effekt → überall aus */
+body.low-power-mode *,
+body.low-power-mode *::before,
+body.low-power-mode *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Animationen sofort auf Endstand springen lassen statt "none":
+   Einblend-Animationen mit "forwards" (z. B. .sound-card) bleiben so sichtbar,
+   Endlos-Schleifen stehen still. */
+body.low-power-mode *:not(.np-motion-ok),
+body.low-power-mode *:not(.np-motion-ok)::before,
+body.low-power-mode *:not(.np-motion-ok)::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+}
+
+body.low-power-mode .hero-title {
+  filter: none !important;
+}
+
+/* Schatten nur bei den großen Glas-Elementen weg; andere Schatten tragen
+   Bedeutung (Drag-Marker, Tier-Rahmen, Fokus) und bleiben. */
+body.low-power-mode .menu-item-circle,
+body.low-power-mode .user-menu,
+body.low-power-mode .tool-card,
+body.low-power-mode .btn-primary,
+body.low-power-mode .btn-secondary {
+  box-shadow: none !important;
+}
+
+body.low-power-mode .menu-item-circle:hover,
+body.low-power-mode .user-menu:hover,
+body.low-power-mode .user-menu:focus-within,
+body.low-power-mode .tool-card:hover,
+body.low-power-mode .btn-primary:hover,
+body.low-power-mode .btn-secondary:hover,
+body.low-power-mode .tool-card:hover .tool-icon {
+  transform: none !important;
+}
+
+html:has(body.low-power-mode) {
+  scroll-behavior: auto !important;
+}

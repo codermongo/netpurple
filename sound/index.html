@@ -11,7 +11,7 @@
     <meta name="author" content="NetPurple">
     <link rel="canonical" href="https://netpurple.net/sound/">
     <meta name="theme-color" content="#121224">
-    <link rel="stylesheet" href="../style.css?v=075930ed">
+    <link rel="stylesheet" href="../style.css?v=d6111399">
     <link rel="stylesheet" href="css/styles.css?v=28c1921e">
     <link rel="stylesheet" href="css/spinner.css?v=da37595d">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1335,9 +1335,10 @@
     ]
     </script>
     <!-- /geo:jsonld -->
+    <link rel="stylesheet" href="/perf.css?v=37082a29">
 </head>
 <body data-auth="out">
-    <script>try{var d=localStorage;if(d.getItem('darkMode')==='true')document.body.classList.add('dark-mode');if(d.getItem('lowPowerMode')==='true'&&(d.getItem('lowPowerMobileOnly')!=='true'||matchMedia('(max-width:768px)').matches))document.body.classList.add('low-power-mode');}catch(e){}</script>
+    <script>try{var d=localStorage,m=function(q){return matchMedia(q).matches},p=d.getItem('lowPowerMode')==='true'||(d.getItem('lowPowerExplicit')!=='true'&&(m('(max-width:768px)')||m('(prefers-reduced-motion:reduce)')));if(d.getItem('darkMode')==='true')document.body.classList.add('dark-mode');if(p&&(d.getItem('lowPowerMobileOnly')!=='true'||m('(max-width:768px)')))document.body.classList.add('low-power-mode');}catch(e){}</script>
     <div class="theme-toggle-container">
 
         <a href="https://github.com/codermongo/netpurple" class="menu-item-circle visible" aria-label="GitHub" target="_blank" rel="noopener" style="text-decoration: none;">
@@ -1400,7 +1401,7 @@
             </div>
 
             <div class="soundboard-container">
-                <div class="spinner" id="spinner" role="status" aria-live="polite"></div>
+                <div class="spinner np-motion-ok" id="spinner" role="status" aria-live="polite"></div>
                 <div class="sound-grid" id="soundGrid">
                     <!-- geo:list -->
                     <a class="sound-card" href="/sound/fart/" style="--accent: #339900"><span class="sound-chip"><span class="sound-icon"><i class="fa-solid fa-play" aria-hidden="true"></i></span></span><span class="sound-title">Fart</span><span class="sound-caption">Open sound</span></a>
@@ -1635,8 +1636,8 @@
 
     <footer class="footer">NetPurple Soundboard · Tap a card to play</footer>
 
-    <script src="../particles.js?v=e0c75f5e"></script>
-    <script src="/config.js?v=c20eb612"></script>
+    <script src="../particles.js?v=aa0fd8e9"></script>
+    <script src="/config.js?v=88082ece"></script>
     <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
     <script src="../auth.js?v=83d31782"></script>
     <script src="loader.js?v=aa315dba"></script>

@@ -11,7 +11,13 @@
    Einbinden auf JEDER Seite, nach dem Appwrite-Web-SDK:
      <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
      <script src="/config.js"></script>
-   Ausserdem als ERSTES Kind von <body> das Anti-Flash-Snippet (siehe unten).
+   Ausserdem als ERSTES Kind von <body> das Anti-Flash-Snippet (siehe unten)
+   und im <head> /perf.css (die Regeln für body.low-power-mode).
+
+   Performance hat drei Zustände: an, aus, automatisch (cfg.lp === null).
+   Automatisch = an bei mobiler Ansicht oder "Bewegung reduzieren", sonst aus.
+   Ein gespeichertes "false" zählt nur mit lowPowerExplicit als bewusstes Aus,
+   weil ältere Versionen "false" bei jedem Toggle mitgeschrieben haben.
    ===================================================================== */
 (function () {
   "use strict";
@@ -21,8 +27,14 @@
   var DB = "699f251000346ad6c5e7";
   var TABLE = "user_config";
 
-  var LS = { dark: "darkMode", lp: "lowPowerMode", lpMobile: "lowPowerMobileOnly" };
+  var LS = {
+    dark: "darkMode",
+    lp: "lowPowerMode",
+    lpExplicit: "lowPowerExplicit",
+    lpMobile: "lowPowerMobileOnly"
+  };
   var MOBILE_MQ = window.matchMedia("(max-width: 768px)");
+  var MOTION_MQ = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   function readLS(k) {
     try { return localStorage.getItem(k) === "true"; } catch (e) { return false; }
@@ -30,8 +42,21 @@
   function writeLS(k, v) {
     try { localStorage.setItem(k, v ? "true" : "false"); } catch (e) { /* private mode */ }
   }
+  function removeLS(k) {
+    try { localStorage.removeItem(k); } catch (e) { /* private mode */ }
+  }
 
-  var cfg = { dark: readLS(LS.dark), lp: readLS(LS.lp), lpMobile: readLS(LS.lpMobile) };
+  // true / false / null (automatisch)
+  function resolveLp(on, explicit) {
+    if (on) return true;
+    return explicit ? false : null;
+  }
+
+  var cfg = {
+    dark: readLS(LS.dark),
+    lp: resolveLp(readLS(LS.lp), readLS(LS.lpExplicit)),
+    lpMobile: readLS(LS.lpMobile)
+  };
 
   /* ---------- styles (injected so every page gets them) ---------- */
   var CSS = [
@@ -68,7 +93,9 @@
   var saveTimer = null;
 
   function isMobile() { return MOBILE_MQ.matches; }
-  function effectiveLp() { return cfg.lp && (!cfg.lpMobile || isMobile()); }
+  function isAutoLp() { return cfg.lp === null; }
+  function lpOn() { return isAutoLp() ? (isMobile() || MOTION_MQ.matches) : cfg.lp; }
+  function effectiveLp() { return lpOn() && (!cfg.lpMobile || isMobile()); }
 
   /* ---------- apply to the page ---------- */
   function apply() {
@@ -78,7 +105,8 @@
     document.dispatchEvent(new CustomEvent("np:configchange", {
       detail: {
         dark: cfg.dark,
-        lowPower: cfg.lp,
+        lowPower: lpOn(),
+        lowPowerAuto: isAutoLp(),
         mobileOnly: cfg.lpMobile,
         effectiveLowPower: effectiveLp()
       }
@@ -86,31 +114,50 @@
   }
 
   /* ---------- persistence ---------- */
-  function persist() {
+  function writeLocal() {
     writeLS(LS.dark, cfg.dark);
-    writeLS(LS.lp, cfg.lp);
+    writeLS(LS.lp, cfg.lp === true);
+    if (isAutoLp()) removeLS(LS.lpExplicit);
+    else writeLS(LS.lpExplicit, true);
     writeLS(LS.lpMobile, cfg.lpMobile);
+  }
+
+  function persist() {
+    writeLocal();
     if (userId && databases) {
       clearTimeout(saveTimer);
       saveTimer = setTimeout(pushRow, 400);
     }
   }
 
-  function pushRow() {
-    if (!userId || !databases) return;
+  function rowData(withExplicit) {
     var data = {
       dark_mode: cfg.dark,
-      low_power: cfg.lp,
+      low_power: cfg.lp === true,
       low_power_mobile_only: cfg.lpMobile
     };
-    databases.updateDocument(DB, TABLE, userId, data).catch(function () {
+    if (withExplicit) data.low_power_explicit = !isAutoLp();
+    return data;
+  }
+
+  function saveRow(data) {
+    return databases.updateDocument(DB, TABLE, userId, data).catch(function (err) {
+      if (!err || err.code !== 404) throw err;
       // row does not exist yet → create it with per-user permissions
-      databases.createDocument(DB, TABLE, userId, data, [
+      return databases.createDocument(DB, TABLE, userId, data, [
         'read("user:' + userId + '")',
         'update("user:' + userId + '")',
         'delete("user:' + userId + '")'
-      ]).catch(function () { /* offline / race — localStorage still holds it */ });
+      ]);
     });
+  }
+
+  function pushRow() {
+    if (!userId || !databases) return;
+    saveRow(rowData(true)).catch(function () {
+      // Spalte low_power_explicit fehlt (noch) → ohne sie speichern
+      return saveRow(rowData(false));
+    }).catch(function () { /* offline / race — localStorage still holds it */ });
   }
 
   function setKey(key, val) {
@@ -140,11 +187,9 @@
       databases.getDocument(DB, TABLE, userId).then(function (row) {
         // server wins
         cfg.dark = !!row.dark_mode;
-        cfg.lp = !!row.low_power;
+        cfg.lp = resolveLp(!!row.low_power, row.low_power_explicit === true);
         cfg.lpMobile = !!row.low_power_mobile_only;
-        writeLS(LS.dark, cfg.dark);
-        writeLS(LS.lp, cfg.lp);
-        writeLS(LS.lpMobile, cfg.lpMobile);
+        writeLocal();
         apply();
       }, function () {
         // no row yet → migrate current local values up once
@@ -227,18 +272,19 @@
   function syncControls() {
     if (!els.panel) return;
     els.dark.checked = cfg.dark;
-    els.lp.checked = cfg.lp;
+    els.lp.checked = lpOn();
     els.lpmobile.checked = cfg.lpMobile;
-    els.mobileRow.classList.toggle("dim", !cfg.lp);
+    els.mobileRow.classList.toggle("dim", !lpOn());
 
     var perf;
-    if (!cfg.lp) {
+    if (!lpOn()) {
       perf = "Aus";
     } else if (cfg.lpMobile) {
       perf = isMobile() ? "An (aktiv – mobile Ansicht)" : "An (inaktiv – Desktop)";
     } else {
       perf = "An";
     }
+    if (isAutoLp()) perf += " (automatisch)";
     els.status.innerHTML =
       "Dark Mode: " + (cfg.dark ? "An" : "Aus") + "<br>"
       + "Performance: " + perf + "<br>"
@@ -294,8 +340,10 @@
     buildUI();
     apply();
     wireHome();
-    if (MOBILE_MQ.addEventListener) MOBILE_MQ.addEventListener("change", apply);
-    else if (MOBILE_MQ.addListener) MOBILE_MQ.addListener(apply); // older Safari
+    [MOBILE_MQ, MOTION_MQ].forEach(function (mq) {
+      if (mq.addEventListener) mq.addEventListener("change", apply);
+      else if (mq.addListener) mq.addListener(apply); // older Safari
+    });
     syncFromServer();
   }
 

@@ -11,7 +11,7 @@
     <meta name="author" content="NetPurple">
     <link rel="canonical" href="https://netpurple.net/games/">
     <meta name="theme-color" content="#121224">
-    <link rel="stylesheet" href="../style.css?v=075930ed">
+    <link rel="stylesheet" href="../style.css?v=d6111399">
     <link rel="stylesheet" href="games.css?v=b27fbd4a">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -962,9 +962,10 @@
     ]
     </script>
     <!-- /geo:jsonld -->
+    <link rel="stylesheet" href="/perf.css?v=37082a29">
 </head>
 <body data-auth="out">
-    <script>try{var d=localStorage;if(d.getItem('darkMode')==='true')document.body.classList.add('dark-mode');if(d.getItem('lowPowerMode')==='true'&&(d.getItem('lowPowerMobileOnly')!=='true'||matchMedia('(max-width:768px)').matches))document.body.classList.add('low-power-mode');}catch(e){}</script>
+    <script>try{var d=localStorage,m=function(q){return matchMedia(q).matches},p=d.getItem('lowPowerMode')==='true'||(d.getItem('lowPowerExplicit')!=='true'&&(m('(max-width:768px)')||m('(prefers-reduced-motion:reduce)')));if(d.getItem('darkMode')==='true')document.body.classList.add('dark-mode');if(p&&(d.getItem('lowPowerMobileOnly')!=='true'||m('(max-width:768px)')))document.body.classList.add('low-power-mode');}catch(e){}</script>
 
     <div class="theme-toggle-container games-toggle">
         <a href="../index.html" class="menu-item-circle visible" aria-label="Back to NetPurple">
@@ -1024,7 +1025,7 @@
                 </div>
             </div>
 
-            <div id="gamesLoader" class="games-loader" aria-hidden="true"></div>
+            <div id="gamesLoader" class="games-loader np-motion-ok" aria-hidden="true"></div>
             <div id="gameGrid" class="games-grid" aria-live="polite">
                 <!-- geo:list -->
                 <a class="game-card" href="/games/projects/1/index.html"><img class="game-thumb" src="/games/projects/1/meta/apple-touch-icon.png" alt="1 cover" loading="lazy"><div class="game-body"><div class="game-title">1</div><div class="game-meta-row">Play now</div></div></a>
@@ -1205,8 +1206,8 @@
         <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
     </button>
 
-    <script src="../particles.js?v=e0c75f5e"></script>
-    <script src="/config.js?v=c20eb612"></script>
+    <script src="../particles.js?v=aa0fd8e9"></script>
+    <script src="/config.js?v=88082ece"></script>
     <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
     <script src="../auth.js?v=83d31782"></script>
     <script src="games.js?v=e1a65857"></script>

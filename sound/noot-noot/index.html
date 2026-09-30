@@ -10,7 +10,7 @@
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <link rel="canonical" href="https://netpurple.net/sound/noot-noot/">
     <meta name="theme-color" content="#121224">
-    <link rel="stylesheet" href="/style.css?v=075930ed">
+    <link rel="stylesheet" href="/style.css?v=d6111399">
     <link rel="stylesheet" href="/sound/css/styles.css?v=28c1921e">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -73,9 +73,10 @@
       }
     ]
     </script>
+    <link rel="stylesheet" href="/perf.css?v=37082a29">
 </head>
 <body data-auth="out">
-    <script>try{var d=localStorage;if(d.getItem('darkMode')==='true')document.body.classList.add('dark-mode');if(d.getItem('lowPowerMode')==='true'&&(d.getItem('lowPowerMobileOnly')!=='true'||matchMedia('(max-width:768px)').matches))document.body.classList.add('low-power-mode');}catch(e){}</script>
+    <script>try{var d=localStorage,m=function(q){return matchMedia(q).matches},p=d.getItem('lowPowerMode')==='true'||(d.getItem('lowPowerExplicit')!=='true'&&(m('(max-width:768px)')||m('(prefers-reduced-motion:reduce)')));if(d.getItem('darkMode')==='true')document.body.classList.add('dark-mode');if(p&&(d.getItem('lowPowerMobileOnly')!=='true'||m('(max-width:768px)')))document.body.classList.add('low-power-mode');}catch(e){}</script>
 
     <canvas id="bg-particles" aria-hidden="true"></canvas>
 
@@ -119,7 +120,7 @@
 
     <footer class="footer">NetPurple Soundboard · <a href="/sound/">All sounds</a></footer>
 
-    <script src="/particles.js?v=e0c75f5e"></script>
-    <script src="/config.js?v=c20eb612"></script>
+    <script src="/particles.js?v=aa0fd8e9"></script>
+    <script src="/config.js?v=88082ece"></script>
 </body>
 </html>
