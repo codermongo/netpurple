@@ -18,9 +18,10 @@
     <link rel="stylesheet" href="../styles.css?v=0f750e86" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/perf.css?v=37082a29">
   </head>
   <body>
-    <script>try{var d=localStorage;if(d.getItem('darkMode')==='true')document.body.classList.add('dark-mode');if(d.getItem('lowPowerMode')==='true'&&(d.getItem('lowPowerMobileOnly')!=='true'||matchMedia('(max-width:768px)').matches))document.body.classList.add('low-power-mode');}catch(e){}</script>
+    <script>try{var d=localStorage,m=function(q){return matchMedia(q).matches},p=d.getItem('lowPowerMode')==='true'||(d.getItem('lowPowerExplicit')!=='true'&&(m('(max-width:768px)')||m('(prefers-reduced-motion:reduce)')));if(d.getItem('darkMode')==='true')document.body.classList.add('dark-mode');if(p&&(d.getItem('lowPowerMobileOnly')!=='true'||m('(max-width:768px)')))document.body.classList.add('low-power-mode');}catch(e){}</script>
     <div class="theme-toggle-container">
       <a class="menu-item-circle back-link" href="/tier" aria-label="Back to tierlists">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -58,9 +59,9 @@
       </section>
     </main>
 
-    <script src="../../particles.js?v=e0c75f5e"></script>
+    <script src="../../particles.js?v=aa0fd8e9"></script>
     <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
-    <script src="/config.js?v=c20eb612"></script>
+    <script src="/config.js?v=88082ece"></script>
     <script src="../create.js?v=4ea39cf5"></script>
     <script>
       (function () {

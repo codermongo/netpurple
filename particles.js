@@ -3,15 +3,10 @@
   const canvas = document.getElementById('bg-particles');
   if (!canvas) return;
 
-  // Contexts where we never run the animation, independent of the manual
-  // Performance toggle (config.js owns body.low-power-mode).
-  function heavyContextBlocked() {
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      || window.matchMedia('(prefers-reduced-data: reduce)').matches
-      || Boolean(navigator.connection && navigator.connection.saveData);
-  }
+  // Einzige Quelle: der Performance Mode (config.js setzt body.low-power-mode,
+  // automatisch auch auf Mobil und bei "Bewegung reduzieren").
   function particlesEnabled() {
-    return !document.body.classList.contains('low-power-mode') && !heavyContextBlocked();
+    return !document.body.classList.contains('low-power-mode');
   }
 
   const ctx = canvas.getContext('2d', { alpha: true });

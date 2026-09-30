@@ -129,7 +129,7 @@ function removeStalePages(dir, keep) {
 }
 
 const ANTI_FLASH =
-  "<script>try{var d=localStorage;if(d.getItem('darkMode')==='true')document.body.classList.add('dark-mode');if(d.getItem('lowPowerMode')==='true'&&(d.getItem('lowPowerMobileOnly')!=='true'||matchMedia('(max-width:768px)').matches))document.body.classList.add('low-power-mode');}catch(e){}</script>";
+  "<script>try{var d=localStorage,m=function(q){return matchMedia(q).matches},p=d.getItem('lowPowerMode')==='true'||(d.getItem('lowPowerExplicit')!=='true'&&(m('(max-width:768px)')||m('(prefers-reduced-motion:reduce)')));if(d.getItem('darkMode')==='true')document.body.classList.add('dark-mode');if(p&&(d.getItem('lowPowerMobileOnly')!=='true'||m('(max-width:768px)')))document.body.classList.add('low-power-mode');}catch(e){}</script>";
 
 /* ---------- sounds ---------- */
 
@@ -224,6 +224,7 @@ function soundPage(sound, slug, related, total) {
     <meta name="twitter:image" content="${SITE}/logo.png">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 ${jsonLd(data, "    ")}
+    <link rel="stylesheet" href="/perf.css">
 </head>
 <body data-auth="out">
     ${ANTI_FLASH}
@@ -450,6 +451,7 @@ function gamePage(game, slug, related, total) {
     <meta name="twitter:image" content="${esc(image)}">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 ${jsonLd(data, "    ")}
+    <link rel="stylesheet" href="/perf.css">
 </head>
 <body data-auth="out">
     ${ANTI_FLASH}
