@@ -40,19 +40,11 @@
 
         /* Kopf: Avatar, Name, Mail, Status */
         .account-head { text-align: center; margin-bottom: 1.4rem; }
-        .account-avatar {
-            width: 56px;
-            height: 56px;
-            margin: 0 auto 0.7rem;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--primary-gradient);
-            color: #fff;
-            font-size: 1.4rem;
-            font-weight: 700;
-            user-select: none;
+        .account-logo {
+            width: 44px;
+            height: 44px;
+            display: block;
+            margin: 0 auto 0.6rem;
         }
         .account-head h1 {
             font-size: 1.5rem;
@@ -294,7 +286,7 @@
     <main class="account-stage">
         <div class="account-card" id="account-card" data-loading="true">
             <header class="account-head" aria-live="polite">
-                <div class="account-avatar" id="account-avatar" aria-hidden="true">?</div>
+                <img class="account-logo" src="/logo.png" alt="NetPurple">
                 <h1 id="account-title">Account</h1>
                 <p class="account-mail" id="account-mail">Loading...</p>
                 <span class="account-pill" id="account-pill" hidden></span>
@@ -422,6 +414,6 @@
     <script src="../particles.js?v=aa0fd8e9"></script>
     <script src="/config.js?v=13a07dde"></script>
     <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
-    <script src="user.js?v=7f46e3b3"></script>
+    <script src="user.js?v=4e6ceafa"></script>
 </body>
 </html>

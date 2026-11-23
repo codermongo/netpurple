@@ -11,7 +11,6 @@ const elements = {
   logoutBtn: $("#logout-btn"),
   accountLogoutBtn: $("#account-logout-btn"),
   userHandle: $("#user-handle"),
-  avatar: $("#account-avatar"),
   title: $("#account-title"),
   mail: $("#account-mail"),
   pill: $("#account-pill"),
@@ -135,9 +134,6 @@ function renderAccount(user) {
   const name = user?.name?.trim() || "";
   const passwordSet = hasPassword(user);
 
-  if (elements.avatar) {
-    elements.avatar.textContent = handle.charAt(0).toUpperCase() || "?";
-  }
   if (elements.title) {
     elements.title.textContent = handle;
   }
