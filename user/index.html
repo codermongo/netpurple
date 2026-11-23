@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="darkreader-lock">
-    <title>User Settings | NetPurple</title>
+    <title>Account | NetPurple</title>
     <meta name="description" content="Manage your NetPurple account details, password, and email verification status.">
     <meta name="robots" content="noindex, nofollow, noarchive">
     <meta name="author" content="NetPurple">
@@ -16,6 +16,259 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="stylesheet" href="/perf.css?v=37082a29">
+    <style>
+        .account-stage {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 88px 16px 32px;
+        }
+        .account-card [hidden] { display: none !important; }
+        .account-card {
+            width: min(460px, 100%);
+            padding: 2.2rem 2rem 1.6rem;
+            background: var(--card-glass-bg);
+            backdrop-filter: blur(8px) saturate(120%);
+            -webkit-backdrop-filter: blur(8px) saturate(120%);
+            border: 1px solid var(--card-glass-stroke);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.08);
+        }
+
+        /* Kopf: Avatar, Name, Mail, Status */
+        .account-head { text-align: center; margin-bottom: 1.4rem; }
+        .account-avatar {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 0.7rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary-gradient);
+            color: #fff;
+            font-size: 1.4rem;
+            font-weight: 700;
+            user-select: none;
+        }
+        .account-head h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            overflow-wrap: anywhere;
+        }
+        .account-mail {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            overflow-wrap: anywhere;
+        }
+        .account-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 0.6rem;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid var(--card-glass-stroke);
+            color: var(--text-secondary);
+        }
+        .account-pill[data-state="verified"] {
+            color: #4ade80;
+            border-color: rgba(74, 222, 128, 0.35);
+            background: rgba(74, 222, 128, 0.1);
+        }
+        .account-pill[data-state="unverified"] {
+            color: #f0717a;
+            border-color: rgba(240, 113, 122, 0.35);
+            background: rgba(240, 113, 122, 0.1);
+        }
+
+        /* Hinweis: E-Mail nicht bestätigt */
+        .account-card .verify-panel { margin: 0 0 1.2rem; }
+        .account-card .verify-btn {
+            width: 100%;
+            padding: 9px 14px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        /* Aufklapp-Liste */
+        .account-rows {
+            border: 1px solid var(--card-glass-stroke);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .account-row + .account-row { border-top: 1px solid var(--card-glass-stroke); }
+        .row-head {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .row-head:hover,
+        .row-head[aria-expanded="true"] { background: rgba(139, 92, 246, 0.08); }
+        .row-head:focus-visible { outline: 2px solid rgba(139, 92, 246, 0.6); outline-offset: -2px; }
+        .row-icon { width: 18px; text-align: center; color: #8b5cf6; flex-shrink: 0; }
+        .row-label { font-weight: 600; width: 72px; flex-shrink: 0; }
+        .row-value {
+            flex: 1;
+            min-width: 0;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .row-action {
+            flex-shrink: 0;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #6366F1;
+        }
+        .row-head[aria-expanded="true"] .row-action { color: var(--text-secondary); }
+        .row-body {
+            padding: 4px 16px 16px;
+            background: rgba(139, 92, 246, 0.04);
+            animation: accountFade 0.2s ease;
+        }
+        .row-body[hidden] { display: none; }
+        .row-body .field + .field { margin-top: 10px; }
+        .row-body .field > span:first-child { font-size: 0.78rem; }
+        .row-body .field input { padding: 10px 12px; font-size: 0.9rem; }
+        .row-note {
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            margin: 8px 0 0;
+        }
+        .row-note a, .link-btn {
+            color: #6366F1;
+            font-weight: 600;
+            text-decoration: none;
+            background: none;
+            border: none;
+            padding: 0;
+            font: inherit;
+            cursor: pointer;
+        }
+        .row-note a:hover, .link-btn:hover { color: #818cf8; }
+
+        .pw-wrap { position: relative; display: block; }
+        .pw-wrap input { padding-right: 40px !important; }
+        .pw-toggle {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        .pw-toggle:hover { color: var(--text-primary); }
+        .pw-hint { min-height: 16px; margin: 6px 0 0; font-size: 0.78rem; color: var(--text-secondary); }
+        .pw-hint[data-tone="error"] { color: #f0717a; }
+        .pw-hint[data-tone="success"] { color: #4ade80; }
+
+        .row-actions {
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .row-actions button {
+            min-height: 42px;
+            font-size: 0.88rem;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+        .row-actions .primary:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .account-card .form-feedback { min-height: 0; font-size: 0.82rem; }
+        .account-card .form-feedback:not(:empty) { margin-top: 10px; }
+        .account-card .form-feedback[data-tone="error"],
+        .account-card .verify-message[data-tone="error"] { color: #f0717a; }
+        .account-card .form-feedback[data-tone="success"],
+        .account-card .verify-message[data-tone="success"] { color: #4ade80; }
+        .account-status { text-align: center; }
+
+        /* Fuß */
+        .account-logout {
+            width: 100%;
+            margin-top: 1.4rem;
+            padding: 11px 16px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .account-foot {
+            margin-top: 0.9rem;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        .account-foot a {
+            color: #6366F1;
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .account-foot a:hover { color: #818cf8; }
+
+        .account-card[data-loading="true"] .account-rows,
+        .account-card[data-loading="true"] .account-logout { opacity: 0.5; pointer-events: none; }
+
+        /* Heller Modus (Klasse heißt historisch dark-mode): grün/rot dunkler für Kontrast */
+        body.dark-mode .account-pill[data-state="verified"] { color: #15803d; }
+        body.dark-mode .account-pill[data-state="unverified"],
+        body.dark-mode .pw-hint[data-tone="error"],
+        body.dark-mode .account-card .form-feedback[data-tone="error"],
+        body.dark-mode .account-card .verify-message[data-tone="error"] { color: #c53030; }
+        body.dark-mode .pw-hint[data-tone="success"],
+        body.dark-mode .account-card .form-feedback[data-tone="success"],
+        body.dark-mode .account-card .verify-message[data-tone="success"] { color: #15803d; }
+
+        @keyframes accountFade { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+
+        @media (max-width: 420px) {
+            .account-card { padding: 1.8rem 1.1rem 1.3rem; }
+            .row-head { flex-wrap: wrap; row-gap: 2px; padding: 12px 14px; }
+            .row-value { order: 3; flex-basis: 100%; padding-left: 30px; }
+            .row-label { flex: 1; }
+            .row-body { padding: 4px 14px 14px; }
+        }
+    </style>
 </head>
 <body data-auth="out">
     <script>try{var d=localStorage,m=function(q){return matchMedia(q).matches},p=d.getItem('lowPowerMode')==='true'||(d.getItem('lowPowerExplicit')!=='true'&&(m('(max-width:768px)')||m('(prefers-reduced-motion:reduce)')));if(d.getItem('darkMode')==='true')document.body.classList.add('dark-mode');if(p&&(d.getItem('lowPowerMobileOnly')!=='true'||m('(max-width:768px)')))document.body.classList.add('low-power-mode');}catch(e){}</script>
@@ -38,94 +291,137 @@
 
     <canvas id="bg-particles" aria-hidden="true"></canvas>
 
-    <section class="hero" style="min-height: 25vh; padding-top: 100px;">
-        <div class="hero-content">
-            <h1 class="hero-title">User Settings</h1>
-            <p class="hero-subtitle">Manage your account details</p>
-        </div>
-    </section>
+    <main class="account-stage">
+        <div class="account-card" id="account-card" data-loading="true">
+            <header class="account-head" aria-live="polite">
+                <div class="account-avatar" id="account-avatar" aria-hidden="true">?</div>
+                <h1 id="account-title">Account</h1>
+                <p class="account-mail" id="account-mail">Loading...</p>
+                <span class="account-pill" id="account-pill" hidden></span>
+            </header>
 
-    <section class="services">
-        <div class="container settings-grid">
-            <div class="tool-card settings-card">
-                <h2>Account</h2>
-                <div class="account-overview" aria-live="polite">
-                    <div class="account-overview-row">
-                        <span class="account-overview-label">Name:</span>
-                        <span class="account-overview-value" id="account-name">Loading...</span>
-                    </div>
-                    <div class="account-overview-row">
-                        <span class="account-overview-label">Email:</span>
-                        <span class="account-overview-value" id="account-email">Loading...</span>
-                    </div>
-                    <div class="account-overview-row">
-                        <span class="account-overview-label">Verified:</span>
-                        <span class="account-overview-value" id="account-verified">Checking...</span>
-                    </div>
-                </div>
-                <button class="btn-secondary settings-resend" id="resend-verification-btn" type="button" hidden>Resend verification email</button>
-                <p class="form-feedback" id="verify-feedback" role="status" aria-live="polite"></p>
+            <div class="verify-panel" id="verify-panel" hidden>
+                <p class="verify-title">Email not verified yet</p>
+                <p class="verify-text">Confirm your email address to secure your account.</p>
+                <button class="btn-secondary verify-btn" id="resend-verification-btn" type="button">Send verification email</button>
+                <p class="verify-message" id="verify-feedback" role="status" aria-live="polite"></p>
+            </div>
 
-                <div class="settings-section settings-update-card">
-                    <h3>Update account</h3>
-                    <div class="settings-action-row" role="tablist" aria-label="Update account actions">
-                        <button class="btn-secondary settings-action-btn is-active" id="action-name-btn" data-pane="name" type="button">Update name</button>
-                        <button class="btn-secondary settings-action-btn" id="action-email-btn" data-pane="email" type="button">Update email</button>
-                        <button class="btn-secondary settings-action-btn" id="action-password-btn" data-pane="password" type="button">Update password</button>
-                    </div>
-
-                    <div class="settings-pane" id="pane-name">
-                        <form class="form" id="name-form">
+            <div class="account-rows">
+                <!-- Name -->
+                <section class="account-row" data-row="name">
+                    <button class="row-head" type="button" id="row-name-head" aria-expanded="false" aria-controls="row-name-body">
+                        <i class="fa-solid fa-user row-icon" aria-hidden="true"></i>
+                        <span class="row-label">Name</span>
+                        <span class="row-value" id="row-name-value">&nbsp;</span>
+                        <span class="row-action">Edit</span>
+                    </button>
+                    <div class="row-body" id="row-name-body" hidden>
+                        <form id="name-form" novalidate>
                             <label class="field">
-                                <span>Name</span>
-                                <input type="text" id="name-input" name="name" placeholder="Your display name" required />
+                                <span>Display name</span>
+                                <input type="text" id="name-input" name="name" placeholder="Your display name" autocomplete="name" maxlength="128" required />
                             </label>
-                            <button class="primary" id="name-save-btn" type="submit">Save name</button>
+                            <div class="row-actions">
+                                <button class="btn-secondary" type="button" data-cancel>Cancel</button>
+                                <button class="primary" id="name-save-btn" type="submit" disabled>Save name</button>
+                            </div>
                             <p class="form-feedback" id="name-feedback" role="status" aria-live="polite"></p>
                         </form>
                     </div>
+                </section>
 
-                    <div class="settings-pane" id="pane-email" hidden>
-                        <form class="form" id="email-form">
+                <!-- E-Mail -->
+                <section class="account-row" data-row="email">
+                    <button class="row-head" type="button" id="row-email-head" aria-expanded="false" aria-controls="row-email-body">
+                        <i class="fa-solid fa-envelope row-icon" aria-hidden="true"></i>
+                        <span class="row-label">Email</span>
+                        <span class="row-value" id="row-email-value">&nbsp;</span>
+                        <span class="row-action">Edit</span>
+                    </button>
+                    <div class="row-body" id="row-email-body" hidden>
+                        <form id="email-form" novalidate>
                             <label class="field">
-                                <span>Email</span>
-                                <input type="email" id="email-input" name="email" placeholder="you@example.com" required />
+                                <span>New email</span>
+                                <input type="email" id="email-input" name="email" placeholder="you@example.com" autocomplete="email" required />
                             </label>
                             <label class="field">
                                 <span>Current password</span>
-                                <input type="password" id="email-password-input" name="password" placeholder="Required to change email" required />
+                                <span class="pw-wrap">
+                                    <input type="password" id="email-password-input" name="password" placeholder="Confirm with your password" autocomplete="current-password" required />
+                                    <button class="pw-toggle" type="button" aria-label="Show password"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+                                </span>
                             </label>
-                            <button class="primary" id="email-save-btn" type="submit">Save email</button>
+                            <p class="row-note">We'll send a verification link to the new address.</p>
+                            <div class="row-actions">
+                                <button class="btn-secondary" type="button" data-cancel>Cancel</button>
+                                <button class="primary" id="email-save-btn" type="submit" disabled>Save email</button>
+                            </div>
                             <p class="form-feedback" id="email-feedback" role="status" aria-live="polite"></p>
                         </form>
+                        <p class="row-note" id="email-needs-password" hidden>
+                            Your account signs in with Google and has no password yet.
+                            <button class="link-btn" type="button" id="email-set-password-link">Set a password</button>
+                            first to change your email.
+                        </p>
                     </div>
+                </section>
 
-                    <div class="settings-pane" id="pane-password" hidden>
-                        <form class="form" id="password-form">
-                            <label class="field">
+                <!-- Passwort -->
+                <section class="account-row" data-row="password">
+                    <button class="row-head" type="button" id="row-password-head" aria-expanded="false" aria-controls="row-password-body">
+                        <i class="fa-solid fa-lock row-icon" aria-hidden="true"></i>
+                        <span class="row-label">Password</span>
+                        <span class="row-value" id="row-password-value">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span>
+                        <span class="row-action" id="row-password-action">Edit</span>
+                    </button>
+                    <div class="row-body" id="row-password-body" hidden>
+                        <form id="password-form" novalidate>
+                            <label class="field" id="password-current-field">
                                 <span>Current password</span>
-                                <input type="password" id="password-current-input" name="current-password" placeholder="Current password" required />
+                                <span class="pw-wrap">
+                                    <input type="password" id="password-current-input" name="current-password" placeholder="Current password" autocomplete="current-password" required />
+                                    <button class="pw-toggle" type="button" aria-label="Show password"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+                                </span>
                             </label>
                             <label class="field">
                                 <span>New password</span>
-                                <input type="password" id="password-new-input" name="new-password" placeholder="At least 8 characters" minlength="8" required />
+                                <span class="pw-wrap">
+                                    <input type="password" id="password-new-input" name="new-password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8" required />
+                                    <button class="pw-toggle" type="button" aria-label="Show password"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+                                </span>
                             </label>
                             <label class="field">
-                                <span>Confirm new password</span>
-                                <input type="password" id="password-confirm-input" name="confirm-password" placeholder="Repeat new password" minlength="8" required />
+                                <span>Repeat new password</span>
+                                <span class="pw-wrap">
+                                    <input type="password" id="password-confirm-input" name="confirm-password" placeholder="Repeat new password" autocomplete="new-password" minlength="8" required />
+                                    <button class="pw-toggle" type="button" aria-label="Show password"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+                                </span>
                             </label>
-                            <button class="primary" id="password-save-btn" type="submit">Save password</button>
+                            <p class="pw-hint" id="password-hint" aria-live="polite"></p>
+                            <div class="row-actions">
+                                <button class="btn-secondary" type="button" data-cancel>Cancel</button>
+                                <button class="primary" id="password-save-btn" type="submit" disabled>Save password</button>
+                            </div>
                             <p class="form-feedback" id="password-feedback" role="status" aria-live="polite"></p>
                         </form>
                     </div>
-                </div>
+                </section>
             </div>
+
+            <p class="form-feedback account-status" id="account-status" role="status" aria-live="polite"></p>
+
+            <button class="btn-secondary account-logout" id="account-logout-btn" type="button">
+                <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+                Log out
+            </button>
+            <p class="account-foot"><a href="/">&larr; Back to NetPurple</a></p>
         </div>
-    </section>
+    </main>
 
     <script src="../particles.js?v=aa0fd8e9"></script>
     <script src="/config.js?v=13a07dde"></script>
     <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
-    <script src="user.js?v=3add9250"></script>
+    <script src="user.js?v=7f46e3b3"></script>
 </body>
 </html>

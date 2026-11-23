@@ -2,40 +2,55 @@ const APPWRITE_ENDPOINT = "https://api.netpurple.net/v1";
 const APPWRITE_PROJECT_ID = "699f23920000d9667d3e";
 const LOGIN_PATH = "/login";
 const AUTH_STORAGE_KEY = "appwrite_auth";
+const MIN_PASSWORD_LENGTH = 8;
+
+const $ = (selector) => document.querySelector(selector);
 
 const elements = {
-  logoutBtn: document.querySelector("#logout-btn"),
-  userHandle: document.querySelector("#user-handle"),
-  accountName: document.querySelector("#account-name"),
-  accountEmail: document.querySelector("#account-email"),
-  accountVerified: document.querySelector("#account-verified"),
-  verifyFeedback: document.querySelector("#verify-feedback"),
-  resendBtn: document.querySelector("#resend-verification-btn"),
-  actionNameBtn: document.querySelector("#action-name-btn"),
-  actionEmailBtn: document.querySelector("#action-email-btn"),
-  actionPasswordBtn: document.querySelector("#action-password-btn"),
-  paneName: document.querySelector("#pane-name"),
-  paneEmail: document.querySelector("#pane-email"),
-  panePassword: document.querySelector("#pane-password"),
-  nameForm: document.querySelector("#name-form"),
-  nameInput: document.querySelector("#name-input"),
-  nameSaveBtn: document.querySelector("#name-save-btn"),
-  nameFeedback: document.querySelector("#name-feedback"),
-  emailForm: document.querySelector("#email-form"),
-  emailInput: document.querySelector("#email-input"),
-  emailPasswordInput: document.querySelector("#email-password-input"),
-  emailSaveBtn: document.querySelector("#email-save-btn"),
-  emailFeedback: document.querySelector("#email-feedback"),
-  passwordForm: document.querySelector("#password-form"),
-  passwordCurrentInput: document.querySelector("#password-current-input"),
-  passwordNewInput: document.querySelector("#password-new-input"),
-  passwordConfirmInput: document.querySelector("#password-confirm-input"),
-  passwordSaveBtn: document.querySelector("#password-save-btn"),
-  passwordFeedback: document.querySelector("#password-feedback")
+  card: $("#account-card"),
+  logoutBtn: $("#logout-btn"),
+  accountLogoutBtn: $("#account-logout-btn"),
+  userHandle: $("#user-handle"),
+  avatar: $("#account-avatar"),
+  title: $("#account-title"),
+  mail: $("#account-mail"),
+  pill: $("#account-pill"),
+  status: $("#account-status"),
+  verifyPanel: $("#verify-panel"),
+  verifyFeedback: $("#verify-feedback"),
+  resendBtn: $("#resend-verification-btn"),
+  nameValue: $("#row-name-value"),
+  emailValue: $("#row-email-value"),
+  passwordValue: $("#row-password-value"),
+  passwordAction: $("#row-password-action"),
+  nameForm: $("#name-form"),
+  nameInput: $("#name-input"),
+  nameSaveBtn: $("#name-save-btn"),
+  nameFeedback: $("#name-feedback"),
+  emailForm: $("#email-form"),
+  emailInput: $("#email-input"),
+  emailPasswordInput: $("#email-password-input"),
+  emailSaveBtn: $("#email-save-btn"),
+  emailFeedback: $("#email-feedback"),
+  emailNeedsPassword: $("#email-needs-password"),
+  emailSetPasswordLink: $("#email-set-password-link"),
+  passwordForm: $("#password-form"),
+  passwordCurrentField: $("#password-current-field"),
+  passwordCurrentInput: $("#password-current-input"),
+  passwordNewInput: $("#password-new-input"),
+  passwordConfirmInput: $("#password-confirm-input"),
+  passwordSaveBtn: $("#password-save-btn"),
+  passwordFeedback: $("#password-feedback"),
+  passwordHint: $("#password-hint")
 };
+
+const ROWS = ["name", "email", "password"];
 
 let account = null;
 let currentUser = null;
+let openRowKey = null;
+
+/* ---------- Helpers ---------- */
 
 function getUserHandle(user) {
   const name = user?.name || "";
@@ -49,17 +64,19 @@ function getUserHandle(user) {
   return "User";
 }
 
+// Konten, die nur per Google angelegt wurden, haben nie ein Passwort gesetzt.
+function hasPassword(user) {
+  return Boolean(user?.passwordUpdate);
+}
+
+function isVerified(user) {
+  return user?.emailVerification === true || user?.emailVerification === "true";
+}
+
 function setAuth(user) {
-  if (user) {
-    document.body.dataset.auth = "in";
-    if (elements.userHandle) {
-      elements.userHandle.textContent = getUserHandle(user);
-    }
-  } else {
-    document.body.dataset.auth = "out";
-    if (elements.userHandle) {
-      elements.userHandle.textContent = "User";
-    }
+  document.body.dataset.auth = user ? "in" : "out";
+  if (elements.userHandle) {
+    elements.userHandle.textContent = user ? getUserHandle(user) : "User";
   }
 }
 
@@ -99,7 +116,7 @@ function getVerificationTarget() {
 
 function initAppwrite() {
   if (typeof Appwrite === "undefined") {
-    setFeedback(elements.verifyFeedback, "Appwrite SDK is not loaded.", "error");
+    setFeedback(elements.status, "Appwrite SDK is not loaded.", "error");
     return false;
   }
   const { Client, Account } = Appwrite;
@@ -111,49 +128,195 @@ function initAppwrite() {
   return true;
 }
 
-function populateAccountFields(user) {
-  if (elements.accountName) {
-    elements.accountName.textContent = user?.name?.trim() || "Not set";
+/* ---------- Darstellung ---------- */
+
+function renderAccount(user) {
+  const handle = getUserHandle(user);
+  const name = user?.name?.trim() || "";
+  const passwordSet = hasPassword(user);
+
+  if (elements.avatar) {
+    elements.avatar.textContent = handle.charAt(0).toUpperCase() || "?";
   }
-  if (elements.accountEmail) {
-    elements.accountEmail.textContent = user?.email || "";
+  if (elements.title) {
+    elements.title.textContent = handle;
   }
-  if (elements.nameInput) {
-    elements.nameInput.value = user?.name || "";
+  if (elements.mail) {
+    elements.mail.textContent = user?.email || "";
   }
-  if (elements.emailInput) {
-    elements.emailInput.value = user?.email || "";
+  if (elements.nameValue) {
+    elements.nameValue.textContent = name || "Not set";
+  }
+  if (elements.emailValue) {
+    elements.emailValue.textContent = user?.email || "";
+  }
+  if (elements.passwordValue) {
+    elements.passwordValue.textContent = passwordSet ? "•".repeat(8) : "Not set (Google sign-in)";
+  }
+  if (elements.passwordAction) {
+    elements.passwordAction.textContent = passwordSet ? "Edit" : "Set";
+  }
+  if (elements.passwordCurrentField) {
+    elements.passwordCurrentField.hidden = !passwordSet;
+  }
+  if (elements.passwordSaveBtn) {
+    elements.passwordSaveBtn.textContent = passwordSet ? "Save password" : "Set password";
+    elements.passwordSaveBtn.dataset.label = elements.passwordSaveBtn.textContent;
+  }
+  if (elements.emailForm) {
+    elements.emailForm.hidden = !passwordSet;
+  }
+  if (elements.emailNeedsPassword) {
+    elements.emailNeedsPassword.hidden = passwordSet;
+  }
+
+  const verified = isVerified(user);
+  if (elements.pill) {
+    elements.pill.hidden = false;
+    elements.pill.dataset.state = verified ? "verified" : "unverified";
+    elements.pill.innerHTML = verified
+      ? '<i class="fa-solid fa-circle-check" aria-hidden="true"></i> Verified'
+      : '<i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> Not verified';
+  }
+  if (elements.verifyPanel) {
+    elements.verifyPanel.hidden = verified;
   }
 }
 
-function updateVerificationState(user) {
-  const verified = user?.emailVerification === true || user?.emailVerification === "true";
-  if (elements.accountVerified) {
-    elements.accountVerified.textContent = verified ? "Yes" : "No";
-    elements.accountVerified.dataset.state = verified ? "verified" : "unverified";
-  }
-  if (elements.resendBtn) {
-    elements.resendBtn.hidden = verified;
-  }
+/* ---------- Aufklapp-Zeilen ---------- */
+
+function rowParts(key) {
+  return {
+    head: document.getElementById(`row-${key}-head`),
+    body: document.getElementById(`row-${key}-body`)
+  };
 }
 
-function setActiveUpdatePane(targetPane) {
-  const map = [
-    { key: "name", button: elements.actionNameBtn, pane: elements.paneName },
-    { key: "email", button: elements.actionEmailBtn, pane: elements.paneEmail },
-    { key: "password", button: elements.actionPasswordBtn, pane: elements.panePassword }
-  ];
-
-  map.forEach((item) => {
-    const isActive = item.key === targetPane;
-    if (item.button) {
-      item.button.classList.toggle("is-active", isActive);
+function resetForm(key) {
+  if (key === "name") {
+    if (elements.nameInput) {
+      elements.nameInput.value = currentUser?.name || "";
     }
-    if (item.pane) {
-      item.pane.hidden = !isActive;
+    setFeedback(elements.nameFeedback, "", "");
+  } else if (key === "email") {
+    if (elements.emailInput) {
+      elements.emailInput.value = "";
+    }
+    if (elements.emailPasswordInput) {
+      elements.emailPasswordInput.value = "";
+    }
+    setFeedback(elements.emailFeedback, "", "");
+  } else if (key === "password") {
+    [elements.passwordCurrentInput, elements.passwordNewInput, elements.passwordConfirmInput].forEach((input) => {
+      if (input) {
+        input.value = "";
+      }
+    });
+    setFeedback(elements.passwordFeedback, "", "");
+  }
+  document.querySelectorAll(`#row-${key}-body .pw-wrap input`).forEach((input) => setPasswordVisible(input, false));
+  updateFormState();
+}
+
+function openRow(key, { focus = true } = {}) {
+  openRowKey = key;
+  ROWS.forEach((rowKey) => {
+    const { head, body } = rowParts(rowKey);
+    const isOpen = rowKey === key;
+    if (head) {
+      head.setAttribute("aria-expanded", String(isOpen));
+      const action = head.querySelector(".row-action");
+      if (action && rowKey !== "password") {
+        action.textContent = isOpen ? "Close" : "Edit";
+      }
+    }
+    if (body) {
+      if (!isOpen && !body.hidden) {
+        resetForm(rowKey);
+      }
+      body.hidden = !isOpen;
     }
   });
+  if (key === "password" && elements.passwordAction) {
+    elements.passwordAction.textContent = "Close";
+  } else if (elements.passwordAction) {
+    elements.passwordAction.textContent = hasPassword(currentUser) ? "Edit" : "Set";
+  }
+  if (key) {
+    setFeedback(elements.status, "", "");
+    resetForm(key);
+    if (focus) {
+      const { body } = rowParts(key);
+      // Erstes sichtbares Feld (bei Google-Konten ist z. B. "Current password" ausgeblendet).
+      const target = [...(body?.querySelectorAll("input") || [])].find((input) => input.offsetParent !== null);
+      target?.focus();
+    }
+  }
 }
+
+function toggleRow(key) {
+  openRow(openRowKey === key ? null : key);
+}
+
+function closeRowWithSuccess(key, message) {
+  openRow(null, { focus: false });
+  setFeedback(elements.status, message, "success");
+  rowParts(key).head?.focus();
+}
+
+/* ---------- Formular-Zustand (Save erst aktiv, wenn sinnvoll) ---------- */
+
+function updateFormState() {
+  if (elements.nameSaveBtn && elements.nameInput) {
+    const value = elements.nameInput.value.trim();
+    elements.nameSaveBtn.disabled = !value || value === (currentUser?.name || "").trim();
+  }
+
+  if (elements.emailSaveBtn && elements.emailInput && elements.emailPasswordInput) {
+    const value = elements.emailInput.value.trim();
+    elements.emailSaveBtn.disabled =
+      !value || !value.includes("@") || value === currentUser?.email || !elements.emailPasswordInput.value;
+  }
+
+  if (elements.passwordSaveBtn && elements.passwordNewInput && elements.passwordConfirmInput) {
+    const needsCurrent = hasPassword(currentUser);
+    const current = elements.passwordCurrentInput?.value || "";
+    const next = elements.passwordNewInput.value;
+    const confirm = elements.passwordConfirmInput.value;
+
+    let hint = "";
+    let tone = "";
+    if (next && next.length < MIN_PASSWORD_LENGTH) {
+      hint = `At least ${MIN_PASSWORD_LENGTH} characters (${next.length}/${MIN_PASSWORD_LENGTH}).`;
+      tone = "error";
+    } else if (confirm && next !== confirm) {
+      hint = "Passwords don't match.";
+      tone = "error";
+    } else if (next && confirm && next === confirm) {
+      hint = "Passwords match.";
+      tone = "success";
+    }
+    setFeedback(elements.passwordHint, hint, tone);
+
+    elements.passwordSaveBtn.disabled =
+      (needsCurrent && !current) || next.length < MIN_PASSWORD_LENGTH || next !== confirm;
+  }
+}
+
+function setPasswordVisible(input, visible) {
+  const toggle = input?.parentElement?.querySelector(".pw-toggle");
+  if (!input || !toggle) {
+    return;
+  }
+  input.type = visible ? "text" : "password";
+  toggle.setAttribute("aria-label", visible ? "Hide password" : "Show password");
+  const icon = toggle.querySelector("i");
+  if (icon) {
+    icon.className = visible ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
+  }
+}
+
+/* ---------- Appwrite-Aktionen ---------- */
 
 async function refreshUser() {
   if (!account) {
@@ -162,8 +325,11 @@ async function refreshUser() {
   try {
     currentUser = await account.get();
     setAuth(currentUser);
-    populateAccountFields(currentUser);
-    updateVerificationState(currentUser);
+    renderAccount(currentUser);
+    updateFormState();
+    if (elements.card) {
+      delete elements.card.dataset.loading;
+    }
     return currentUser;
   } catch {
     currentUser = null;
@@ -185,7 +351,7 @@ async function resendVerificationEmail() {
 
   try {
     await account.createVerification(getVerificationTarget());
-    setFeedback(elements.verifyFeedback, "Verification email sent.", "success");
+    setFeedback(elements.verifyFeedback, "Verification email sent. Check your inbox.", "success");
   } catch (error) {
     setFeedback(elements.verifyFeedback, error?.message || "Could not send verification email.", "error");
   } finally {
@@ -213,12 +379,13 @@ async function submitNameUpdate(event) {
     const updated = await account.updateName(name);
     currentUser = updated;
     setAuth(updated);
-    populateAccountFields(updated);
-    setFeedback(elements.nameFeedback, "Name updated.", "success");
-  } catch (error) {
-    setFeedback(elements.nameFeedback, error?.message || "Could not update name.", "error");
-  } finally {
+    renderAccount(updated);
     setLoading(elements.nameSaveBtn, false, "Saving...");
+    closeRowWithSuccess("name", "Name updated.");
+  } catch (error) {
+    setLoading(elements.nameSaveBtn, false, "Saving...");
+    setFeedback(elements.nameFeedback, error?.message || "Could not update name.", "error");
+    updateFormState();
   }
 }
 
@@ -233,7 +400,7 @@ async function submitEmailUpdate(event) {
   const password = elements.emailPasswordInput.value;
 
   if (!newEmail || !password) {
-    setFeedback(elements.emailFeedback, "Enter your email and current password.", "error");
+    setFeedback(elements.emailFeedback, "Enter the new email and your current password.", "error");
     return;
   }
   if (currentUser?.email && newEmail === currentUser.email) {
@@ -254,36 +421,38 @@ async function submitEmailUpdate(event) {
       verificationSent = false;
     }
     await refreshUser();
-    elements.emailPasswordInput.value = "";
+    setLoading(elements.emailSaveBtn, false, "Saving...");
     if (verificationSent) {
-      setFeedback(elements.emailFeedback, "Email updated. Verification email sent.", "success");
+      closeRowWithSuccess("email", "Email updated. We sent a verification link to the new address.");
     } else {
-      setFeedback(elements.emailFeedback, "Email updated. Please resend verification email.", "error");
+      openRow(null, { focus: false });
+      setFeedback(elements.status, "Email updated, but the verification email could not be sent. Use the button above to resend it.", "error");
     }
   } catch (error) {
-    setFeedback(elements.emailFeedback, error?.message || "Could not update email.", "error");
-  } finally {
     setLoading(elements.emailSaveBtn, false, "Saving...");
+    setFeedback(elements.emailFeedback, error?.message || "Could not update email.", "error");
+    updateFormState();
   }
 }
 
 async function submitPasswordUpdate(event) {
   event.preventDefault();
-  if (!account || !elements.passwordCurrentInput || !elements.passwordNewInput || !elements.passwordConfirmInput) {
+  if (!account || !elements.passwordNewInput || !elements.passwordConfirmInput) {
     setFeedback(elements.passwordFeedback, "Appwrite SDK is not loaded.", "error");
     return;
   }
 
-  const currentPassword = elements.passwordCurrentInput.value;
+  const needsCurrent = hasPassword(currentUser);
+  const currentPassword = elements.passwordCurrentInput?.value || "";
   const newPassword = elements.passwordNewInput.value;
   const confirmPassword = elements.passwordConfirmInput.value;
 
-  if (!currentPassword || !newPassword || !confirmPassword) {
+  if ((needsCurrent && !currentPassword) || !newPassword || !confirmPassword) {
     setFeedback(elements.passwordFeedback, "Please complete all password fields.", "error");
     return;
   }
-  if (newPassword.length < 8) {
-    setFeedback(elements.passwordFeedback, "New password must be at least 8 characters.", "error");
+  if (newPassword.length < MIN_PASSWORD_LENGTH) {
+    setFeedback(elements.passwordFeedback, `New password must be at least ${MIN_PASSWORD_LENGTH} characters.`, "error");
     return;
   }
   if (newPassword !== confirmPassword) {
@@ -295,15 +464,18 @@ async function submitPasswordUpdate(event) {
   setFeedback(elements.passwordFeedback, "", "");
 
   try {
-    await account.updatePassword(newPassword, currentPassword);
-    elements.passwordCurrentInput.value = "";
-    elements.passwordNewInput.value = "";
-    elements.passwordConfirmInput.value = "";
-    setFeedback(elements.passwordFeedback, "Password updated.", "success");
-  } catch (error) {
-    setFeedback(elements.passwordFeedback, error?.message || "Could not update password.", "error");
-  } finally {
+    if (needsCurrent) {
+      await account.updatePassword(newPassword, currentPassword);
+    } else {
+      await account.updatePassword(newPassword);
+    }
+    await refreshUser();
     setLoading(elements.passwordSaveBtn, false, "Saving...");
+    closeRowWithSuccess("password", needsCurrent ? "Password updated." : "Password set. You can now also sign in with email and password.");
+  } catch (error) {
+    setLoading(elements.passwordSaveBtn, false, "Saving...");
+    setFeedback(elements.passwordFeedback, error?.message || "Could not update password.", "error");
+    updateFormState();
   }
 }
 
@@ -320,47 +492,54 @@ async function logout() {
   window.location.href = getLoginRedirectUrl();
 }
 
+/* ---------- Events ---------- */
+
 function initEventHandlers() {
-  if (elements.resendBtn) {
-    elements.resendBtn.addEventListener("click", () => {
-      void resendVerificationEmail();
+  ROWS.forEach((key) => {
+    rowParts(key).head?.addEventListener("click", () => toggleRow(key));
+  });
+
+  document.querySelectorAll("[data-cancel]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const key = openRowKey;
+      openRow(null, { focus: false });
+      if (key) {
+        rowParts(key).head?.focus();
+      }
     });
-  }
-  if (elements.nameForm) {
-    elements.nameForm.addEventListener("submit", (event) => {
-      void submitNameUpdate(event);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && openRowKey) {
+      const key = openRowKey;
+      openRow(null, { focus: false });
+      rowParts(key).head?.focus();
+    }
+  });
+
+  document.querySelectorAll(".pw-toggle").forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const input = toggle.parentElement?.querySelector("input");
+      setPasswordVisible(input, input?.type === "password");
     });
-  }
-  if (elements.emailForm) {
-    elements.emailForm.addEventListener("submit", (event) => {
-      void submitEmailUpdate(event);
-    });
-  }
-  if (elements.passwordForm) {
-    elements.passwordForm.addEventListener("submit", (event) => {
-      void submitPasswordUpdate(event);
-    });
-  }
-  if (elements.logoutBtn) {
-    elements.logoutBtn.addEventListener("click", () => {
-      void logout();
-    });
-  }
-  if (elements.actionNameBtn) {
-    elements.actionNameBtn.addEventListener("click", () => {
-      setActiveUpdatePane("name");
-    });
-  }
-  if (elements.actionEmailBtn) {
-    elements.actionEmailBtn.addEventListener("click", () => {
-      setActiveUpdatePane("email");
-    });
-  }
-  if (elements.actionPasswordBtn) {
-    elements.actionPasswordBtn.addEventListener("click", () => {
-      setActiveUpdatePane("password");
-    });
-  }
+  });
+
+  [
+    elements.nameInput,
+    elements.emailInput,
+    elements.emailPasswordInput,
+    elements.passwordCurrentInput,
+    elements.passwordNewInput,
+    elements.passwordConfirmInput
+  ].forEach((input) => input?.addEventListener("input", updateFormState));
+
+  elements.emailSetPasswordLink?.addEventListener("click", () => openRow("password"));
+  elements.resendBtn?.addEventListener("click", () => void resendVerificationEmail());
+  elements.nameForm?.addEventListener("submit", (event) => void submitNameUpdate(event));
+  elements.emailForm?.addEventListener("submit", (event) => void submitEmailUpdate(event));
+  elements.passwordForm?.addEventListener("submit", (event) => void submitPasswordUpdate(event));
+  elements.logoutBtn?.addEventListener("click", () => void logout());
+  elements.accountLogoutBtn?.addEventListener("click", () => void logout());
 }
 
 async function initUserSettings() {
@@ -368,7 +547,6 @@ async function initUserSettings() {
   if (!initAppwrite()) {
     return;
   }
-  setActiveUpdatePane("name");
   initEventHandlers();
   await refreshUser();
 }
