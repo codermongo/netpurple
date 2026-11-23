@@ -21,7 +21,8 @@ const SQUARE_COVERS = false;
 const CATEGORY_META = {
   anime: { label: "Anime", coverApi: "anime", file: "anime-ranking" },
   games: { label: "Game", coverApi: "games", file: "games-ranking" },
-  series: { label: "Series", coverApi: "series", file: "series-ranking" }
+  series: { label: "Series", coverApi: "series", file: "series-ranking" },
+  hardware: { label: "Hardware", coverApi: "hardware", file: "hardware-ranking" }
 };
 
 const APPWRITE_ENDPOINT = "https://api.netpurple.net/v1";
@@ -413,6 +414,156 @@ const PROVIDERS = {
   }
 };
 
+// ── Hardware catalog ────────────────────────────────────────────────
+// "hardware" has no external API: suggestions, images and the generated
+// placeholder covers all come from our own catalog (/tier/data/hardware.json).
+const HARDWARE_CATALOG_URL = "/tier/data/hardware.json";
+const HARDWARE_SUGGESTION_LIMIT = 8;
+const HW_BRAND_COLORS = {
+  AMD: "#e0201f", ATI: "#c8102e", Intel: "#0071c5", Nvidia: "#76b900", Apple: "#8e8e93",
+  Qualcomm: "#3253dc", Samsung: "#1428a0", Google: "#4285f4", OnePlus: "#eb0028",
+  Xiaomi: "#ff6900", Huawei: "#cf0a2c", Sony: "#00439c", Microsoft: "#107c10",
+  Nintendo: "#e60012", Sega: "#0089cf", Valve: "#1b2838", Nothing: "#3a3a3a",
+  Fairphone: "#00a6a6", Motorola: "#5c92fa", Nokia: "#124191", BlackBerry: "#444444",
+  HTC: "#69a42e", LG: "#a50034", Asus: "#d0021b", Lenovo: "#e2231a", MSI: "#cc0000",
+  Meta: "#0866ff", Oculus: "#444444", Vivo: "#415fff", Oppo: "#1ba784", Honor: "#0a84ff",
+  "3dfx": "#5b5b5b", Matrox: "#005cb9", Atari: "#e4202e", Magnavox: "#7a5c2e",
+  Mattel: "#d1121b", Coleco: "#2b4c9b", NEC: "#1414a0", SNK: "#1f5aa6", Philips: "#0b5ed7",
+  Panasonic: "#0041c0", Ouya: "#f02e5d", Bandai: "#d7000f", Analogue: "#2b2b2b",
+  Panic: "#d9a400", Anbernic: "#7a3fd0", Retroid: "#3d7be0"
+};
+
+let hardwareCatalogPromise = null;
+let hardwareIndex = null;
+
+function hwNorm(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\+/g, " plus ")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Short names that are ambiguous on their own get the brand in front.
+function hardwareDisplayTitle(item) {
+  const name = String(item?.name || "").trim();
+  const brand = String(item?.brand || "").trim();
+  if (/^(M\d|Phone \()/.test(name) && brand) {
+    return `${brand} ${name}`;
+  }
+  return name;
+}
+
+function buildHardwareIndex(data) {
+  const types = (data && data.types) || {};
+  const items = (Array.isArray(data?.items) ? data.items : []).map((raw) => {
+    const title = hardwareDisplayTitle(raw);
+    const keys = [...new Set(
+      [title, raw.name, `${raw.brand} ${raw.name}`, ...(Array.isArray(raw.aliases) ? raw.aliases : [])]
+        .map(hwNorm)
+        .filter(Boolean)
+    )];
+    return {
+      ...raw,
+      title,
+      typeLabel: types[raw.type] || raw.type || "",
+      keys,
+      compact: keys.map((key) => key.replace(/ /g, ""))
+    };
+  });
+
+  const byKey = new Map();
+  for (const item of items) {
+    for (const key of item.keys) {
+      if (!byKey.has(key)) byKey.set(key, item);
+    }
+  }
+  hardwareIndex = { items, byKey };
+  return hardwareIndex;
+}
+
+function loadHardwareCatalog() {
+  if (!hardwareCatalogPromise) {
+    hardwareCatalogPromise = fetch(HARDWARE_CATALOG_URL)
+      .then((response) => (response.ok ? response.json() : { items: [] }))
+      .then(buildHardwareIndex)
+      .catch(() => buildHardwareIndex({ items: [] }));
+  }
+  return hardwareCatalogPromise;
+}
+
+function findHardware(title) {
+  if (!hardwareIndex) return null;
+  return hardwareIndex.byKey.get(hwNorm(title)) || null;
+}
+
+function hardwareImageUrl(item) {
+  const image = String(item?.image || "").trim();
+  if (!image) return "";
+  try {
+    return new URL(image, new URL(HARDWARE_CATALOG_URL, window.location.origin)).href;
+  } catch {
+    return "";
+  }
+}
+
+function formatHardwarePrice(item) {
+  if (!Number.isFinite(item?.uvp)) return "";
+  const amount = item.uvp.toLocaleString("de-DE", {
+    minimumFractionDigits: Number.isInteger(item.uvp) ? 0 : 2,
+    maximumFractionDigits: 2
+  });
+  return item.uvp_currency === "USD" ? `${amount} $` : `${amount} €`;
+}
+
+function hardwareMeta(item) {
+  return [item.brand, item.typeLabel, item.year, formatHardwarePrice(item)].filter(Boolean).join(" · ");
+}
+
+function searchHardware(index, query, limit) {
+  const q = hwNorm(query);
+  if (!q) return [];
+  const qc = q.replace(/ /g, "");
+  const tokens = q.split(" ");
+  const scored = [];
+
+  for (const item of index.items) {
+    let score = 0;
+    for (let i = 0; i < item.keys.length; i++) {
+      const key = item.keys[i];
+      const compact = item.compact[i];
+      if (key === q || compact === qc) score = Math.max(score, 100);
+      else if (key.startsWith(q) || compact.startsWith(qc)) score = Math.max(score, 85);
+      else if (` ${key}`.includes(` ${q}`)) score = Math.max(score, 78);
+      else if (key.includes(q) || compact.includes(qc)) score = Math.max(score, 70);
+      else if (tokens.every((token) => key.includes(token))) score = Math.max(score, 60);
+    }
+    if (score > 0) scored.push({ item, score });
+  }
+
+  scored.sort((a, b) => b.score - a.score || (b.item.year || 0) - (a.item.year || 0) || a.item.title.localeCompare(b.item.title));
+  return scored.slice(0, limit).map((entry) => entry.item);
+}
+
+function isHardwareQuery(query) {
+  return hwNorm(query).replace(/ /g, "").length >= 2;
+}
+
+function createHardwarePlaceholder(title) {
+  const item = findHardware(title);
+  const color = (item && HW_BRAND_COLORS[item.brand]) || "#6366f1";
+  const name = item ? item.name : String(title || "?");
+  const sub = item ? [item.typeLabel, item.year].filter(Boolean).join(" · ") : "Hardware";
+  return `
+    <div class="card-cover-placeholder hw-cover" style="--hw-color:${color}" aria-label="${escapeHtml(title || "Hardware")}">
+      ${item ? `<span class="hw-cover-brand">${escapeHtml(item.brand)}</span>` : ""}
+      <span class="hw-cover-name">${escapeHtml(name)}</span>
+      <span class="hw-cover-sub">${escapeHtml(sub)}</span>
+    </div>
+  `;
+}
+
 // Definitive cover lookup (used on save + background backfill), tries the raw title
 // first, then a sanitized variant, and returns on the first usable hit.
 async function fetchCoverForType(type, title) {
@@ -506,6 +657,10 @@ async function fetchCover(title, artist) {
   if (COVER_API_TYPE === "anime" || COVER_API_TYPE === "series") {
     return fetchCoverForType(COVER_API_TYPE, title);
   }
+  if (COVER_API_TYPE === "hardware") {
+    await loadHardwareCatalog();
+    return hardwareImageUrl(findHardware(title));
+  }
   // "games" intentionally has no live cover fetch here — CheapShark thumbnails are
   // too small to store as cover_url. High-quality Steam grid covers are backfilled
   // separately (see the SteamGridDB maintenance script) so cover_url stays empty
@@ -542,13 +697,17 @@ function renderTitleSuggestions(items) {
   const markup = items.map((item) => {
     const safeTitle = escapeHtml(item.title);
     const safeImage = escapeHtml(item.image || "");
+    const swatch = item.color ? ` style="background:${item.color}"` : "";
     const image = item.image
       ? `<img class="title-suggestion-cover" src="${safeImage}" alt="${safeTitle} cover" loading="lazy" referrerpolicy="no-referrer" />`
-      : `<span class="title-suggestion-cover" aria-hidden="true"></span>`;
+      : `<span class="title-suggestion-cover"${swatch} aria-hidden="true"></span>`;
+    const text = item.meta
+      ? `<span class="title-suggestion-text"><span class="title-suggestion-name">${safeTitle}</span><span class="title-suggestion-meta">${escapeHtml(item.meta)}</span></span>`
+      : `<span class="title-suggestion-name">${safeTitle}</span>`;
     return `
       <button class="title-suggestion-btn" type="button" data-suggestion-title="${safeTitle}" data-suggestion-image="${safeImage}">
         ${image}
-        <span class="title-suggestion-name">${safeTitle}</span>
+        ${text}
       </button>
     `;
   }).join("");
@@ -640,8 +799,31 @@ function abortPendingTitleSuggestionRequest() {
   }
 }
 
+async function loadHardwareSuggestions(query) {
+  const index = await loadHardwareCatalog();
+  // Ignore results for a query the user has already typed past.
+  if (elements.editTitle && elements.editTitle.value.trim() !== query) {
+    return;
+  }
+  const items = searchHardware(index, query, HARDWARE_SUGGESTION_LIMIT).map((item) => ({
+    title: item.title,
+    image: hardwareImageUrl(item),
+    meta: hardwareMeta(item),
+    color: HW_BRAND_COLORS[item.brand] || ""
+  }));
+  renderTitleSuggestions(items);
+}
+
 async function loadTitleSuggestions(rawQuery) {
   const query = String(rawQuery || "").trim();
+  if (COVER_API_TYPE === "hardware") {
+    if (isHardwareQuery(query)) {
+      await loadHardwareSuggestions(query);
+    } else {
+      clearTitleSuggestions();
+    }
+    return;
+  }
   if (!isLikelySearchQuery(query)) {
     clearTitleSuggestions();
     return;
@@ -718,8 +900,9 @@ function queueTitleSuggestions() {
 
   const value = elements.editTitle ? elements.editTitle.value : "";
   const query = String(value || "").trim();
+  const usable = COVER_API_TYPE === "hardware" ? isHardwareQuery(query) : isLikelySearchQuery(query);
 
-  if (!isLikelySearchQuery(query)) {
+  if (!usable) {
     abortPendingTitleSuggestionRequest();
     clearTitleSuggestions();
     return;
@@ -739,11 +922,21 @@ function applySuggestedTitle(title, image) {
   // "games" never persists a cover_url from the live suggestion source (CheapShark
   // thumbnails are too small) — see fetchCover() for why.
   state.pendingCoverUrl = COVER_API_TYPE !== "games" ? String(image || "").trim() : "";
+  if (COVER_API_TYPE === "hardware" && elements.editPrice && elements.editPrice.value.trim() === "") {
+    // Prefill the launch price (UVP), but only euro values: the field is in €.
+    const item = findHardware(title);
+    if (item && Number.isFinite(item.uvp) && item.uvp_currency === "EUR") {
+      elements.editPrice.value = item.uvp;
+    }
+  }
   clearTitleSuggestions();
   elements.editTitle.focus();
 }
 
 function createPlaceholder(title) {
+  if (COVER_API_TYPE === "hardware") {
+    return createHardwarePlaceholder(title);
+  }
   const safeTitle = escapeHtml(title || "?");
   const initial = escapeHtml((title || "?").trim().charAt(0).toUpperCase() || "?");
   return `
@@ -754,7 +947,11 @@ function createPlaceholder(title) {
 }
 
 function renderCardCover(record) {
-  const url = record.cover_url || state.coverCache[getCoverKey(record.title)] || "";
+  const url = record.cover_url
+    || (COVER_API_TYPE === "hardware"
+      ? hardwareImageUrl(findHardware(record.title))
+      : state.coverCache[getCoverKey(record.title)])
+    || "";
   const safeTitle = escapeHtml(record.title || ITEM_LABEL);
 
   if (url) {
@@ -765,6 +962,8 @@ function renderCardCover(record) {
 }
 
 async function enrichVisibleCovers(records, jobId) {
+  // Hardware covers come synchronously from the catalog (see renderCardCover).
+  if (COVER_API_TYPE === "hardware") return;
   const BATCH_SIZE = 3;
   const BATCH_DELAY_MS = 1100;
 
@@ -2194,7 +2393,7 @@ function applyListConfig(doc) {
   const isWatchable = doc.category === "anime" || doc.category === "series";
   toggleField("fieldPlayTime", isWatchable);
   toggleField("fieldStoryLength", isGames);
-  toggleField("fieldPrice", isGames);
+  toggleField("fieldPrice", isGames || doc.category === "hardware");
   const playInfo = document.querySelector("#playTimeInfo");
   if (playInfo) playInfo.hidden = !isWatchable;
 }
@@ -2279,6 +2478,10 @@ async function init() {
   }
 
   applyListConfig(listDoc);
+  if (COVER_API_TYPE === "hardware") {
+    // Needed before the first render: covers, placeholders and lookups use it.
+    await loadHardwareCatalog();
+  }
   await refreshAuthState();
   applyViewMode();
   await loadList();

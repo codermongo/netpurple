@@ -32,7 +32,8 @@
   const CATEGORIES = [
     { id: "anime", label: "Anime", icon: "fa-tv" },
     { id: "games", label: "Games", icon: "fa-gamepad" },
-    { id: "series", label: "Serien", icon: "fa-film" }
+    { id: "series", label: "Serien", icon: "fa-film" },
+    { id: "hardware", label: "Hardware", icon: "fa-microchip" }
   ];
 
   let Sdk = null;
