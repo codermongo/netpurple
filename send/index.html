@@ -1,0 +1,76 @@
+<!doctype html>
+<!-- NetPurple Send: Download-Seite der Freigabe-Links aus dem Purple Chat. Ausgeliefert vom Dienst purple-send unter /send/s/<id> (static_dir = dieser Ordner); die Datei wird nur hier im Browser entschlüsselt. -->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#121224">
+<meta name="darkreader-lock">
+<title>NetPurple Send</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="../static/send.css?v=2">
+<script src="../static/send.js?v=2" defer></script>
+</head>
+<body>
+<canvas id="bg-particles" aria-hidden="true"></canvas>
+
+<main id="main">
+  <header class="hero">
+    <div class="logo-geometric" aria-hidden="true"></div>
+    <h1 class="hero-title">NetPurple Send</h1>
+    <p class="hero-subtitle">Ende-zu-Ende-verschlüsselte Datei</p>
+  </header>
+
+  <div class="card">
+    <section id="loading"><p class="dim">Wird geladen …</p></section>
+
+    <section id="error" hidden>
+      <div class="state-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      </div>
+      <p class="error" id="error-text"></p>
+    </section>
+
+    <form id="password" hidden>
+      <div class="state-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      </div>
+      <label for="pw">Diese Datei ist mit einem Passwort geschützt.</label>
+      <input id="pw" type="password" autocomplete="off" placeholder="Passwort" required>
+      <button type="submit" id="pw-button" class="btn-primary">Entsperren</button>
+      <p class="error" id="pw-error" hidden></p>
+    </form>
+
+    <section id="file" hidden>
+      <div class="file">
+        <div class="file-icon" id="file-icon" aria-hidden="true"></div>
+        <div class="file-text">
+          <div id="name" class="name"></div>
+          <div id="details" class="dim"></div>
+        </div>
+      </div>
+      <p id="note" class="note" hidden></p>
+
+      <div id="preview" class="preview" hidden></div>
+
+      <div class="buttons">
+        <button type="button" id="view" class="btn-primary" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>Ansehen</span>
+        </button>
+        <button type="button" id="download" class="btn-secondary">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>
+          <span>Herunterladen</span>
+        </button>
+      </div>
+      <div id="progress" class="progress" hidden><div id="bar"></div></div>
+      <p id="status" class="dim" hidden></p>
+    </section>
+  </div>
+
+  <footer class="dim">Der Schlüssel steht nur im Link und verlässt diesen Browser nicht. Entschlüsselt wird hier auf deinem Gerät – auch beim Ansehen.</footer>
+</main>
+</body>
+</html>
